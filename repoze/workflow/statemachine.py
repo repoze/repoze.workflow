@@ -13,8 +13,8 @@ class StateMachineError(Exception):
 class StateMachine(object):
     """ Finite state machine featuring transition actions.
 
-    The class stores a dictionary of (state, transition_id) keys, and
-    (state, transition_fn) values.
+    The class stores a dictionary of (from_state, transition_id) keys, and
+    (to_state, transition_fn) values.
 
     When a (state, transition_id) search is performed:
     * an exact match is checked first,

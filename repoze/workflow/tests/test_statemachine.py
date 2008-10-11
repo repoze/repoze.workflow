@@ -1,5 +1,6 @@
 import unittest
 
+
 class StateMachineTests(unittest.TestCase):
 
     def _getTargetClass(self):
@@ -80,3 +81,22 @@ class StateMachineTests(unittest.TestCase):
         self.assertEqual(args[4], ('pending', 'published', None, ob))
         from repoze.workflow.statemachine import StateMachineError
         self.assertRaises(StateMachineError, sm.execute, ob, 'nosuch')
+
+    def test_fail_before_transition(self):
+        from repoze.workflow.statemachine import StateMachine
+        from repoze.workflow.statemachine import StateMachineError
+        
+        class FailBeforeTransition(StateMachine):
+            def before_transition(self, a, b, c, d):
+                return False
+
+        class ReviewedObject:
+            pass
+
+        def dummy(state, newstate, transition_id, context):
+            pass
+
+        states = {('from', 'do_it'):('to', dummy)}
+        sm = FailBeforeTransition('state', states, initial_state='from')
+        ob = ReviewedObject()
+        self.assertRaises(StateMachineError, sm.execute, ob, 'do_it')
