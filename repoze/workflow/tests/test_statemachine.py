@@ -1,12 +1,6 @@
 import unittest
-from zope.component.testing import PlacelessSetup
 
-class StateMachineTests(unittest.TestCase, PlacelessSetup):
-    def setUp(self):
-        PlacelessSetup.setUp(self)
-
-    def tearDown(self):
-        PlacelessSetup.tearDown(self)
+class StateMachineTests(unittest.TestCase):
 
     def _getTargetClass(self):
         from repoze.workflow.statemachine import StateMachine
