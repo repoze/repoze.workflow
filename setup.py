@@ -32,7 +32,7 @@ requires = [
 
 setup(name='repoze.workflow',
       version=__version__,
-      description='A template for repoze projects',
+      description='Simple state machine useful for workflow-like apps',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Development Status :: 3 - Alpha",
