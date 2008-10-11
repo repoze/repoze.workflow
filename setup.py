@@ -27,6 +27,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'setuptools',
+    'zope.interface'
     ]
 
 setup(name='repoze.workflow',
@@ -55,14 +56,6 @@ setup(name='repoze.workflow',
       install_requires=requires,
       test_suite="repoze.workflow",
       entry_points = """\
-        #[console_scripts]
-        #addzope2user = repoze.workflow.scripts.adduser:main
-
-        #[repoze.project]
-        #initialize = repoze.workflow.instance:mkinstance
-
-        #[paste.filter_app_factory]
-        #middleware = repoze.workflow:constructor
       """
       )
 
