@@ -33,7 +33,7 @@ class StateMachineTests(unittest.TestCase):
         ob.state = 'published'
         self.assertEqual(sorted(sm.transitions(ob)), ['retract'])
 
-    def test_execute(self):
+    def test_execute_use_add(self):
         sm = self._makeOne(initial_state='pending')
         args = []
         def dummy(state, newstate, transition_id, context):
@@ -43,6 +43,21 @@ class StateMachineTests(unittest.TestCase):
         sm.add('published', 'retract', 'pending', dummy)
         sm.add('private', 'submit', 'pending', dummy)
         sm.add('pending', None, 'published', dummy)
+        self._do_execute(sm, args)
+
+    def test_execute_use_constructor(self):
+        args = []
+        def dummy(state, newstate, transition_id, context):
+            args.append((state, newstate, transition_id, context))
+        states = {('pending', 'publish'): ('published', dummy),
+                  ('pending', 'reject'): ('private', dummy),
+                  ('published', 'retract'): ('pending', dummy),
+                  ('private', 'submit'): ('pending', dummy),
+                  ('pending', None): ('published', dummy),}
+        sm = self._makeOne(states=states, initial_state='pending')
+        self._do_execute(sm, args)
+
+    def _do_execute(self, sm, args):
         class ReviewedObject:
             pass
         ob = ReviewedObject()
