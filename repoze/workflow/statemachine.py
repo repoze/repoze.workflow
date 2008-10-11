@@ -2,6 +2,8 @@
 Skip Montanaro's FSM from
 http://wiki.python.org/moin/FiniteStateMachine (ancient but simple #
 and useful!)"""
+from repoze.workflow.interfaces import IStateMachine
+from zope.interface import implements
 
 _marker = ()
 
@@ -21,7 +23,8 @@ class StateMachine(object):
     The transition function must be of the following form:
     * function(current_state, new_state, transition_id, context)
     """
-
+    implements(IStateMachine)
+    
     def __init__(self, state_attr, states={}, initial_state=None):
         """
         o state_attr - attribute name where a given object's current
@@ -58,7 +61,13 @@ class StateMachine(object):
         if newstate is None:
             raise StateMachineError(
                 'No transition from %r using transition %r' % (state, transition_id))
-        transition_fn(state, newstate, transition_id, context)
+        if self.before_transition(state, newstate, transition_id, context):
+            transition_fn(state, newstate, transition_id, context)
+        else:
+            raise StateMachineError(
+                'Transition %r aborted for %r due to before_transition failure' %
+                (transition_id, state))
+        self.after_transition(state, newstate, transition_id, context)
         setattr(context, self.state_attr, newstate)
 
     def state_of(self, context):
@@ -72,15 +81,15 @@ class StateMachine(object):
                        if state == from_state and t_id is not None]
         return transitions
 
-    def before_transition(self):
+    def before_transition(self, state, newstate, transition_id, context):
         """
         Hook method to be overridden by subclasses (or injected
         directly onto an instance) to allow for before transition
         actions (such as firing an event).
         """
-        pass
+        return True
 
-    def after_transition(self):
+    def after_transition(self, state, newstate, transition_id, context):
         """
         Hook method to be overridden by subclasses (or injected
         directly onto an instance) to allow for after transition
