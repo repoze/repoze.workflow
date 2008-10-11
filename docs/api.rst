@@ -6,9 +6,9 @@ Interfaces
 
 .. autoclass:: repoze.workflow.statemachine.StateMachine
 
-.. autointerface::
+.. autointerface:: repoze.workflow.interfaces.IStateMachine
 
 Exceptions
 ----------
 
-.. autoexception:: repoze.workflow.statemachine.StateMachineException
+.. autoexception:: repoze.workflow.statemachine.StateMachineError
