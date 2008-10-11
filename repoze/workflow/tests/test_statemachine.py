@@ -88,7 +88,7 @@ class StateMachineTests(unittest.TestCase):
         
         class FailBeforeTransition(StateMachine):
             def before_transition(self, a, b, c, d):
-                return False
+                raise StateMachineError
 
         class ReviewedObject:
             pass
@@ -100,3 +100,5 @@ class StateMachineTests(unittest.TestCase):
         sm = FailBeforeTransition('state', states, initial_state='from')
         ob = ReviewedObject()
         self.assertRaises(StateMachineError, sm.execute, ob, 'do_it')
+        self.assertEqual(hasattr(ob, 'state'), False)
+        self.assertEqual(sm.state_of(ob), 'from')

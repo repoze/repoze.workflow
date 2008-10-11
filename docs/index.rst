@@ -61,12 +61,6 @@ to some other storage mechanism).
    api.rst
 
 
-Topic A
--------
-
-Explain topic.
-
-
 Indices and tables
 ------------------
 

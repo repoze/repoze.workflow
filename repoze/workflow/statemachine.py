@@ -41,11 +41,9 @@ class StateMachine(object):
         self.initial_state = initial_state
 
     def add(self, state, transition_id, newstate, transition_fn):
-        """Add a transition to the FSM."""
         self.states[(state, transition_id)] = (newstate, transition_fn)
 
     def execute(self, context, transition_id):
-        """Perform a transition and execute an action."""
         state = getattr(context, self.state_attr, _marker) 
         if state is _marker:
             state = self.initial_state
@@ -61,12 +59,8 @@ class StateMachine(object):
         if newstate is None:
             raise StateMachineError(
                 'No transition from %r using transition %r' % (state, transition_id))
-        if self.before_transition(state, newstate, transition_id, context):
-            transition_fn(state, newstate, transition_id, context)
-        else:
-            raise StateMachineError(
-                'Transition %r aborted for %r due to before_transition failure' %
-                (transition_id, state))
+        self.before_transition(state, newstate, transition_id, context)
+        transition_fn(state, newstate, transition_id, context)
         self.after_transition(state, newstate, transition_id, context)
         setattr(context, self.state_attr, newstate)
 
@@ -82,17 +76,7 @@ class StateMachine(object):
         return transitions
 
     def before_transition(self, state, newstate, transition_id, context):
-        """
-        Hook method to be overridden by subclasses (or injected
-        directly onto an instance) to allow for before transition
-        actions (such as firing an event).
-        """
-        return True
+        pass
 
     def after_transition(self, state, newstate, transition_id, context):
-        """
-        Hook method to be overridden by subclasses (or injected
-        directly onto an instance) to allow for after transition
-        actions (such as firing an event).
-        """
         pass
