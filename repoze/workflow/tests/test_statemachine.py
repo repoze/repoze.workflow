@@ -12,9 +12,9 @@ class StateMachineTests(unittest.TestCase, PlacelessSetup):
         from repoze.workflow.statemachine import StateMachine
         return StateMachine
 
-    def _makeOne(self, attr='state', initial_state=None):
+    def _makeOne(self, attr='state', states={}, initial_state=None):
         klass = self._getTargetClass()
-        return klass(attr, initial_state)
+        return klass(attr, states, initial_state)
 
     def test_add(self):
         sm = self._makeOne()

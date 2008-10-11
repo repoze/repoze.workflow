@@ -3,15 +3,13 @@ Skip Montanaro's FSM from
 http://wiki.python.org/moin/FiniteStateMachine (ancient but simple #
 and useful!)"""
 
-from persistent import Persistent
-
 _marker = ()
 
 class StateMachineError(Exception):
     """ Invalid input to finite state machine"""
 
-class StateMachine(Persistent):
-    """ Persistent finite state machine featuring transition actions.
+class StateMachine(object):
+    """ Finite state machine featuring transition actions.
 
     The class stores a dictionary of (state, transition_id) keys, and
     (state, transition_fn) values.
@@ -24,15 +22,24 @@ class StateMachine(Persistent):
     * function(current_state, new_state, transition_id, context)
     """
 
-    def __init__(self, state_attr, initial_state=None):
-        self.states = {}
+    def __init__(self, state_attr, states={}, initial_state=None):
+        """
+        o state_attr - attribute name where a given object's current
+                       state will be stored (object is responsible for
+                       persisting)
+                       
+        o states - state dictionary
+
+        o initial_state - initial state for any object using this
+                          state machine
+        """
+        self.states = states
         self.state_attr = state_attr
         self.initial_state = initial_state
 
     def add(self, state, transition_id, newstate, transition_fn):
         """Add a transition to the FSM."""
         self.states[(state, transition_id)] = (newstate, transition_fn)
-        self._p_changed = True
 
     def execute(self, context, transition_id):
         """Perform a transition and execute an action."""
