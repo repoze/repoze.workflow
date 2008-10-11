@@ -9,7 +9,7 @@ class StateMachineTests(unittest.TestCase, PlacelessSetup):
         PlacelessSetup.tearDown(self)
 
     def _getTargetClass(self):
-        from repoze.lemonade.statemachine import StateMachine
+        from repoze.workflow.statemachine import StateMachine
         return StateMachine
 
     def _makeOne(self, attr='state', initial_state=None):
@@ -69,5 +69,5 @@ class StateMachineTests(unittest.TestCase, PlacelessSetup):
         self.assertEqual(args[2], ('pending', 'private', 'reject', ob))
         self.assertEqual(args[3], ('private', 'pending', 'submit', ob))
         self.assertEqual(args[4], ('pending', 'published', None, ob))
-        from repoze.lemonade.statemachine import StateMachineError
+        from repoze.workflow.statemachine import StateMachineError
         self.assertRaises(StateMachineError, sm.execute, ob, 'nosuch')

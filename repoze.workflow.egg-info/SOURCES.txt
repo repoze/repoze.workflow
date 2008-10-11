@@ -1,5 +1,15 @@
+CHANGES.txt
+COPYRIGHT.txt
+LICENSE.txt
 README.txt
+TODO.txt
+ez_setup.py
 setup.py
+docs/Makefile
+docs/api.rst
+docs/conf.py
+docs/index.rst
+docs/.static/logo_hi.gif
 repoze/__init__.py
 repoze.workflow.egg-info/PKG-INFO
 repoze.workflow.egg-info/SOURCES.txt
