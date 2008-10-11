@@ -1,9 +1,0 @@
-        #[console_scripts]
-        #addzope2user = repoze.workflow.scripts.adduser:main
-
-        #[repoze.project]
-        #initialize = repoze.workflow.instance:mkinstance
-
-        #[paste.filter_app_factory]
-        #middleware = repoze.workflow:constructor
-      
