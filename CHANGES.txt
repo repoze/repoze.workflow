@@ -1,6 +1,3 @@
-repoze.workflow Changelog
-=========================
-
 0.1
 ---
 

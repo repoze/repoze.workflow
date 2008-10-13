@@ -1,4 +1,4 @@
-API Documentation for repoze.atemplate
+API Documentation for repoze.workflow
 ======================================
 
 Interfaces

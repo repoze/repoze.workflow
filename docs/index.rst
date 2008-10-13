@@ -59,6 +59,7 @@ The state machine object does not handle persistence at all.
    :maxdepth: 2
 
    api.rst
+   changes.rst
 
 
 Indices and tables
