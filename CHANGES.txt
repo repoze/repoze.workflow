@@ -1,7 +1,7 @@
-repoze.atemplate Changelog
-==========================
+repoze.workflow Changelog
+=========================
 
-0.1 (unreleaesd)
-----------------
+0.1
+---
 
 - Initial release.
