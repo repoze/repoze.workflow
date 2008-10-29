@@ -22,6 +22,10 @@ class StateMachine(object):
 
     The transition function must be of the following form:
     * function(current_state, new_state, transition_id, context)
+
+    It is highly recommended that all transition functions be module
+    level callables to facilitate issues related to StateMachine
+    persistence.
     """
     implements(IStateMachine)
     

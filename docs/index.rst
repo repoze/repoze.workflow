@@ -49,7 +49,8 @@ The state machine object does not handle persistence at all.
 
 - If you want to use a database or other non-code mechanism to persist
   the state machine's state map, you can subclass the StateMachine
-  class.
+  class.  It is highly recommended that all transition functions be
+  defined at module scope to facilitate StateMachine persistence.
 
 - To persist a given object's state, persist the specified state_attr
   attribute on the object (or implement this as a property and delegate
