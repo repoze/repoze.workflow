@@ -27,7 +27,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'setuptools',
-    'zope.interface'
+    'zope.interface>=3.4'
     ]
 
 setup(name='repoze.workflow',
