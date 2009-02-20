@@ -1,4 +1,10 @@
+0.2
+---
+
+- Initial release. Updated README.txt and removed remnants from repoze
+  package template.
+
 0.1
 ---
 
-- Initial release.
+- Unreleased

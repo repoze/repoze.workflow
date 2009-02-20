@@ -1,4 +1,0 @@
-repoze.atemplate README
-=======================
-
-- [_] TBD

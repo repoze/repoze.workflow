@@ -1,4 +1,5 @@
-repoze.workflow README
-======================
+repoze.workflow
+===============
 
-Please see docs/index.rst for the documentation.
+repoze.workflow is a simple state machine useful for workflow-like apps.
+Refer to docs/index.rst for further information.
