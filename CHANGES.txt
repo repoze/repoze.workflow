@@ -1,5 +1,5 @@
-0.2
----
+0.2 (2009/02/20)
+----------------
 
 - Initial release. Updated README.txt and removed remnants from repoze
   package template.
