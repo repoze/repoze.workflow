@@ -7,9 +7,9 @@ class StateMachineTests(unittest.TestCase):
         from repoze.workflow.statemachine import StateMachine
         return StateMachine
 
-    def _makeOne(self, attr='state', states={}, initial_state=None):
+    def _makeOne(self, attr='state', **kw):
         klass = self._getTargetClass()
-        return klass(attr, states, initial_state)
+        return klass(attr, **kw)
 
     def test_add(self):
         sm = self._makeOne()
@@ -17,6 +17,13 @@ class StateMachineTests(unittest.TestCase):
         sm.add('start', 'get', 'getting', None)
         self.assertEqual(sm.states[('start', 'add')], ('adding', None))
         self.assertEqual(sm.states[('start', 'get')], ('getting', None))
+
+    def test_add_in_separate_instance_does_not_pollute(self):
+        sm1 = self._makeOne()
+        sm2 = self._makeOne()
+        sm1.add('start', 'add', 'adding', None)
+        sm1.add('start', 'get', 'getting', None)
+        self.assertEqual(len(sm2.states), 0)
 
     def test_transitions(self):
         sm = self._makeOne(initial_state='pending')

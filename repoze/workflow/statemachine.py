@@ -29,7 +29,7 @@ class StateMachine(object):
     """
     implements(IStateMachine)
     
-    def __init__(self, state_attr, states={}, initial_state=None):
+    def __init__(self, state_attr, states=None, initial_state=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -40,6 +40,8 @@ class StateMachine(object):
         o initial_state - initial state for any object using this
                           state machine
         """
+        if states is None:
+            states = {}
         self.states = states
         self.state_attr = state_attr
         self.initial_state = initial_state
