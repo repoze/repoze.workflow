@@ -62,7 +62,8 @@ class StateMachine(object):
             newstate, transition_fn = self.states[sn]
         if newstate is None:
             raise StateMachineError(
-                'No transition from %r using transition %r' % (state, transition_id))
+                'No transition from %r using transition %r'
+                    % (state, transition_id))
         self.before_transition(state, newstate, transition_id, context)
         transition_fn(state, newstate, transition_id, context)
         self.after_transition(state, newstate, transition_id, context)
