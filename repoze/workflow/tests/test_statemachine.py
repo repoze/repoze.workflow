@@ -32,8 +32,6 @@ class StateMachineTests(unittest.TestCase):
         sm.add('published', 'retract', 'pending', None)
         sm.add('private', 'submit', 'pending', None)
         sm.add('pending', None, 'published', None)
-        class ReviewedObject:
-            pass
         ob = ReviewedObject()
         self.assertEqual(sorted(sm.transitions(ob)), ['publish', 'reject'])
         self.assertEqual(sorted(sm.transitions(ob, from_state='private')),
@@ -65,9 +63,17 @@ class StateMachineTests(unittest.TestCase):
         sm = self._makeOne(states=states, initial_state='pending')
         self._do_execute(sm, args)
 
+    def test_execute_None_match(self):
+        sm = self._makeOne(initial_state='pending')
+        args = []
+        def dummy(state, newstate, transition_id, context):
+            args.append((state, newstate, transition_id, context))
+        sm.add('pending', None, 'published', dummy)
+        ob = ReviewedObject()
+        sm.execute(ob, 'publish')
+        self.assertEqual(ob.state, 'published')
+
     def _do_execute(self, sm, args):
-        class ReviewedObject:
-            pass
         ob = ReviewedObject()
         sm.execute(ob, 'publish')
         self.assertEqual(ob.state, 'published')
@@ -97,9 +103,6 @@ class StateMachineTests(unittest.TestCase):
             def before_transition(self, a, b, c, d):
                 raise StateMachineError
 
-        class ReviewedObject:
-            pass
-
         def dummy(state, newstate, transition_id, context):
             pass
 
@@ -109,3 +112,6 @@ class StateMachineTests(unittest.TestCase):
         self.assertRaises(StateMachineError, sm.execute, ob, 'do_it')
         self.assertEqual(hasattr(ob, 'state'), False)
         self.assertEqual(sm.state_of(ob), 'from')
+
+class ReviewedObject:
+    pass
