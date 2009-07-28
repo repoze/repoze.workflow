@@ -46,24 +46,25 @@ class StateMachine(object):
         if transitions is None:
             transitions = []
         self._transitions = transitions
-        self._states = {}
+        self._state_data = {}
+        self._state_order = []
         self.state_attr = state_attr
         self.initial_state = initial_state
 
     def add_state_info(self, state_name, **kw):
-        if not state_name in self._states:
-            self._states[state_name] = {}
-        self._states[state_name].update(kw)
+        if not state_name in self._state_order:
+            self._state_order.append(state_name)
+        if not state_name in self._state_data:
+            self._state_data[state_name] = {}
+        self._state_data[state_name].update(kw)
 
     def add_transition(self, transition_name, from_state, to_state,
                        callback, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
-        if not from_state in self._states:
-            self._states[from_state] = {}
-        if not to_state in self._states:
-            self._states[to_state] = {}
+        self.add_state_info(from_state)
+        self.add_state_info(to_state)
         transition = kw
         transition['name'] = transition_name
         transition['from_state'] = from_state
@@ -110,4 +111,11 @@ class StateMachine(object):
         transitions = [transition for transition in self._transitions
                        if from_state == transition['from_state']]
         return transitions
+
+                    
+            
+
+            
+            
+        
 

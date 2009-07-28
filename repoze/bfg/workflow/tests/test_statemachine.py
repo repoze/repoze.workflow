@@ -12,14 +12,17 @@ class StateMachineTests(unittest.TestCase):
 
     def test_add_state_info_state_exists(self):
         sm = self._makeOne()
-        sm._states = {'foo':{'c':5}}
+        sm._state_names = ['foo']
+        sm._state_data = {'foo':{'c':5}}
         sm.add_state_info('foo', a=1, b=2)
-        self.assertEqual(sm._states, {'foo':{'a':1, 'b':2, 'c':5}})
+        self.assertEqual(sm._state_order, ['foo'])
+        self.assertEqual(sm._state_data, {'foo':{'a':1, 'b':2, 'c':5}})
 
     def test_add_state_info_state_doesntexist(self):
         sm = self._makeOne()
         sm.add_state_info('foo', a=1, b=2)
-        self.assertEqual(sm._states, {'foo':{'a':1, 'b':2}})
+        self.assertEqual(sm._state_order, ['foo'])
+        self.assertEqual(sm._state_data, {'foo':{'a':1, 'b':2}})
 
     def test_add_transition(self):
         sm = self._makeOne()
@@ -38,7 +41,7 @@ class StateMachineTests(unittest.TestCase):
         self.assertEqual(transitions[1]['callback'], None)
         self.assertEqual(transitions[1]['b'], 2)
 
-        self.assertEqual(len(sm._states), 2)
+        self.assertEqual(len(sm._state_order), 2)
 
     def _add_transitions(self, sm, callback=None):
         sm._transitions.extend(

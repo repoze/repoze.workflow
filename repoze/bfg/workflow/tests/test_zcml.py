@@ -159,7 +159,11 @@ class TestFixtureApp(unittest.TestCase):
         adapter = getAdapter(content, IWorkflow, name='theworkflow')
         self.assertEqual(adapter.__class__, Workflow)
         self.assertEqual(
-            adapter.machine._states,
+            adapter.machine._state_order,
+            ['private', 'public'],
+            )
+        self.assertEqual(
+            adapter.machine._state_data,
             {u'public': {'description': u'Everybody can see it',
                          'title': u'Public'},
              u'private': {'description': u'Nobody can see it',
