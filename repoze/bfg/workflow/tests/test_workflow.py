@@ -117,11 +117,28 @@ class TestWorkflow(unittest.TestCase):
         result = workflow.state_info(request, 'whatever')
         self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
 
+    def test_initialize(self):
+        machine = DummyMachine()
+        workflow = self._makeOne(machine=machine)
+        workflow.initialize()
+        self.assertEqual(workflow.context.initialized, True)
+
+    def test_initial_state(self):
+        machine = DummyMachine(initial_state='public')
+        workflow = self._makeOne(machine=machine)
+        self.assertEqual(workflow.initial_state, 'public')
+        
+    def test_state_attr(self):
+        machine = DummyMachine(state_attr='thestate')
+        workflow = self._makeOne(machine=machine)
+        self.assertEqual(workflow.state_attr, 'thestate')
+
 class DummyContext:
     pass
 
 class DummyMachine:
-    def __init__(self, transitions=None, state_info=None):
+    def __init__(self, transitions=None, state_info=None, initial_state=None,
+                 state_attr=None):
         self.executed = []
         if transitions is None:
             transitions = {}
@@ -129,6 +146,8 @@ class DummyMachine:
             state_info = []
         self._transitions = transitions
         self._state_info = state_info
+        self.initial_state = initial_state
+        self.state_attr = state_attr
 
     def execute(self, context, transition_id, guards=()):
         self.executed.append({'context':context,
@@ -140,6 +159,10 @@ class DummyMachine:
 
     def state_info(self, context, from_state=None):
         return self._state_info
+
+    def initialize(self, context):
+        context.initialized = True
+        
     
         
                               

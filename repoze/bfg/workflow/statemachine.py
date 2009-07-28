@@ -32,7 +32,8 @@ class StateMachine(object):
     """
     implements(IStateMachine)
     
-    def __init__(self, state_attr, transitions=None, initial_state=None):
+    def __init__(self, state_attr, transitions=None, initial_state=None,
+                 initializer=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -42,6 +43,9 @@ class StateMachine(object):
 
         o initial_state - initial state for any object using this
                           state machine
+
+        o initializer - callback function that accepts a context
+          to initialize a context object to the initial state
         """
         if transitions is None:
             transitions = []
@@ -49,6 +53,7 @@ class StateMachine(object):
         self._state_data = {}
         self._state_order = []
         self.state_attr = state_attr
+        self.initializer = initializer
         self.initial_state = initial_state
 
     def add_state_info(self, state_name, **kw):
@@ -125,6 +130,8 @@ class StateMachine(object):
             D['data'] = state_data
             D['initial'] = state_name == self.initial_state
             D['current'] = state_name == context_state
+            title = state_data.get('title', state_name)
+            D['title'] = title
             for transition in self._transitions:
                 if (transition['from_state'] == from_state and
                     transition['to_state'] == state_name):
@@ -133,4 +140,10 @@ class StateMachine(object):
             L.append(D)
 
         return L
-                    
+
+    def initialize(self, context):
+        setattr(context, self.state_attr, self.initial_state)
+        if self.initializer is not None:
+            self.initializer(context)
+            
+        

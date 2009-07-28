@@ -8,6 +8,7 @@
    initial_state="private"
    state_attr="state"
    class=".dummy.Workflow"
+   initializer=".dummy.initializer"
    >
 
    <state name="private">

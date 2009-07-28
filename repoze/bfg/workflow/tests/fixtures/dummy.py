@@ -11,3 +11,6 @@ class Content(object):
 
 def callback(context, transition):
     pass
+
+def initializer(context):
+    pass

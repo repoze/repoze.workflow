@@ -13,11 +13,11 @@ class TestWorkflowDirective(unittest.TestCase):
         return WorkflowDirective
 
     def _makeOne(self, context=None, name=None, for_=None, initial_state=None,
-                 state_attr=None, class_=None):
+                 state_attr=None, class_=None, initializer=None):
         if context is None:
             context = DummyContext()
         return self._getTargetClass()(context, name, for_, initial_state,
-                                      state_attr, class_)
+                                      state_attr, class_, initializer)
 
     def test_ctor_with_state_attr(self):
         ctor = self._makeOne(name='public', state_attr='public2')
@@ -41,7 +41,10 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import handler
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
-        directive = self._makeOne()
+        def initializer(context):
+            """ """
+        directive = self._makeOne(initial_state='public',
+                                  initializer=initializer)
         directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_private'),
@@ -69,6 +72,9 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'name': 'make_private', 'to_state': 'public'}]
             )
+        self.assertEqual(result.machine.initializer, initializer)
+        self.assertEqual(result.machine.initial_state, 'public')
+        
 
 class TestTransitionDirective(unittest.TestCase):
     def setUp(self):

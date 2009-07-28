@@ -13,6 +13,14 @@ class Workflow:
         self.context = context
         self.machine = machine # r.b.workflow.statemachine.StateMachine instance
 
+    @property
+    def initial_state(self):
+        return self.machine.initial_state
+
+    @property
+    def state_attr(self):
+        return self.machine.state_attr
+
     def execute(self, request, transition_name):
         def permission_guard(context, transition):
             permission = transition.get('permission')
@@ -48,6 +56,6 @@ class Workflow:
                 L.append(transition)
             state['transitions'] = L
         return states
-    
-            
-            
+
+    def initialize(self):
+        self.machine.initialize(self.context)
