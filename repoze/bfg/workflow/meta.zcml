@@ -1,0 +1,20 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:meta="http://namespaces.zope.org/meta">
+
+  <meta:groupingDirective
+      namespace="http://namespaces.repoze.org/bfg"
+      name="transition"
+      schema="repoze.bfg.workflow.zcml.ITransitionDirective"
+      handler="repoze.bfg.workflow.zcml.Transition"
+      />
+
+  <meta:directive
+      name="key"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.bfg.workflow.zcml.ITransitionDirective"
+      schema="repoze.bfg.workflow.zcml.IKeyValueDirectiveDirective"
+      handler="repoze.bfg.workflow.zcml.key_value"
+      />
+
+</configure>
