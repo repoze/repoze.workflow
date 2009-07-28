@@ -168,9 +168,9 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(
             adapter.machine._transitions,
             [{'from_state': u'private', 'callback': callback,
-              'name': u'private_to_public', 'to_state': u'public'},
+              'name': u'thename', 'to_state': u'public'},
              {'from_state': u'public', 'callback': callback,
-              'name': u'public_to_private', 'to_state': u'private'}]
+              'name': None, 'to_state': u'private'}]
             )
 
 class DummyContext:

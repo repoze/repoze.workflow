@@ -20,7 +20,7 @@
    </state>
 
    <transition
-      name="private_to_public"
+      name="thename"
       callback=".dummy.callback"
       from_state="private"
       to_state="public"
@@ -28,7 +28,6 @@
       />
 
    <transition
-      name="public_to_private"
       callback=".dummy.callback"
       from_state="public"
       to_state="private"
