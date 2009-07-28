@@ -4,7 +4,7 @@
 
 <workflow
    name="theworkflow"
-   for=".dummy.IContent"
+   for="*"
    initial_state="private"
    state_attr="state"
    >
