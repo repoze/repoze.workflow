@@ -24,10 +24,10 @@ class IKeyValueDirective(Interface):
 
 class ITransitionDirective(Interface):
     """ The interface for a transition directive """
+    name = TextLine(title=u'name', required=True)
     callback = GlobalObject(title=u'callback', required=True)
     from_state = TextLine(title=u'from_state', required=True)
     to_state = TextLine(title=u'to_state', required=True)
-    name = TextLine(title=u'name', required=False)
     permission = TextLine(title=u'permission', required=False)
 
 class IStateDirective(Interface):
@@ -89,13 +89,13 @@ class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                ITransitionDirective)
 
-    def __init__(self, context, callback, from_state, to_state,
-                 name=None, permission=None):
+    def __init__(self, context, name, callback, from_state, to_state,
+                 permission=None):
         self.context = context
+        self.name = name
         self.callback = callback
         self.from_state = from_state
         self.to_state = to_state
-        self.name = name
         self.permission = permission
         self.extras = {} # mutated by subdirectives
 

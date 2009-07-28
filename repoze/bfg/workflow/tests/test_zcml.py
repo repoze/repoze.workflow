@@ -81,14 +81,14 @@ class TestTransitionDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import TransitionDirective
         return TransitionDirective
 
-    def _makeOne(self, context=None, callback=None, from_state=None,
-                 to_state=None, name=None, permission=None):
-        return self._getTargetClass()(context, callback, from_state,
-                                      to_state, name, permission)
+    def _makeOne(self, context=None, name=None, callback=None, from_state=None,
+                 to_state=None, permission=None):
+        return self._getTargetClass()(context, name, callback, from_state,
+                                      to_state, permission)
 
     def test_ctor(self):
-        directive = self._makeOne('context', 'callback', 'from_state',
-                                  'to_state', 'name', 'permission')
+        directive = self._makeOne('context', 'name', 'callback', 'from_state',
+                                  'to_state', 'permission')
         self.assertEqual(directive.context, 'context')
         self.assertEqual(directive.name, 'name')
         self.assertEqual(directive.callback, 'callback')
@@ -168,9 +168,9 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(
             adapter.machine._transitions,
             [{'from_state': u'private', 'callback': callback,
-              'name': u'thename', 'to_state': u'public'},
+              'name': u'to_public', 'to_state': u'public'},
              {'from_state': u'public', 'callback': callback,
-              'name': None, 'to_state': u'private'}]
+              'name': 'to_private', 'to_state': u'private'}]
             )
 
 class DummyContext:
