@@ -112,10 +112,25 @@ class StateMachine(object):
                        if from_state == transition['from_state']]
         return transitions
 
+    def state_info(self, context, from_state=None):
+        context_state = self.state_of(context)
+        if from_state is None:
+            from_state = context_state
+
+        L = []
+
+        for state_name in self._state_order:
+            D = {'name':state_name, 'transitions':[]}
+            state_data = self._state_data[state_name]
+            D['data'] = state_data
+            D['initial'] = state_name == self.initial_state
+            D['current'] = state_name == context_state
+            for transition in self._transitions:
+                if (transition['from_state'] == from_state and
+                    transition['to_state'] == state_name):
+                    transitions = D['transitions']
+                    transitions.append(transition)
+            L.append(D)
+
+        return L
                     
-            
-
-            
-            
-        
-

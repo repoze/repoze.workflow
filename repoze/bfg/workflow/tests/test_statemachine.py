@@ -135,5 +135,106 @@ class StateMachineTests(unittest.TestCase):
         ob = ReviewedObject()
         self.assertRaises(ValueError, sm.execute, ob, 'publish', (guard,))
 
+    def test_state_info_pending(self):
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state_info('pending', desc='Pending')
+        sm.add_state_info('published', desc='Published')
+        sm.add_state_info('private', desc='Private')
+        self._add_transitions(sm)
+        ob = ReviewedObject()
+        ob.state = 'pending'
+        result = sm.state_info(ob)
+        self.assertEqual(len(result), 3)
+
+        state = result[0]
+        self.assertEqual(state['initial'], True)
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['name'], 'pending')
+        self.assertEqual(state['data'], {'desc':'Pending'})
+        self.assertEqual(len(state['transitions']), 0)
+
+        state = result[1]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['data'], {'desc':'Published'})
+        self.assertEqual(len(state['transitions']), 1)
+        self.assertEquals(state['transitions'][0]['name'], 'publish')
+
+        state = result[2]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'private')
+        self.assertEqual(state['data'], {'desc':'Private'})
+        self.assertEqual(len(state['transitions']), 1)
+        self.assertEqual(state['transitions'][0]['name'], 'reject')
+
+
+    def test_state_info_published(self):
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state_info('pending', desc='Pending')
+        sm.add_state_info('published', desc='Published')
+        sm.add_state_info('private', desc='Private')
+        self._add_transitions(sm)
+        ob = ReviewedObject()
+        ob.state = 'published'
+        result = sm.state_info(ob)
+        self.assertEqual(len(result), 3)
+
+        state = result[0]
+        self.assertEqual(state['initial'], True)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'pending')
+        self.assertEqual(state['data'], {'desc':'Pending'})
+        self.assertEqual(len(state['transitions']), 1)
+        self.assertEquals(state['transitions'][0]['name'], 'retract')
+
+        state = result[1]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['data'], {'desc':'Published'})
+        self.assertEqual(len(state['transitions']), 0)
+
+        state = result[2]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'private')
+        self.assertEqual(state['data'], {'desc':'Private'})
+        self.assertEqual(len(state['transitions']), 0)
+
+    def test_state_info_private(self):
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state_info('pending', desc='Pending')
+        sm.add_state_info('published', desc='Published')
+        sm.add_state_info('private', desc='Private')
+        self._add_transitions(sm)
+        ob = ReviewedObject()
+        ob.state = 'private'
+        result = sm.state_info(ob)
+        self.assertEqual(len(result), 3)
+
+        state = result[0]
+        self.assertEqual(state['initial'], True)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'pending')
+        self.assertEqual(state['data'], {'desc':'Pending'})
+        self.assertEqual(len(state['transitions']), 1)
+        self.assertEquals(state['transitions'][0]['name'], 'submit')
+
+        state = result[1]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['data'], {'desc':'Published'})
+        self.assertEqual(len(state['transitions']), 0)
+
+        state = result[2]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['name'], 'private')
+        self.assertEqual(state['data'], {'desc':'Private'})
+        self.assertEqual(len(state['transitions']), 0)
+
 class ReviewedObject:
     pass
