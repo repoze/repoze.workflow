@@ -39,7 +39,7 @@ class IWorkflowDirective(Interface):
     for_ = GlobalObject(title=u'for',  required=True)
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=False)
-    class_ = TextLine(title=u'class', required=False)
+    class_ = GlobalObject(title=u'class', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
