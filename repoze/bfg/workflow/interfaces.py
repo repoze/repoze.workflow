@@ -1,5 +1,9 @@
 from zope.interface import Interface
 
+class IWorkflowFactory(Interface):
+    def __call__(self, context, machine):
+        """ Return an object which implements IWorkflow """
+
 class IWorkflow(Interface):
     def execute(request, transition_id):
         """ Execute a transition.

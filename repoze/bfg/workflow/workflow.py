@@ -1,10 +1,13 @@
 from zope.interface import implements
+from zope.interface import classImplements
 
 from repoze.bfg.security import has_permission
 from repoze.bfg.workflow.statemachine import StateMachineError
 from repoze.bfg.workflow.interfaces import IWorkflow
+from repoze.bfg.workflow.interfaces import IWorkflowFactory
 
 class Workflow:
+    classImplements(IWorkflowFactory)
     implements(IWorkflow)
     def __init__(self, context, machine):
         self.context = context
