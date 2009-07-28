@@ -80,31 +80,55 @@ class TestWorkflow(unittest.TestCase):
         self.assertEqual(result, None)
 
     def test_transitions_permissive(self):
-        machine = DummyMachine([{'permission':'view'}])
+        machine = DummyMachine([{'permission':'view'}, {}])
         workflow = self._makeOne(machine=machine)
         testing.registerDummySecurityPolicy(permissive=True)
         request = testing.DummyRequest()
         transitions = workflow.transitions(request, 'private')
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(transitions[0]['permission'], 'view')
+        self.assertEqual(len(transitions), 2)
 
     def test_transitions_nonpermissive(self):
-        machine = DummyMachine([{'permission':'view'}])
+        machine = DummyMachine([{'permission':'view'}, {}])
         workflow = self._makeOne(machine=machine)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
         transitions = workflow.transitions(request, 'private')
-        self.assertEqual(len(transitions), 0)
+        self.assertEqual(len(transitions), 1)
+
+    def test_state_info_permissive(self):
+        state_info = []
+        state_info.append({'transitions':[{'permission':'view'}, {}]})
+        state_info.append({'transitions':[{'permission':'view'}, {}]})
+        machine = DummyMachine(state_info=state_info)
+        workflow = self._makeOne(machine=machine)
+        request = testing.DummyRequest()
+        testing.registerDummySecurityPolicy(permissive=True)
+        result = workflow.state_info(request, 'whatever')
+        self.assertEqual(result, state_info)
+
+    def test_state_info_nonpermissive(self):
+        state_info = []
+        state_info.append({'transitions':[{'permission':'view'}, {}]})
+        state_info.append({'transitions':[{'permission':'view'}, {}]})
+        machine = DummyMachine(state_info=state_info)
+        workflow = self._makeOne(machine=machine)
+        request = testing.DummyRequest()
+        testing.registerDummySecurityPolicy(permissive=False)
+        result = workflow.state_info(request, 'whatever')
+        self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
 
 class DummyContext:
     pass
 
 class DummyMachine:
-    def __init__(self, transitions=None):
+    def __init__(self, transitions=None, state_info=None):
         self.executed = []
         if transitions is None:
             transitions = {}
+        if state_info is None:
+            state_info = []
         self._transitions = transitions
+        self._state_info = state_info
 
     def execute(self, context, transition_id, guards=()):
         self.executed.append({'context':context,
@@ -113,6 +137,9 @@ class DummyMachine:
 
     def transitions(self, context, from_state=None):
         return self._transitions
+
+    def state_info(self, context, from_state=None):
+        return self._state_info
     
         
                               

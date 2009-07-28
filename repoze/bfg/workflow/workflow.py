@@ -26,7 +26,28 @@ class Workflow:
                              guards=(permission_guard,))
 
     def transitions(self, request, from_state=None):
-        info = self.machine.transitions(self.context, from_state)
-        return [ thing for thing in info if
-                 has_permission(thing.get('permission', None),
-                                self.context, request) ]
+        transitions = self.machine.transitions(self.context, from_state)
+        L = []
+        for transition in transitions:
+            if 'permission' in transition:
+                if not has_permission(transition['permission'],
+                                      self.context, request):
+                    continue
+            L.append(transition)
+        return L
+
+    def state_info(self, request, from_state=None):
+        states = self.machine.state_info(self.context, from_state)
+        for state in states:
+            L = []
+            for transition in state['transitions']:
+                if 'permission' in transition:
+                    if not has_permission(transition['permission'],
+                                          self.context, request):
+                        continue
+                L.append(transition)
+            state['transitions'] = L
+        return states
+    
+            
+            
