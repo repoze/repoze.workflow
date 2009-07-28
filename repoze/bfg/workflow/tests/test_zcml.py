@@ -37,17 +37,147 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(ctor.class_, Workflow)
 
     def test_after(self):
-        machine = self._makeOne()
-        machine.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
-        machine.transitions = [ DummyTransition('make_public'),
-                                DummyTransition('make_private'),
-                                ]
-        machine.after()
+        import types
+        from repoze.bfg.workflow.zcml import handler
+        from repoze.bfg.workflow.interfaces import IWorkflow
+        from repoze.bfg.workflow.workflow import Workflow
+        directive = self._makeOne()
+        directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
+        directive.transitions = [ DummyTransition('make_public'),
+                                  DummyTransition('make_private'),
+                                  ]
+        directive.after()
+        actions = directive.context.actions
+        self.assertEqual(len(actions), 1)
+        action = actions[0]
+        self.assertEqual(action[0], None)
+        self.assertEqual(action[1], handler)
+        self.assertEqual(action[2][0], 'registerAdapter')
+        adapter = action[2][1]
+        self.assertEqual(type(adapter), types.FunctionType)
+        self.assertEqual(action[2][2], (None,))
+        self.assertEqual(action[2][3], IWorkflow)
+        self.assertEqual(action[2][4], None)
+        self.assertEqual(action[2][5], None)
+        context = DummyContext()
+        result = adapter(context)
+        self.assertEqual(result.__class__, Workflow)
+        self.assertEqual(
+            result.machine._transitions,
+            [{'from_state': 'private', 'callback': None,
+              'name': 'make_public', 'to_state': 'public'},
+             {'from_state': 'private', 'callback': None,
+              'name': 'make_private', 'to_state': 'public'}]
+            )
+
+class TestTransitionDirective(unittest.TestCase):
+    def setUp(self):
+        testing.cleanUp()
+
+    def tearDown(self):
+        testing.cleanUp()
+
+    def _getTargetClass(self):
+        from repoze.bfg.workflow.zcml import TransitionDirective
+        return TransitionDirective
+
+    def _makeOne(self, context=None, name=None, callback=None,
+                 from_state=None, to_state=None, permission=None):
+        return self._getTargetClass()(context, name, callback, from_state,
+                                      to_state, permission)
+
+    def test_ctor(self):
+        directive = self._makeOne('context', 'name', 'callback', 'from_state',
+                                  'to_state', 'permission')
+        self.assertEqual(directive.context, 'context')
+        self.assertEqual(directive.name, 'name')
+        self.assertEqual(directive.callback, 'callback')
+        self.assertEqual(directive.from_state, 'from_state')
+        self.assertEqual(directive.to_state, 'to_state')
+        self.assertEqual(directive.permission, 'permission')
+        self.assertEqual(directive.extras, {})
+
+    def test_after(self):
+        context = DummyContext(transitions=[])
+        directive = self._makeOne(context)
+        directive.after()
+        self.assertEqual(context.transitions, [directive])
+
+class TestStateDirective(unittest.TestCase):
+    def setUp(self):
+        testing.cleanUp()
+
+    def tearDown(self):
+        testing.cleanUp()
+
+    def _getTargetClass(self):
+        from repoze.bfg.workflow.zcml import StateDirective
+        return StateDirective
+
+    def _makeOne(self, context=None, name=None):
+        return self._getTargetClass()(context, name)
+
+    def test_ctor(self):
+        directive = self._makeOne('context', 'name')
+        self.assertEqual(directive.context, 'context')
+        self.assertEqual(directive.name, 'name')
+
+    def test_after(self):
+        context = DummyContext(states=[])
+        directive = self._makeOne(context)
+        directive.after()
+        self.assertEqual(context.states, [directive])
+
+class TestKeyValuePair(unittest.TestCase):
+    def _callFUT(self, context, key, value):
+        from repoze.bfg.workflow.zcml import key_value_pair
+        key_value_pair(context, key, value)
+
+    def test_it_no_extras(self):
+        context = DummyContext()
+        context.context = DummyContext()
+        self._callFUT(context, 'key', 'value')
+        self.assertEqual(context.context.extras, {'key':'value'})
+
+class TestFixtureApp(unittest.TestCase):
+    def setUp(self):
+        testing.cleanUp()
+
+    def tearDown(self):
+        testing.cleanUp()
+
+    def test_execute_actions(self):
+        from repoze.bfg.workflow.interfaces import IWorkflow
+        from repoze.bfg.workflow.workflow import Workflow
+        from zope.component import getAdapter
+        from zope.configuration import xmlconfig
+        import repoze.bfg.workflow.tests.fixtures as package
+        xmlconfig.file('configure.zcml', package, execute=True)
+        from repoze.bfg.workflow.tests.fixtures.dummy import Content
+        from repoze.bfg.workflow.tests.fixtures.dummy import callback
+        content = Content()
+        adapter = getAdapter(content, IWorkflow, name='theworkflow')
+        self.assertEqual(adapter.__class__, Workflow)
+        self.assertEqual(
+            adapter.machine._states,
+            {u'public': {'description': u'Everybody can see it',
+                         'title': u'Public'},
+             u'private': {'description': u'Nobody can see it',
+                          'title': u'Private'}}
+            )
+        self.assertEqual(
+            adapter.machine._transitions,
+            [{'from_state': u'private', 'callback': callback,
+              'name': u'private_to_public', 'to_state': u'public'},
+             {'from_state': u'public', 'callback': callback,
+              'name': u'public_to_private', 'to_state': u'private'}]
+            )
 
 class DummyContext:
     info = None
-    def __init__(self):
+    def __init__(self, **kw):
         self.actions = []
+        self.__dict__.update(kw)
 
 class DummyState:
     def __init__(self, name, **extras):

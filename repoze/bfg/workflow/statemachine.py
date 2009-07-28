@@ -15,7 +15,7 @@ class StateMachine(object):
 
     The class stores a sequence of transition dictionaries.
 
-    When a (state, transition_id) search is performed via ``execute``:
+    When a (state, transition_name) search is performed via ``execute``:
 
       * an exact match is checked first,
       * (state, None) is checked next.
@@ -50,37 +50,37 @@ class StateMachine(object):
         self.state_attr = state_attr
         self.initial_state = initial_state
 
-    def add_state_info(self, state_id, **kw):
-        if not state_id in self._states:
-            self._states[state_id] = {}
-        self._states[state_id].update(kw)
+    def add_state_info(self, state_name, **kw):
+        if not state_name in self._states:
+            self._states[state_name] = {}
+        self._states[state_name].update(kw)
 
-    def add_transition(self, transition_id, from_state, to_state,
+    def add_transition(self, transition_name, from_state, to_state,
                        callback, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
-        any of the keys ``from_state``, ``id``, ``to_state``, or
+        any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
         if not from_state in self._states:
             self._states[from_state] = {}
         if not to_state in self._states:
             self._states[to_state] = {}
         transition = kw
-        transition['id'] = transition_id
+        transition['name'] = transition_name
         transition['from_state'] = from_state
         transition['to_state'] = to_state
         transition['callback'] = callback
         self._transitions.append(transition)
 
-    def execute(self, context, transition_id, guards=()):
+    def execute(self, context, transition_name, guards=()):
         """ Execute a transition """
         state = getattr(context, self.state_attr, _marker) 
         if state is _marker:
             state = self.initial_state
-        si = (state, transition_id)
+        si = (state, transition_name)
 
         found = None
         for transition in self._transitions:
-            match = (transition['from_state'], transition['id'])
+            match = (transition['from_state'], transition['name'])
             if match == si:
                 found = transition
                 break
@@ -88,7 +88,7 @@ class StateMachine(object):
         if found is None:
             raise StateMachineError(
                 'No transition from %r using transition %r'
-                % (state, transition_id))
+                % (state, transition_name))
 
         if guards:
             for guard in guards:

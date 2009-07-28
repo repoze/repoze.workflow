@@ -13,13 +13,13 @@ from repoze.bfg.workflow.statemachine import StateMachine
 from repoze.bfg.workflow.workflow import Workflow
 from repoze.bfg.workflow.interfaces import IWorkflow
 
-def handler(methodName, *args, **kwargs):
+def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)
     method(*args, **kwargs)
 
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
-    key = TextLine(title=u'key', required=True)
+    name = TextLine(title=u'key', required=True)
     value = TextLine(title=u'value', required=True)
 
 class ITransitionDirective(Interface):
@@ -41,26 +41,21 @@ class IWorkflowDirective(Interface):
     state_attr = TextLine(title=u'state_attr', required=False)
     class_ = TextLine(title=u'class', required=False)
 
-def key_value(context, key, value):
-    ob = context.context
-    if not hasattr(ob, 'extras'):
-        ob.extras = {}
-    ob.extras[key] = value
-
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, name, for_, initial_state, state_attr=None,
                  class_=None):
         self.context = context
+        self.name = name
+        self.for_ = for_
+        self.initial_state = initial_state
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
         if class_ is None:
             class_ = Workflow
         self.class_ = class_
-        self.name = name
-        self.for_ = for_
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
 
@@ -97,12 +92,12 @@ class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
     def __init__(self, context, name, callback, from_state, to_state,
                  permission=None):
         self.context = context
-        self.extras = {} # mutated by subdirectives
         self.name = name
         self.callback = callback
         self.from_state = from_state
         self.to_state = to_state
         self.permission = permission
+        self.extras = {} # mutated by subdirectives
 
     def after(self):
         self.context.transitions.append(self)
@@ -118,6 +113,11 @@ class StateDirective(zope.configuration.config.GroupingContextDecorator):
     def after(self):
         self.context.states.append(self)
 
+def key_value_pair(context, name, value):
+    ob = context.context
+    if not hasattr(ob, 'extras'):
+        ob.extras = {}
+    ob.extras[str(name)] = value
 
 
         

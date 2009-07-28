@@ -27,12 +27,12 @@ class StateMachineTests(unittest.TestCase):
         sm.add_transition('make_private', 'public', 'private', None, b=2)
         self.assertEqual(len(sm._transitions), 2)
         transitions = sm._transitions
-        self.assertEqual(transitions[0]['id'], 'make_public')
+        self.assertEqual(transitions[0]['name'], 'make_public')
         self.assertEqual(transitions[0]['from_state'], 'private')
         self.assertEqual(transitions[0]['to_state'], 'public')
         self.assertEqual(transitions[0]['callback'], None)
         self.assertEqual(transitions[0]['a'], 1)
-        self.assertEqual(transitions[1]['id'], 'make_private')
+        self.assertEqual(transitions[1]['name'], 'make_private')
         self.assertEqual(transitions[1]['from_state'], 'public')
         self.assertEqual(transitions[1]['to_state'], 'private')
         self.assertEqual(transitions[1]['callback'], None)
@@ -43,13 +43,13 @@ class StateMachineTests(unittest.TestCase):
     def _add_transitions(self, sm, callback=None):
         sm._transitions.extend(
             [
-            dict(id='publish', from_state='pending', to_state='published',
+            dict(name='publish', from_state='pending', to_state='published',
                  callback=callback),
-            dict(id='reject', from_state='pending', to_state='private',
+            dict(name='reject', from_state='pending', to_state='private',
                  callback=callback),
-            dict(id='retract', from_state='published', to_state='pending',
+            dict(name='retract', from_state='published', to_state='pending',
                  callback=callback),
-            dict(id='submit', from_state='private', to_state='pending',
+            dict(name='submit', from_state='private', to_state='pending',
                  callback=callback),
             ]
             )
@@ -60,8 +60,8 @@ class StateMachineTests(unittest.TestCase):
         ob = ReviewedObject()
         result = sm.transitions(ob)
         self.assertEqual(len(result), 2)
-        self.assertEqual(result[0]['id'], 'publish')
-        self.assertEqual(result[1]['id'], 'reject')
+        self.assertEqual(result[0]['name'], 'publish')
+        self.assertEqual(result[1]['name'], 'reject')
 
     def test_transitions_overridden_from_state(self):
         sm = self._makeOne(initial_state='pending')
@@ -69,7 +69,7 @@ class StateMachineTests(unittest.TestCase):
         ob = ReviewedObject()
         result = sm.transitions(ob, from_state='private')
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['id'], 'submit')
+        self.assertEqual(result[0]['name'], 'submit')
 
     def test_transitions_context_has_state(self):
         sm = self._makeOne(initial_state='pending')
@@ -78,7 +78,7 @@ class StateMachineTests(unittest.TestCase):
         ob.state = 'published'
         result = sm.transitions(ob)
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['id'], 'retract')
+        self.assertEqual(result[0]['name'], 'retract')
 
     def test_execute(self):
         sm = self._makeOne(initial_state='pending')
@@ -101,22 +101,22 @@ class StateMachineTests(unittest.TestCase):
         self.assertEqual(args[0][1], {'from_state': 'pending',
                                       'callback': dummy,
                                       'to_state': 'published',
-                                      'id': 'publish'})
+                                      'name': 'publish'})
         self.assertEqual(args[1][0], ob)
         self.assertEqual(args[1][1], {'from_state': 'published',
                                       'callback': dummy,
                                       'to_state': 'pending',
-                                      'id': 'retract'})
+                                      'name': 'retract'})
         self.assertEqual(args[2][0], ob)
         self.assertEqual(args[2][1], {'from_state': 'pending',
                                       'callback': dummy,
                                       'to_state': 'private',
-                                      'id': 'reject'})
+                                      'name': 'reject'})
         self.assertEqual(args[3][0], ob)
         self.assertEqual(args[3][1], {'from_state': 'private',
                                       'callback': dummy,
                                       'to_state': 'pending',
-                                      'id': 'submit'})
+                                      'name': 'submit'})
 
     def test_execute_error(self):
         sm = self._makeOne(initial_state='pending')
