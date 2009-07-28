@@ -75,7 +75,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
             return self.class_(context, machine)
 
         self.action(
-            discriminator = self.name,
+            discriminator = (self.name, self.for_),
             callable = handler,
             args = ('registerAdapter',
                     adapter,

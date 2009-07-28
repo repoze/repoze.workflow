@@ -50,7 +50,7 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         self.assertEqual(len(actions), 1)
         action = actions[0]
-        self.assertEqual(action[0], None)
+        self.assertEqual(action[0], (None, None))
         self.assertEqual(action[1], handler)
         self.assertEqual(action[2][0], 'registerAdapter')
         adapter = action[2][1]
