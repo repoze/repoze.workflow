@@ -21,15 +21,11 @@ class Workflow:
     def state_attr(self):
         return self.machine.state_attr
 
+    def state_of(self, context):
+        return self.machine.state_of(context)
+
     def execute(self, request, transition_name):
-        def permission_guard(context, transition):
-            permission = transition.get('permission')
-            if request is not None and permission is not None:
-                if not has_permission(permission, context, request):
-                    raise StateMachineError(
-                        '%s permission required for transition %r' % (
-                        permission, transition_name)
-                        )
+        permission_guard = PermissionGuard(request, transition_name)
         self.machine.execute(self.context, transition_name,
                              guards=(permission_guard,))
 
@@ -59,3 +55,23 @@ class Workflow:
 
     def initialize(self):
         self.machine.initialize(self.context)
+
+    def transition_to_state(self, request, to_state):
+        permission_guard = PermissionGuard(request, to_state)
+        self.machine.transition_to_state(self.context, to_state,
+                                         guards=(permission_guard,))
+
+class PermissionGuard:
+    def __init__(self, request, name):
+        self.request = request
+        self.name = name
+
+    def __call__(self, context, transition):
+        permission = transition.get('permission')
+        if self.request is not None and permission is not None:
+            if not has_permission(permission, context, self.request):
+                raise StateMachineError(
+                    '%s permission required for transition using %r' % (
+                    permission, self.name)
+                    )
+                    

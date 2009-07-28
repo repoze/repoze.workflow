@@ -57,6 +57,11 @@ class StateMachineTests(unittest.TestCase):
                  callback=callback),
             ]
             )
+        if not sm._state_order:
+            sm._state_order = ['pending', 'published', 'private']
+        sm._state_data.setdefault('pending', {})
+        sm._state_data.setdefault('published', {})
+        sm._state_data.setdefault('private', {})
 
     def test_transitions_default_from_state(self):
         sm = self._makeOne(initial_state='pending')
@@ -122,6 +127,7 @@ class StateMachineTests(unittest.TestCase):
                                       'to_state': 'pending',
                                       'name': 'submit'})
 
+
     def test_execute_error(self):
         sm = self._makeOne(initial_state='pending')
         ob = ReviewedObject()
@@ -135,6 +141,64 @@ class StateMachineTests(unittest.TestCase):
         self._add_transitions(sm)
         ob = ReviewedObject()
         self.assertRaises(ValueError, sm.execute, ob, 'publish', (guard,))
+
+    def test_transition_to_state(self):
+        sm = self._makeOne(initial_state='pending')
+        args = []
+        def dummy(context, transition):
+            args.append((context, transition))
+        self._add_transitions(sm, callback=dummy)
+        ob = ReviewedObject()
+        ob.state = 'pending'
+        sm.transition_to_state(ob, 'published')
+        self.assertEqual(ob.state, 'published')
+        sm.transition_to_state(ob, 'pending')
+        self.assertEqual(ob.state, 'pending')
+        sm.transition_to_state(ob, 'private')
+        self.assertEqual(ob.state, 'private')
+        sm.transition_to_state(ob, 'pending')
+
+        self.assertEqual(len(args), 4)
+        self.assertEqual(args[0][0], ob)
+        self.assertEqual(args[0][1], {'from_state': 'pending',
+                                      'callback': dummy,
+                                      'to_state': 'published',
+                                      'name': 'publish'})
+        self.assertEqual(args[1][0], ob)
+        self.assertEqual(args[1][1], {'from_state': 'published',
+                                      'callback': dummy,
+                                      'to_state': 'pending',
+                                      'name': 'retract'})
+        self.assertEqual(args[2][0], ob)
+        self.assertEqual(args[2][1], {'from_state': 'pending',
+                                      'callback': dummy,
+                                      'to_state': 'private',
+                                      'name': 'reject'})
+        self.assertEqual(args[3][0], ob)
+        self.assertEqual(args[3][1], {'from_state': 'private',
+                                      'callback': dummy,
+                                      'to_state': 'pending',
+                                      'name': 'submit'})
+
+    def test_transition_to_state_error(self):
+        sm = self._makeOne(initial_state='pending')
+        ob = ReviewedObject()
+        from repoze.bfg.workflow.statemachine import StateMachineError
+        self.assertRaises(StateMachineError, sm.transition_to_state, ob,
+                          'nosuch')
+
+    def test_transition_to_state_skip_same_false(self):
+        sm = self._makeOne(initial_state='pending')
+        ob = ReviewedObject()
+        from repoze.bfg.workflow.statemachine import StateMachineError
+        self.assertRaises(StateMachineError, sm.transition_to_state, ob,
+                          'pending', (), False)
+
+    def test_transition_to_state_skip_same_true(self):
+        sm = self._makeOne(initial_state='pending')
+        ob = ReviewedObject()
+        from repoze.bfg.workflow.statemachine import StateMachineError
+        self.assertEqual(sm.transition_to_state(ob, 'pending', (), True), None)
 
     def test_state_info_with_title(self):
         sm = self._makeOne(initial_state='pending')

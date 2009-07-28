@@ -117,6 +117,21 @@ class StateMachine(object):
                        if from_state == transition['from_state']]
         return transitions
 
+    def transition_to_state(self, context, to_state, guards=(), skip_same=True):
+        from_state = self.state_of(context)
+        if (from_state == to_state) and skip_same:
+            return
+        state_info = self.state_info(context)
+        for info in state_info:
+            if info['name'] == to_state:
+                transitions = info['transitions']
+                if transitions:
+                    transition = transitions[0]
+                    self.execute(context, transition['name'], guards)
+                    return
+        raise StateMachineError('No transition from state %r to state %r'
+                % (from_state, to_state))
+
     def state_info(self, context, from_state=None):
         context_state = self.state_of(context)
         if from_state is None:

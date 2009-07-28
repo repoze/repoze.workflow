@@ -79,6 +79,62 @@ class TestWorkflow(unittest.TestCase):
         result = permitted(None, {})
         self.assertEqual(result, None)
 
+    def test_transition_to_state_permissive(self):
+        workflow = self._makeOne()
+        testing.registerDummySecurityPolicy(permissive=True)
+        request = testing.DummyRequest()
+        workflow.transition_to_state(request, 'published')
+        machine = workflow.machine
+        self.assertEqual(len(machine.transitioned_to_state), 1)
+        transitioned = machine.transitioned_to_state[0]
+        self.assertEqual(transitioned['context'], workflow.context)
+        self.assertEqual(transitioned['to_state'], 'published')
+        permitted = transitioned['guards'][0]
+        result = permitted(None, {'permission':'view'})
+        self.assertEqual(result, None)
+
+    def test_transition_to_state_not_permissive(self):
+        from repoze.bfg.workflow.statemachine import StateMachineError
+        workflow = self._makeOne()
+        testing.registerDummySecurityPolicy(permissive=False)
+        request = testing.DummyRequest()
+        workflow.transition_to_state(request, 'published')
+        machine = workflow.machine
+        self.assertEqual(len(machine.transitioned_to_state), 1)
+        transitioned = machine.transitioned_to_state[0]
+        self.assertEqual(transitioned['context'], workflow.context)
+        self.assertEqual(transitioned['to_state'], 'published')
+        permitted = transitioned['guards'][0]
+        self.assertRaises(StateMachineError, permitted, None,
+                          {'permission':'view'})
+
+    def test_transition_to_state_request_is_None(self):
+        workflow = self._makeOne()
+        testing.registerDummySecurityPolicy(permissive=False)
+        workflow.transition_to_state(None, 'published')
+        machine = workflow.machine
+        self.assertEqual(len(machine.transitioned_to_state), 1)
+        transitioned = machine.transitioned_to_state[0]
+        self.assertEqual(transitioned['context'], workflow.context)
+        self.assertEqual(transitioned['to_state'], 'published')
+        permitted = transitioned['guards'][0]
+        result = permitted(None, {'permission':'view'})
+        self.assertEqual(result, None)
+
+    def test_transition_to_state_permission_is_None(self):
+        workflow = self._makeOne()
+        testing.registerDummySecurityPolicy(permissive=False)
+        request = testing.DummyRequest()
+        workflow.transition_to_state(request, 'published')
+        machine = workflow.machine
+        self.assertEqual(len(machine.transitioned_to_state), 1)
+        transitioned = machine.transitioned_to_state[0]
+        self.assertEqual(transitioned['context'], workflow.context)
+        self.assertEqual(transitioned['to_state'], 'published')
+        permitted = transitioned['guards'][0]
+        result = permitted(None, {})
+        self.assertEqual(result, None)
+
     def test_transitions_permissive(self):
         machine = DummyMachine([{'permission':'view'}, {}])
         workflow = self._makeOne(machine=machine)
@@ -133,13 +189,18 @@ class TestWorkflow(unittest.TestCase):
         workflow = self._makeOne(machine=machine)
         self.assertEqual(workflow.state_attr, 'thestate')
 
+    def test_state_of(self):
+        machine = DummyMachine()
+        workflow = self._makeOne(machine=machine)
+        ob = DummyContext()
+        self.assertEqual(workflow.state_of(ob), 'state')
+
 class DummyContext:
     pass
 
 class DummyMachine:
     def __init__(self, transitions=None, state_info=None, initial_state=None,
                  state_attr=None):
-        self.executed = []
         if transitions is None:
             transitions = {}
         if state_info is None:
@@ -148,11 +209,18 @@ class DummyMachine:
         self._state_info = state_info
         self.initial_state = initial_state
         self.state_attr = state_attr
+        self.executed = []
+        self.transitioned_to_state = []
 
     def execute(self, context, transition_id, guards=()):
         self.executed.append({'context':context,
                               'transition_id':transition_id,
                               'guards':guards})
+
+    def transition_to_state(self, context, to_state, guards=()):
+        self.transitioned_to_state.append({'context':context,
+                                           'to_state':to_state,
+                                           'guards':guards})
 
     def transitions(self, context, from_state=None):
         return self._transitions
@@ -162,7 +230,9 @@ class DummyMachine:
 
     def initialize(self, context):
         context.initialized = True
-        
+
+    def state_of(self, context):
+        return 'state'
     
         
                               
