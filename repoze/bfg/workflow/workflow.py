@@ -4,9 +4,13 @@ http://wiki.python.org/moin/FiniteStateMachine (ancient but simple #
 and useful!)"""
 from repoze.bfg.workflow.interfaces import IWorkflow
 from repoze.bfg.workflow.interfaces import IWorkflowFactory
+from repoze.bfg.workflow.interfaces import IWorkflowLookup
+
+from repoze.bfg.traversal import find_interface
+
 from zope.interface import implements
 from zope.interface import classImplements
-from zope.component import getSiteManager
+from zope.component import queryUtility
 
 from repoze.bfg.security import has_permission
 
@@ -238,12 +242,26 @@ class PermissionGuard:
                     permission, self.name)
                     )
                     
-def get_workflow(interface, name):
-    sm = getSiteManager()
-    # this is actually a utility even though we've registered it as
-    # an adapter (so we can find it based on the content interface)
-    utility = sm.adapters.lookup((interface,), IWorkflow, name=name,
-                                 default=None)
-    return utility
+def get_workflow(content_type, name, context=None):
+    """ Return a workflow based on a content_type, the workflow name,
+    and (optionally) a context.  The context is used as a starting
+    point to find a container type for placeful workflows."""
 
-    
+    wf_lookup = queryUtility(IWorkflowLookup, name=name)
+    if wf_lookup is None:
+        return None
+    wf_list = wf_lookup.get(content_type, [])
+
+    fallback = None
+
+    for wf_def in wf_list:
+        container_type = wf_def['container_type']
+        workflow = wf_def['workflow']
+        if container_type is None:
+            fallback = workflow
+        elif context is not None:
+            if find_interface(context, container_type):
+                return workflow
+
+    return fallback
+            

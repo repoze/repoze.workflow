@@ -31,10 +31,12 @@ class TestWorkflowDirective(unittest.TestCase):
         import types
         from zope.interface import Interface
         from zope.component import getSiteManager
-        class IDummy(Interface):
-            pass
+        from zope.component import getUtility
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
+        from repoze.bfg.workflow.workflow import IWorkflowLookup
+        class IDummy(Interface):
+            pass
         directive = self._makeOne(initial_state='public',
                                   for_=IDummy)
         directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
@@ -45,16 +47,20 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         self.assertEqual(len(actions), 1)
         action = actions[0]
-        self.assertEqual(action[0], (IWorkflow, IDummy, ''))
+        self.assertEqual(action[0], (IWorkflow, IDummy, None, ''))
         callback = action[1]
         self.assertEqual(type(callback), types.FunctionType)
         callback()
         sm = getSiteManager()
-        utility = sm.adapters.lookup((IDummy,), IWorkflow, name="")
-        self.assertEqual(type(utility), Workflow)
-        self.assertEqual(utility.__class__, Workflow)
+        lookup = getUtility(IWorkflowLookup, name="")
+        wflist = lookup[IDummy]
+        self.assertEqual(len(wflist), 1)
+        wf_dict = wflist[0]
+        self.assertEqual(wf_dict['container_type'], None)
+        self.assertEqual(wf_dict['workflow'].__class__, Workflow)
+        workflow = wf_dict['workflow']
         self.assertEqual(
-            utility._transition_data,
+            workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
               'name': 'make_public', 'to_state': 'public'},
@@ -63,7 +69,7 @@ class TestWorkflowDirective(unittest.TestCase):
               'name': 'make_private', 'to_state': 'public'},
              }
             )
-        self.assertEqual(utility.initial_state, 'public')
+        self.assertEqual(workflow.initial_state, 'public')
         
 
 class TestTransitionDirective(unittest.TestCase):
@@ -154,29 +160,34 @@ class TestFixtureApp(unittest.TestCase):
         testing.cleanUp()
 
     def test_execute_actions(self):
-        from repoze.bfg.workflow.interfaces import IWorkflow
-        from repoze.bfg.workflow.workflow import Workflow
-        from zope.component import getAdapter
         from zope.configuration import xmlconfig
-        import repoze.bfg.workflow.tests.fixtures as package
-        xmlconfig.file('configure.zcml', package, execute=True)
-        from repoze.bfg.workflow.tests.fixtures.dummy import Content
+        from zope.component import getUtility
+        from repoze.bfg.workflow.interfaces import IWorkflowLookup
+        from repoze.bfg.workflow.workflow import Workflow
         from repoze.bfg.workflow.tests.fixtures.dummy import callback
-        content = Content()
-        utility = getAdapter(content, IWorkflow, name='theworkflow')
-        self.assertEqual(utility.__class__, Workflow)
+        import repoze.bfg.workflow.tests.fixtures as package
+        from repoze.bfg.workflow.tests.fixtures.dummy import IContent
+        xmlconfig.file('configure.zcml', package, execute=True)
+        wf_lookup = getUtility(IWorkflowLookup, name='theworkflow')
+        self.assertEqual(len(wf_lookup), 1)
+        wf_list = wf_lookup[IContent]
+        self.assertEqual(len(wf_list), 1)
+        workflow_data = wf_list[0]
+        self.assertEqual(workflow_data['container_type'], None)
+        workflow = workflow_data['workflow']
+        self.assertEqual(workflow.__class__, Workflow)
         self.assertEqual(
-            utility._state_order,
+            workflow._state_order,
             ['private', 'public'],
             )
         self.assertEqual(
-            utility._state_data,
+            workflow._state_data,
             {u'public': {'description': u'Everybody can see it',
                          'title': u'Public'},
              u'private': {'description': u'Nobody can see it',
                           'title': u'Private'}},
             )
-        transitions = utility._transition_data
+        transitions = workflow._transition_data
         self.assertEqual(len(transitions), 3)
         self.assertEqual(transitions['initialize'],
              {'from_state': None, 'callback': callback,

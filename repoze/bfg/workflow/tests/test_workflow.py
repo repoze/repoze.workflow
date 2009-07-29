@@ -579,18 +579,84 @@ class TestGetWorkflow(unittest.TestCase):
     def tearDown(self):
         testing.cleanUp()
 
-    def _callFUT(self, iface, name):
+    def _callFUT(self, iface, name, context=None):
         from repoze.bfg.workflow import get_workflow
-        return get_workflow(iface, name)
+        return get_workflow(iface, name, context)
 
-    def test_it(self):
+    def test_no_workflow_lookup(self):
+        self.assertEqual(self._callFUT(None, None), None)
+
+    def test_no_content_type(self):
+        from repoze.bfg.workflow.interfaces import IWorkflowLookup
         from zope.interface import Interface
         class IDummy(Interface):
             pass
-        from repoze.bfg.workflow import IWorkflow
-        testing.registerAdapter('adapter', (IDummy,), IWorkflow, name="foo")
-        result = self._callFUT(IDummy, 'foo')
-        self.assertEqual(result, 'adapter')
+        testing.registerUtility({}, IWorkflowLookup, name='')
+        result = self._callFUT(IDummy, '')
+        self.assertEqual(result, None)
+
+    def test_container_type_is_None_becomes_fallback(self):
+        from repoze.bfg.workflow.interfaces import IWorkflowLookup
+        from zope.interface import Interface
+        class IDummy(Interface):
+            pass
+        workflow = object()
+        testing.registerUtility({IDummy:[{'container_type':None,
+                                         'workflow':workflow}]},
+                                 IWorkflowLookup, name='')
+        result = self._callFUT(IDummy, '')
+        self.assertEqual(result, workflow)
+
+    def test_container_type_is_None_becomes_fallback_with_context(self):
+        from repoze.bfg.workflow.interfaces import IWorkflowLookup
+        from zope.interface import Interface
+        class IDummy(Interface):
+            pass
+        workflow = object()
+        testing.registerUtility({IDummy:[{'container_type':None,
+                                         'workflow':workflow}]},
+                                 IWorkflowLookup, name='')
+        context = object()
+        result = self._callFUT(IDummy, '', context)
+        self.assertEqual(result, workflow)
+        
+    def test_interface_found(self):
+        from repoze.bfg.workflow.interfaces import IWorkflowLookup
+        from zope.interface import Interface
+        from zope.interface import directlyProvides
+        class IDummy(Interface):
+            pass
+        class IContext(Interface):
+            pass
+        workflow = object()
+        workflow2 = object()
+        testing.registerUtility({IDummy:[{'container_type':IContext,
+                                         'workflow':workflow},
+                                         {'container_type':None,
+                                          'workflow':workflow2}]},
+                                 IWorkflowLookup, name='')
+        context = ReviewedObject()
+        directlyProvides(context, IContext)
+        result = self._callFUT(IDummy, '', context)
+        self.assertEqual(result, workflow)
+
+    def test_interface_not_found(self):
+        from repoze.bfg.workflow.interfaces import IWorkflowLookup
+        from zope.interface import Interface
+        class IDummy(Interface):
+            pass
+        class IContext(Interface):
+            pass
+        workflow = object()
+        workflow2 = object()
+        testing.registerUtility({IDummy:[{'container_type':IContext,
+                                         'workflow':workflow},
+                                         {'container_type':None,
+                                          'workflow':workflow2}]},
+                                 IWorkflowLookup, name='')
+        context = ReviewedObject()
+        result = self._callFUT(IDummy, '', context)
+        self.assertEqual(result, workflow2)
 
 class ReviewedObject:
     pass

@@ -1,4 +1,5 @@
 from zope.component import getSiteManager
+from zope.component import queryUtility
 from zope.configuration.exceptions import ConfigurationError
 
 import zope.configuration.config
@@ -10,8 +11,10 @@ from zope.interface import implements
 
 from zope.schema import TextLine
 
-from repoze.bfg.workflow.workflow import Workflow
 from repoze.bfg.workflow.interfaces import IWorkflow
+from repoze.bfg.workflow.interfaces import IWorkflowLookup
+
+from repoze.bfg.workflow.workflow import Workflow
 from repoze.bfg.workflow.workflow import StateMachineError
 
 def handler(methodName, *args, **kwargs): # pragma: no cover
@@ -40,20 +43,22 @@ class IWorkflowDirective(Interface):
     name = TextLine(title=u'name', required=False)
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=False)
-    for_ = GlobalObject(title=u'for', required=False)
+    content_type = GlobalObject(title=u'content_type', required=False)
+    container_type = GlobalObject(title=u'container_type', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, initial_state, name=None, state_attr=None,
-                 for_=None):
+                 content_type=None, container_type=None):
         self.context = context
         self.initial_state = initial_state
         self.name = name or ''
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
-        self.for_ = for_
+        self.content_type = content_type
+        self.container_type = container_type
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
 
@@ -73,13 +78,22 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                             **transition.extras)
                 except StateMachineError, why:
                     raise ConfigurationError(str(why))
-            sm = getSiteManager()
-            sm.registerAdapter(workflow, (self.for_,), IWorkflow,
-                               name=self.name,
-                               info=self.info)
 
+            sm = getSiteManager()
+
+            workflows = queryUtility(IWorkflowLookup, name=self.name,
+                                     default=None)
+            if workflows is None:
+                workflows = {}
+                sm.registerUtility(workflows, IWorkflowLookup, name=self.name)
+
+            wf_list = workflows.setdefault(self.content_type, [])
+            wf_list.append({'workflow':workflow,
+                            'container_type':self.container_type})
+                              
         self.action(
-            discriminator = (IWorkflow, self.for_, self.name),
+            discriminator = (IWorkflow, self.content_type, self.container_type,
+                             self.name),
             callable = register,
             args = (),
             )
@@ -124,7 +138,9 @@ def key_value_pair(context, name, value):
         ob.extras = {}
     ob.extras[str(name)] = value
 
-
+class WorkflowList(object):
+    def __init__(self):
+        self.workflows = []
         
 
     
