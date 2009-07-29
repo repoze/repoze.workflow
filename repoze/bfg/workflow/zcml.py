@@ -35,7 +35,7 @@ class IStateDirective(Interface):
     title = TextLine(title=u'title', required=False)
 
 class IWorkflowDirective(Interface):
-    name = TextLine(title=u'name', required=True)
+    name = TextLine(title=u'name', required=False)
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=False)
     class_ = GlobalObject(title=u'class', required=False)
@@ -43,11 +43,11 @@ class IWorkflowDirective(Interface):
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
-    def __init__(self, context, name, initial_state, state_attr=None,
-                 class_=None):
+    def __init__(self, context, initial_state, name=None, state_attr=None,
+                 class_=None, ):
         self.context = context
-        self.name = name
         self.initial_state = initial_state
+        self.name = name
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr

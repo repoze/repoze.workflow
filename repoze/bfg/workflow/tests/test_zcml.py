@@ -12,11 +12,11 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import WorkflowDirective
         return WorkflowDirective
 
-    def _makeOne(self, context=None, name=None, initial_state=None,
+    def _makeOne(self, context=None, initial_state=None, name=None,
                  state_attr=None, class_=None):
         if context is None:
             context = DummyContext()
-        return self._getTargetClass()(context, name, initial_state,
+        return self._getTargetClass()(context, initial_state, name,
                                       state_attr, class_)
 
     def test_ctor_with_state_attr(self):
