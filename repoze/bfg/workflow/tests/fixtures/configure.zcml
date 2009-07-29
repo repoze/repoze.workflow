@@ -8,7 +8,6 @@
    initial_state="private"
    state_attr="state"
    class=".dummy.Workflow"
-   initializer=".dummy.initializer"
    >
 
    <state name="private">
@@ -20,6 +19,13 @@
      <key name="title" value="Public"/>
      <key name="description" value="Everybody can see it"/>
    </state>
+
+   <transition
+      name="initialize"
+      callback=".dummy.callback"
+      from_state=""
+      to_state="private"
+      />
 
    <transition
       name="to_public"

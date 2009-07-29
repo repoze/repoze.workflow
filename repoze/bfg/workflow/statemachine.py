@@ -81,13 +81,13 @@ class StateMachine(object):
         """ Execute a transition """
         state = getattr(context, self.state_attr, _marker) 
         if state is _marker:
-            state = self.initial_state
+            state = None
         si = (state, transition_name)
 
         found = None
         for transition in self._transitions:
             match = (transition['from_state'], transition['name'])
-            if match == si:
+            if si == match:
                 found = transition
                 break
 
@@ -157,8 +157,11 @@ class StateMachine(object):
         return L
 
     def initialize(self, context):
-        setattr(context, self.state_attr, self.initial_state)
-        if self.initializer is not None:
-            self.initializer(context)
+        transitions = [t for t in self._transitions if t['from_state'] == None
+                       and t['to_state'] == self.initial_state]
+        if transitions:
+            self.execute(context, transitions[0]['name'])
+        else:
+            setattr(context, self.state_attr, self.initial_state)
             
         

@@ -13,11 +13,11 @@ class TestWorkflowDirective(unittest.TestCase):
         return WorkflowDirective
 
     def _makeOne(self, context=None, name=None, for_=None, initial_state=None,
-                 state_attr=None, class_=None, initializer=None):
+                 state_attr=None, class_=None):
         if context is None:
             context = DummyContext()
         return self._getTargetClass()(context, name, for_, initial_state,
-                                      state_attr, class_, initializer)
+                                      state_attr, class_)
 
     def test_ctor_with_state_attr(self):
         ctor = self._makeOne(name='public', state_attr='public2')
@@ -41,10 +41,7 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import handler
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
-        def initializer(context):
-            """ """
-        directive = self._makeOne(initial_state='public',
-                                  initializer=initializer)
+        directive = self._makeOne(initial_state='public')
         directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_private'),
@@ -72,7 +69,6 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'name': 'make_private', 'to_state': 'public'}]
             )
-        self.assertEqual(result.machine.initializer, initializer)
         self.assertEqual(result.machine.initial_state, 'public')
         
 
@@ -99,6 +95,17 @@ class TestTransitionDirective(unittest.TestCase):
         self.assertEqual(directive.name, 'name')
         self.assertEqual(directive.callback, 'callback')
         self.assertEqual(directive.from_state, 'from_state')
+        self.assertEqual(directive.to_state, 'to_state')
+        self.assertEqual(directive.permission, 'permission')
+        self.assertEqual(directive.extras, {})
+
+    def test_ctor_no_from_state(self):
+        directive = self._makeOne('context', 'name', 'callback', '',
+                                  'to_state', 'permission')
+        self.assertEqual(directive.context, 'context')
+        self.assertEqual(directive.name, 'name')
+        self.assertEqual(directive.callback, 'callback')
+        self.assertEqual(directive.from_state, None)
         self.assertEqual(directive.to_state, 'to_state')
         self.assertEqual(directive.permission, 'permission')
         self.assertEqual(directive.extras, {})
@@ -166,21 +173,27 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(adapter.__class__, Workflow)
         self.assertEqual(
             adapter.machine._state_order,
-            ['private', 'public'],
+            ['private', 'public', None],
             )
         self.assertEqual(
             adapter.machine._state_data,
             {u'public': {'description': u'Everybody can see it',
                          'title': u'Public'},
              u'private': {'description': u'Nobody can see it',
-                          'title': u'Private'}}
+                          'title': u'Private'},
+             None: {}},
             )
-        self.assertEqual(
-            adapter.machine._transitions,
-            [{'from_state': u'private', 'callback': callback,
-              'name': u'to_public', 'to_state': u'public'},
+        transitions = adapter.machine._transitions
+        self.assertEqual(len(transitions), 3)
+        self.assertEqual(transitions[0],
+             {'from_state': None, 'callback': callback,
+              'name': 'initialize', 'to_state': u'private'},)
+        self.assertEqual(transitions[1],
+            {'from_state': u'private', 'callback': callback,
+              'name': u'to_public', 'to_state': u'public'},)
+        self.assertEqual(transitions[2],
              {'from_state': u'public', 'callback': callback,
-              'name': 'to_private', 'to_state': u'private'}]
+              'name': 'to_private', 'to_state': u'private'}
             )
 
 class DummyContext:

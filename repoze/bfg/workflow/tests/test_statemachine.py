@@ -6,10 +6,9 @@ class StateMachineTests(unittest.TestCase):
         from repoze.bfg.workflow.statemachine import StateMachine
         return StateMachine
 
-    def _makeOne(self, attr='state', transitions=None, initial_state=None,
-                 initializer=None):
+    def _makeOne(self, attr='state', transitions=None, initial_state=None):
         klass = self._getTargetClass()
-        return klass(attr, transitions, initial_state, initializer)
+        return klass(attr, transitions, initial_state)
 
     def test_add_state_info_state_exists(self):
         sm = self._makeOne()
@@ -96,6 +95,7 @@ class StateMachineTests(unittest.TestCase):
             args.append((context, transition))
         self._add_transitions(sm, callback=dummy)
         ob = ReviewedObject()
+        ob.state = 'pending'
         sm.execute(ob, 'publish')
         self.assertEqual(ob.state, 'published')
         sm.execute(ob, 'retract')
@@ -140,6 +140,7 @@ class StateMachineTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         self._add_transitions(sm)
         ob = ReviewedObject()
+        ob.state = 'pending'
         self.assertRaises(ValueError, sm.execute, ob, 'publish', (guard,))
 
     def test_transition_to_state(self):
@@ -328,15 +329,16 @@ class StateMachineTests(unittest.TestCase):
         self.assertEqual(len(state['transitions']), 0)
 
     def test_initialize_no_initializer(self):
-        sm = self._makeOne(initial_state='pending', initializer=None)
+        sm = self._makeOne(initial_state='pending')
         ob = ReviewedObject()
         sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
         
     def test_initialize_with_initializer(self):
-        def initializer(context):
+        def initializer(context, transition):
             context.initialized = True
-        sm = self._makeOne(initial_state='pending', initializer=initializer)
+        sm = self._makeOne(initial_state='pending')
+        sm.add_transition('initialize', None, 'pending', initializer)
         ob = ReviewedObject()
         sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')

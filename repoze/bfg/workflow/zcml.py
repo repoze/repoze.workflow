@@ -41,13 +41,12 @@ class IWorkflowDirective(Interface):
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=False)
     class_ = GlobalObject(title=u'class', required=False)
-    initializer = GlobalObject(title=u'initializer', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, name, for_, initial_state, state_attr=None,
-                 class_=None, initializer=None):
+                 class_=None):
         self.context = context
         self.name = name
         self.for_ = for_
@@ -58,15 +57,13 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         if class_ is None:
             class_ = Workflow
         self.class_ = class_
-        self.initializer = initializer
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
 
     def after(self):
         def adapter(context):
             machine = StateMachine(self.state_attr,
-                                   initial_state=self.initial_state,
-                                   initializer=self.initializer)
+                                   initial_state=self.initial_state)
             for state in self.states:
                 machine.add_state_info(state.name, **state.extras)
 
@@ -98,6 +95,8 @@ class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
         self.context = context
         self.name = name
         self.callback = callback
+        if not from_state:
+            from_state = None
         self.from_state = from_state
         self.to_state = to_state
         self.permission = permission
