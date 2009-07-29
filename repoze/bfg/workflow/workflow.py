@@ -61,6 +61,9 @@ class Workflow(object):
         self.initializer = initializer
         self.initial_state = initial_state
 
+    def __call__(self, context):
+        return self # allow ourselves to act as an adapter
+
     def add_state_info(self, state_name, **kw):
         if not state_name in self._state_order:
             self._state_order.append(state_name)
@@ -220,3 +223,10 @@ class PermissionGuard:
                     permission, self.name)
                     )
                     
+def get_workflow(interface, name):
+    sm = getSiteManager()
+    utility = sm.registry.lookup((interface,), IWorkflow, name=name,
+                                 default=None)
+    return utility
+
+    

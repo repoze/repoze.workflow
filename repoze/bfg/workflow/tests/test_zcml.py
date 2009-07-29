@@ -13,34 +13,29 @@ class TestWorkflowDirective(unittest.TestCase):
         return WorkflowDirective
 
     def _makeOne(self, context=None, initial_state=None, name=None,
-                 state_attr=None, class_=None):
+                 state_attr=None, for_=None):
         if context is None:
             context = DummyContext()
-        return self._getTargetClass()(context, initial_state, name,
-                                      state_attr, class_)
+        return self._getTargetClass()(context, initial_state, name, state_attr,
+                                      for_)
 
     def test_ctor_with_state_attr(self):
-        ctor = self._makeOne(name='public', state_attr='public2')
-        self.assertEqual(ctor.state_attr, 'public2')
+        workflow = self._makeOne(name='public', state_attr='public2')
+        self.assertEqual(workflow.state_attr, 'public2')
         
     def test_ctor_no_state_attr(self):
-        ctor = self._makeOne(name='public')
-        self.assertEqual(ctor.state_attr, 'public')
-
-    def test_ctor_with_class_(self):
-        ctor = self._makeOne(name='public', class_='class')
-        self.assertEqual(ctor.class_, 'class')
-        
-    def test_ctor_no_class_(self):
-        from repoze.bfg.workflow.workflow import Workflow
-        ctor = self._makeOne(name='public')
-        self.assertEqual(ctor.class_, Workflow)
+        workflow = self._makeOne(name='public')
+        self.assertEqual(workflow.state_attr, 'public')
 
     def test_after(self):
+        from zope.interface import Interface
+        class IDummy(Interface):
+            pass
         from repoze.bfg.workflow.zcml import handler
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
-        directive = self._makeOne(initial_state='public')
+        directive = self._makeOne(initial_state='public',
+                                  for_=IDummy)
         directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_private'),
@@ -51,12 +46,13 @@ class TestWorkflowDirective(unittest.TestCase):
         action = actions[0]
         self.assertEqual(action[0], (IWorkflow, None))
         self.assertEqual(action[1], handler)
-        self.assertEqual(action[2][0], 'registerUtility')
+        self.assertEqual(action[2][0], 'registerAdapter')
         utility = action[2][1]
         self.assertEqual(type(utility), Workflow)
-        self.assertEqual(action[2][2], IWorkflow)
-        self.assertEqual(action[2][3], None)
+        self.assertEqual(action[2][2], (IDummy,))
+        self.assertEqual(action[2][3], IWorkflow)
         self.assertEqual(action[2][4], None)
+        self.assertEqual(action[2][5], None)
         self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
             utility._transition_data,
@@ -158,14 +154,14 @@ class TestFixtureApp(unittest.TestCase):
     def test_execute_actions(self):
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
-        from zope.component import getUtility
+        from zope.component import getAdapter
         from zope.configuration import xmlconfig
         import repoze.bfg.workflow.tests.fixtures as package
         xmlconfig.file('configure.zcml', package, execute=True)
         from repoze.bfg.workflow.tests.fixtures.dummy import Content
         from repoze.bfg.workflow.tests.fixtures.dummy import callback
         content = Content()
-        utility = getUtility(IWorkflow, name='theworkflow')
+        utility = getAdapter(content, IWorkflow, name='theworkflow')
         self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
             utility._state_order,

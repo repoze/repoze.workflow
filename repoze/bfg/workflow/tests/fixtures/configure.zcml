@@ -6,7 +6,7 @@
    name="theworkflow"
    initial_state="private"
    state_attr="state"
-   class=".dummy.Workflow"
+   for=".dummy.IContent"
    >
 
    <state name="private">

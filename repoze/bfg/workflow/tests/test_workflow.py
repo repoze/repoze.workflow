@@ -21,6 +21,10 @@ class WorkflowTests(unittest.TestCase):
         from repoze.bfg.workflow.interfaces import IWorkflow
         verifyObject(IWorkflow, self._makeOne())
 
+    def test_call(self):
+        workflow = self._makeOne()
+        self.assertEqual(workflow(None), workflow)
+
     def test_state_of_default(self):
         sm = self._makeOne()
         ob = ReviewedObject()
