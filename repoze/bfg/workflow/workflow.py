@@ -5,12 +5,12 @@ and useful!)"""
 from repoze.bfg.workflow.interfaces import IWorkflow
 from repoze.bfg.workflow.interfaces import IWorkflowFactory
 from repoze.bfg.workflow.interfaces import IWorkflowLookup
+from repoze.bfg.workflow.interfaces import IDefaultWorkflow
 
 from repoze.bfg.traversal import find_interface
 
 from zope.interface import implements
 from zope.interface import classImplements
-from zope.interface import Interface
 from zope.component import getSiteManager
 
 from repoze.bfg.security import has_permission
@@ -249,7 +249,7 @@ def get_workflow(content_type, name, context=None):
     point to find a container type for placeful workflows."""
     sm = getSiteManager()
     if content_type is None:
-        content_type = Interface
+        content_type = IDefaultWorkflow
     wf_list = sm.adapters.lookup((content_type,), IWorkflowLookup, name=name,
                                  default=None)
     if wf_list is None:

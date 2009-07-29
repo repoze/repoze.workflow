@@ -19,3 +19,7 @@ class IWorkflowLookup(Interface):
     workflow info dictionaries keyed by content type. """
     
     
+class IDefaultWorkflow(Interface):
+    """ Marker interface used internally for workflows that aren't
+    associated with a particular content type"""
+    

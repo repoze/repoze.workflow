@@ -1,5 +1,4 @@
 from zope.component import getSiteManager
-from zope.component import queryUtility
 from zope.configuration.exceptions import ConfigurationError
 
 import zope.configuration.config
@@ -14,6 +13,7 @@ from zope.schema import TextLine
 
 from repoze.bfg.workflow.interfaces import IWorkflow
 from repoze.bfg.workflow.interfaces import IWorkflowLookup
+from repoze.bfg.workflow.interfaces import IDefaultWorkflow
 
 from repoze.bfg.workflow.workflow import Workflow
 from repoze.bfg.workflow.workflow import StateMachineError
@@ -58,7 +58,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
-        self.content_type = content_type or Interface
+        self.content_type = content_type or IDefaultWorkflow
         self.container_type = container_type
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
