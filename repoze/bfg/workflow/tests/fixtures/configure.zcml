@@ -4,7 +4,6 @@
 
 <workflow
    name="theworkflow"
-   for="*"
    initial_state="private"
    state_attr="state"
    class=".dummy.Workflow"

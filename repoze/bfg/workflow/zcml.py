@@ -36,7 +36,6 @@ class IStateDirective(Interface):
 
 class IWorkflowDirective(Interface):
     name = TextLine(title=u'name', required=True)
-    for_ = GlobalObject(title=u'for',  required=True)
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=False)
     class_ = GlobalObject(title=u'class', required=False)
@@ -44,11 +43,10 @@ class IWorkflowDirective(Interface):
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
-    def __init__(self, context, name, for_, initial_state, state_attr=None,
+    def __init__(self, context, name, initial_state, state_attr=None,
                  class_=None):
         self.context = context
         self.name = name
-        self.for_ = for_
         self.initial_state = initial_state
         if state_attr is None:
             state_attr = name
@@ -60,26 +58,22 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         self.states = [] # mutated by subdirectives
 
     def after(self):
-        def adapter(context):
-            machine = StateMachine(self.state_attr,
-                                   initial_state=self.initial_state)
-            for state in self.states:
-                machine.add_state_info(state.name, **state.extras)
+        workflow = Workflow(self.state_attr,
+                               initial_state=self.initial_state)
+        for state in self.states:
+            workflow.add_state_info(state.name, **state.extras)
 
-            for transition in self.transitions:
-                machine.add_transition(transition.name,
-                                       transition.from_state,
-                                       transition.to_state,
-                                       transition.callback,
-                                       **transition.extras)
-            return self.class_(context, machine)
+        for transition in self.transitions:
+            workflow.add_transition(transition.name,
+                                    transition.from_state,
+                                    transition.to_state,
+                                    transition.callback,
+                                    **transition.extras)
 
         self.action(
-            discriminator = (self.name, self.for_),
+            discriminator = (IWorkflow, self.name),
             callable = handler,
-            args = ('registerAdapter',
-                    adapter,
-                    (self.for_,), IWorkflow, self.name,
+            args = ('registerUtility', workflow, IWorkflow, self.name,
                     self.info)
             )
 

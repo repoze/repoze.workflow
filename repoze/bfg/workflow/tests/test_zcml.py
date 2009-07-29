@@ -12,11 +12,11 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import WorkflowDirective
         return WorkflowDirective
 
-    def _makeOne(self, context=None, name=None, for_=None, initial_state=None,
+    def _makeOne(self, context=None, name=None, initial_state=None,
                  state_attr=None, class_=None):
         if context is None:
             context = DummyContext()
-        return self._getTargetClass()(context, name, for_, initial_state,
+        return self._getTargetClass()(context, name, initial_state,
                                       state_attr, class_)
 
     def test_ctor_with_state_attr(self):
@@ -37,7 +37,6 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(ctor.class_, Workflow)
 
     def test_after(self):
-        import types
         from repoze.bfg.workflow.zcml import handler
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
@@ -50,26 +49,23 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         self.assertEqual(len(actions), 1)
         action = actions[0]
-        self.assertEqual(action[0], (None, None))
+        self.assertEqual(action[0], (IWorkflow, None))
         self.assertEqual(action[1], handler)
-        self.assertEqual(action[2][0], 'registerAdapter')
-        adapter = action[2][1]
-        self.assertEqual(type(adapter), types.FunctionType)
-        self.assertEqual(action[2][2], (None,))
-        self.assertEqual(action[2][3], IWorkflow)
+        self.assertEqual(action[2][0], 'registerUtility')
+        utility = action[2][1]
+        self.assertEqual(type(utility), Workflow)
+        self.assertEqual(action[2][2], IWorkflow)
+        self.assertEqual(action[2][3], None)
         self.assertEqual(action[2][4], None)
-        self.assertEqual(action[2][5], None)
-        context = DummyContext()
-        result = adapter(context)
-        self.assertEqual(result.__class__, Workflow)
+        self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
-            result.machine._transition_data,
+            utility._transition_data,
             [{'from_state': 'private', 'callback': None,
               'name': 'make_public', 'to_state': 'public'},
              {'from_state': 'private', 'callback': None,
               'name': 'make_private', 'to_state': 'public'}]
             )
-        self.assertEqual(result.machine.initial_state, 'public')
+        self.assertEqual(utility.initial_state, 'public')
         
 
 class TestTransitionDirective(unittest.TestCase):
@@ -162,28 +158,28 @@ class TestFixtureApp(unittest.TestCase):
     def test_execute_actions(self):
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
-        from zope.component import getAdapter
+        from zope.component import getUtility
         from zope.configuration import xmlconfig
         import repoze.bfg.workflow.tests.fixtures as package
         xmlconfig.file('configure.zcml', package, execute=True)
         from repoze.bfg.workflow.tests.fixtures.dummy import Content
         from repoze.bfg.workflow.tests.fixtures.dummy import callback
         content = Content()
-        adapter = getAdapter(content, IWorkflow, name='theworkflow')
-        self.assertEqual(adapter.__class__, Workflow)
+        utility = getUtility(IWorkflow, name='theworkflow')
+        self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
-            adapter.machine._state_order,
+            utility._state_order,
             ['private', 'public', None],
             )
         self.assertEqual(
-            adapter.machine._state_data,
+            utility._state_data,
             {u'public': {'description': u'Everybody can see it',
                          'title': u'Public'},
              u'private': {'description': u'Nobody can see it',
                           'title': u'Private'},
              None: {}},
             )
-        transitions = adapter.machine._transition_data
+        transitions = utility._transition_data
         self.assertEqual(len(transitions), 3)
         self.assertEqual(transitions[0],
              {'from_state': None, 'callback': callback,
