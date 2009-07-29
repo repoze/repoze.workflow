@@ -564,5 +564,25 @@ class WorkflowTests(unittest.TestCase):
         result = workflow.state_info(request, 'whatever')
         self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
 
+class TestGetWorkflow(unittest.TestCase):
+    def setUp(self):
+        testing.cleanUp()
+
+    def tearDown(self):
+        testing.cleanUp()
+
+    def _callFUT(self, iface, name):
+        from repoze.bfg.workflow import get_workflow
+        return get_workflow(iface, name)
+
+    def test_it(self):
+        from zope.interface import Interface
+        class IDummy(Interface):
+            pass
+        from repoze.bfg.workflow import IWorkflow
+        testing.registerAdapter('adapter', (IDummy,), IWorkflow, name="foo")
+        result = self._callFUT(IDummy, 'foo')
+        self.assertEqual(result, 'adapter')
+
 class ReviewedObject:
     pass

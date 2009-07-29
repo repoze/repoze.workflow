@@ -6,6 +6,7 @@ from repoze.bfg.workflow.interfaces import IWorkflow
 from repoze.bfg.workflow.interfaces import IWorkflowFactory
 from zope.interface import implements
 from zope.interface import classImplements
+from zope.component import getSiteManager
 
 from repoze.bfg.security import has_permission
 
@@ -225,7 +226,9 @@ class PermissionGuard:
                     
 def get_workflow(interface, name):
     sm = getSiteManager()
-    utility = sm.registry.lookup((interface,), IWorkflow, name=name,
+    # this is actually a utility even though we've registered it as
+    # an adapter (so we can find it based on the content interface)
+    utility = sm.adapters.lookup((interface,), IWorkflow, name=name,
                                  default=None)
     return utility
 
