@@ -38,8 +38,7 @@ class Workflow(object):
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
     
-    def __init__(self, state_attr, transitions=None, initial_state=None,
-                 initializer=None):
+    def __init__(self, state_attr, initial_state=None, initializer=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -53,9 +52,8 @@ class Workflow(object):
         o initializer - callback function that accepts a context
           to initialize a context object to the initial state
         """
-        if transitions is None:
-            transitions = []
-        self._transition_data = transitions
+        self._transition_data = {}
+        self._transition_order = []
         self._state_data = {}
         self._state_order = []
         self.state_attr = state_attr
@@ -77,14 +75,20 @@ class Workflow(object):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
-        self.add_state_info(from_state)
-        self.add_state_info(to_state)
+        if transition_name in self._transition_order:
+            raise StateMachineError('Duplicate transition name %s' %
+                                    transition_name)
+        if from_state is not None:
+            self.add_state_info(from_state)
+        if to_state is not None:
+            self.add_state_info(to_state)
         transition = kw
         transition['name'] = transition_name
         transition['from_state'] = from_state
         transition['to_state'] = to_state
         transition['callback'] = callback
-        self._transition_data.append(transition)
+        self._transition_data[transition_name] = transition
+        self._transition_order.append(transition_name)
 
     def _execute(self, context, transition_name, guards=()):
         """ Execute a transition """
@@ -94,7 +98,8 @@ class Workflow(object):
         si = (state, transition_name)
 
         found = None
-        for transition in self._transition_data:
+        for tname in self._transition_order:
+            transition = self._transition_data[tname]
             match = (transition['from_state'], transition['name'])
             if si == match:
                 found = transition
@@ -122,8 +127,13 @@ class Workflow(object):
     def _transitions(self, context, from_state=None):
         if from_state is None:
             from_state = self.state_of(context)
-        transitions = [transition for transition in self._transition_data
-                       if from_state == transition['from_state']]
+
+        transitions = []
+        for tname in self._transition_order:
+            transition = self._transition_data[tname]
+            if from_state == transition['from_state']:
+                transitions.append(transition)
+        
         return transitions
 
     def _transition_to_state(self, context, to_state, guards=(),
@@ -157,7 +167,8 @@ class Workflow(object):
             D['current'] = state_name == context_state
             title = state_data.get('title', state_name)
             D['title'] = title
-            for transition in self._transition_data:
+            for tname in self._transition_order:
+                transition = self._transition_data[tname]
                 if (transition['from_state'] == from_state and
                     transition['to_state'] == state_name):
                     transitions = D['transitions']
@@ -167,9 +178,12 @@ class Workflow(object):
         return L
 
     def initialize(self, context):
-        transitions = [t for t in self._transition_data
-                       if t['from_state'] == None
-                       and t['to_state'] == self.initial_state]
+        transitions = []
+        for tname in self._transition_order:
+            transition = self._transition_data[tname]
+            if  ( (transition['from_state'] == None) and
+                  (transition['to_state'] == self.initial_state) ):
+                transitions.append(transition)
         if transitions:
             self._execute(context, transitions[0]['name'])
         else:

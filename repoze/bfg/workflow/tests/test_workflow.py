@@ -7,9 +7,9 @@ class WorkflowTests(unittest.TestCase):
         from repoze.bfg.workflow import Workflow
         return Workflow
 
-    def _makeOne(self, attr='state', transitions=None, initial_state=None):
+    def _makeOne(self, attr='state', initial_state=None):
         klass = self._getTargetClass()
-        return klass(attr, transitions, initial_state)
+        return klass(attr, initial_state)
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
@@ -55,33 +55,41 @@ class WorkflowTests(unittest.TestCase):
         sm.add_transition('make_public', 'private', 'public', None, a=1)
         sm.add_transition('make_private', 'public', 'private', None, b=2)
         self.assertEqual(len(sm._transition_data), 2)
-        transitions = sm._transition_data
-        self.assertEqual(transitions[0]['name'], 'make_public')
-        self.assertEqual(transitions[0]['from_state'], 'private')
-        self.assertEqual(transitions[0]['to_state'], 'public')
-        self.assertEqual(transitions[0]['callback'], None)
-        self.assertEqual(transitions[0]['a'], 1)
-        self.assertEqual(transitions[1]['name'], 'make_private')
-        self.assertEqual(transitions[1]['from_state'], 'public')
-        self.assertEqual(transitions[1]['to_state'], 'private')
-        self.assertEqual(transitions[1]['callback'], None)
-        self.assertEqual(transitions[1]['b'], 2)
+        self.assertEqual(sm._transition_order, ['make_public', 'make_private'])
+        make_public = sm._transition_data['make_public']
+        self.assertEqual(make_public['name'], 'make_public')
+        self.assertEqual(make_public['from_state'], 'private')
+        self.assertEqual(make_public['to_state'], 'public')
+        self.assertEqual(make_public['callback'], None)
+        self.assertEqual(make_public['a'], 1)
+        make_private = sm._transition_data['make_private']
+        self.assertEqual(make_private['name'], 'make_private')
+        self.assertEqual(make_private['from_state'], 'public')
+        self.assertEqual(make_private['to_state'], 'private')
+        self.assertEqual(make_private['callback'], None)
+        self.assertEqual(make_private['b'], 2)
 
         self.assertEqual(len(sm._state_order), 2)
 
     def _add_transitions(self, sm, callback=None):
-        sm._transition_data.extend(
-            [
-            dict(name='publish', from_state='pending', to_state='published',
-                 callback=callback),
-            dict(name='reject', from_state='pending', to_state='private',
-                 callback=callback),
-            dict(name='retract', from_state='published', to_state='pending',
-                 callback=callback),
-            dict(name='submit', from_state='private', to_state='pending',
-                 callback=callback),
-            ]
-            )
+        tdata = sm._transition_data
+        tdata['publish'] =  dict(name='publish',
+                                 from_state='pending',
+                                 to_state='published',
+                                 callback=callback)
+        tdata['reject'] = dict(name='reject',
+                               from_state='pending',
+                               to_state='private',
+                               callback=callback)
+        tdata['retract'] = dict(name='retract',
+                                from_state='published',
+                                to_state='pending',
+                                callback=callback)
+        tdata['submit'] = dict(name='submit',
+                               from_state='private',
+                               to_state='pending',
+                               callback=callback)
+        sm._transition_order = ['publish', 'reject', 'retract', 'submit']
         if not sm._state_order:
             sm._state_order = ['pending', 'published', 'private']
         sm._state_data.setdefault('pending', {})

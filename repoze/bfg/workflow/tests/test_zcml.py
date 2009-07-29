@@ -56,10 +56,13 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
             utility._transition_data,
-            [{'from_state': 'private', 'callback': None,
-              'name': 'make_public', 'to_state': 'public'},
+            {'make_public':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_private', 'to_state': 'public'}]
+              'name': 'make_public', 'to_state': 'public'},
+             'make_private':
+             {'from_state': 'private', 'callback': None,
+              'name': 'make_private', 'to_state': 'public'},
+             }
             )
         self.assertEqual(utility.initial_state, 'public')
         
@@ -165,25 +168,24 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
             utility._state_order,
-            ['private', 'public', None],
+            ['private', 'public'],
             )
         self.assertEqual(
             utility._state_data,
             {u'public': {'description': u'Everybody can see it',
                          'title': u'Public'},
              u'private': {'description': u'Nobody can see it',
-                          'title': u'Private'},
-             None: {}},
+                          'title': u'Private'}},
             )
         transitions = utility._transition_data
         self.assertEqual(len(transitions), 3)
-        self.assertEqual(transitions[0],
+        self.assertEqual(transitions['initialize'],
              {'from_state': None, 'callback': callback,
               'name': 'initialize', 'to_state': u'private'},)
-        self.assertEqual(transitions[1],
+        self.assertEqual(transitions['to_public'],
             {'from_state': u'private', 'callback': callback,
               'name': u'to_public', 'to_state': u'public'},)
-        self.assertEqual(transitions[2],
+        self.assertEqual(transitions['to_private'],
              {'from_state': u'public', 'callback': callback,
               'name': 'to_private', 'to_state': u'private'}
             )
