@@ -69,7 +69,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                     **transition.extras)
 
         self.action(
-            discriminator = (IWorkflow, self.name),
+            discriminator = (IWorkflow, self.for_, self.name),
             callable = handler,
             args = ('registerAdapter',
                     workflow, (self.for_,), IWorkflow, self.name,
