@@ -9,7 +9,6 @@ from zope.interface import implements
 
 from zope.schema import TextLine
 
-from repoze.bfg.workflow.statemachine import StateMachine
 from repoze.bfg.workflow.workflow import Workflow
 from repoze.bfg.workflow.interfaces import IWorkflow
 
