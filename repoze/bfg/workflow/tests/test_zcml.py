@@ -28,10 +28,11 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(workflow.state_attr, 'public')
 
     def test_after(self):
+        import types
         from zope.interface import Interface
+        from zope.component import getSiteManager
         class IDummy(Interface):
             pass
-        from repoze.bfg.workflow.zcml import handler
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
         directive = self._makeOne(initial_state='public',
@@ -44,15 +45,13 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         self.assertEqual(len(actions), 1)
         action = actions[0]
-        self.assertEqual(action[0], (IWorkflow, IDummy, None))
-        self.assertEqual(action[1], handler)
-        self.assertEqual(action[2][0], 'registerAdapter')
-        utility = action[2][1]
+        self.assertEqual(action[0], (IWorkflow, IDummy, ''))
+        callback = action[1]
+        self.assertEqual(type(callback), types.FunctionType)
+        callback()
+        sm = getSiteManager()
+        utility = sm.adapters.lookup((IDummy,), IWorkflow, name="")
         self.assertEqual(type(utility), Workflow)
-        self.assertEqual(action[2][2], (IDummy,))
-        self.assertEqual(action[2][3], IWorkflow)
-        self.assertEqual(action[2][4], None)
-        self.assertEqual(action[2][5], None)
         self.assertEqual(utility.__class__, Workflow)
         self.assertEqual(
             utility._transition_data,

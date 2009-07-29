@@ -1,4 +1,5 @@
 from zope.component import getSiteManager
+from zope.configuration.exceptions import ConfigurationError
 
 import zope.configuration.config
 
@@ -11,6 +12,7 @@ from zope.schema import TextLine
 
 from repoze.bfg.workflow.workflow import Workflow
 from repoze.bfg.workflow.interfaces import IWorkflow
+from repoze.bfg.workflow.workflow import StateMachineError
 
 def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)
@@ -47,7 +49,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                  for_=None):
         self.context = context
         self.initial_state = initial_state
-        self.name = name
+        self.name = name or ''
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
@@ -56,24 +58,30 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         self.states = [] # mutated by subdirectives
 
     def after(self):
-        workflow = Workflow(self.state_attr,
-                            initial_state=self.initial_state)
-        for state in self.states:
-            workflow.add_state_info(state.name, **state.extras)
+        def register():
+            workflow = Workflow(self.state_attr,
+                                initial_state=self.initial_state)
+            for state in self.states:
+                workflow.add_state_info(state.name, **state.extras)
 
-        for transition in self.transitions:
-            workflow.add_transition(transition.name,
-                                    transition.from_state,
-                                    transition.to_state,
-                                    transition.callback,
-                                    **transition.extras)
+            for transition in self.transitions:
+                try:
+                    workflow.add_transition(transition.name,
+                                            transition.from_state,
+                                            transition.to_state,
+                                            transition.callback,
+                                            **transition.extras)
+                except StateMachineError, why:
+                    raise ConfigurationError(str(why))
+            sm = getSiteManager()
+            sm.registerAdapter(workflow, (self.for_,), IWorkflow,
+                               name=self.name,
+                               info=self.info)
 
         self.action(
             discriminator = (IWorkflow, self.for_, self.name),
-            callable = handler,
-            args = ('registerAdapter',
-                    workflow, (self.for_,), IWorkflow, self.name,
-                    self.info)
+            callable = register,
+            args = (),
             )
 
 class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
