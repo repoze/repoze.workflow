@@ -107,7 +107,7 @@ class StateMachine(object):
         setattr(context, self.state_attr, to_state)
 
     def state_of(self, context):
-        state = getattr(context, self.state_attr, self.initial_state)
+        state = getattr(context, self.state_attr, None)
         return state
 
     def transitions(self, context, from_state=None):

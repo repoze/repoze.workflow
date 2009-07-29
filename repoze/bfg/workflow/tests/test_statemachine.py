@@ -10,6 +10,17 @@ class StateMachineTests(unittest.TestCase):
         klass = self._getTargetClass()
         return klass(attr, transitions, initial_state)
 
+    def test_state_of_default(self):
+        sm = self._makeOne()
+        ob = ReviewedObject()
+        self.assertEqual(sm.state_of(ob), None)
+
+    def state_of_nondefault(self):
+        sm = self._makeOne()
+        ob = ReviewedObject()
+        ob.state = 'pending'
+        self.assertEqual(sm.state_of(ob), 'pending')
+
     def test_add_state_info_state_exists(self):
         sm = self._makeOne()
         sm._state_names = ['foo']
@@ -66,6 +77,7 @@ class StateMachineTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         self._add_transitions(sm)
         ob = ReviewedObject()
+        ob.state = 'pending'
         result = sm.transitions(ob)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['name'], 'publish')
@@ -198,6 +210,7 @@ class StateMachineTests(unittest.TestCase):
     def test_transition_to_state_skip_same_true(self):
         sm = self._makeOne(initial_state='pending')
         ob = ReviewedObject()
+        ob.state = 'pending'
         from repoze.bfg.workflow.statemachine import StateMachineError
         self.assertEqual(sm.transition_to_state(ob, 'pending', (), True), None)
 
