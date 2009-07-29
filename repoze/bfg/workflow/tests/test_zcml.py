@@ -13,11 +13,11 @@ class TestWorkflowDirective(unittest.TestCase):
         return WorkflowDirective
 
     def _makeOne(self, context=None, initial_state=None, name=None,
-                 state_attr=None, for_=None):
+                 state_attr=None, content_type=None):
         if context is None:
             context = DummyContext()
         return self._getTargetClass()(context, initial_state, name, state_attr,
-                                      for_)
+                                      content_type)
 
     def test_ctor_with_state_attr(self):
         workflow = self._makeOne(name='public', state_attr='public2')
@@ -38,7 +38,7 @@ class TestWorkflowDirective(unittest.TestCase):
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
-                                  for_=IDummy)
+                                  content_type=IDummy)
         directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_private'),
@@ -52,8 +52,7 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(type(callback), types.FunctionType)
         callback()
         sm = getSiteManager()
-        lookup = getUtility(IWorkflowLookup, name="")
-        wflist = lookup[IDummy]
+        wflist = sm.adapters.lookup((IDummy,), IWorkflowLookup, name="")
         self.assertEqual(len(wflist), 1)
         wf_dict = wflist[0]
         self.assertEqual(wf_dict['container_type'], None)
@@ -161,16 +160,16 @@ class TestFixtureApp(unittest.TestCase):
 
     def test_execute_actions(self):
         from zope.configuration import xmlconfig
-        from zope.component import getUtility
+        from zope.component import getSiteManager
         from repoze.bfg.workflow.interfaces import IWorkflowLookup
         from repoze.bfg.workflow.workflow import Workflow
         from repoze.bfg.workflow.tests.fixtures.dummy import callback
         import repoze.bfg.workflow.tests.fixtures as package
         from repoze.bfg.workflow.tests.fixtures.dummy import IContent
         xmlconfig.file('configure.zcml', package, execute=True)
-        wf_lookup = getUtility(IWorkflowLookup, name='theworkflow')
-        self.assertEqual(len(wf_lookup), 1)
-        wf_list = wf_lookup[IContent]
+        sm = getSiteManager()
+        wf_list = sm.adapters.lookup((IContent,),
+                                     IWorkflowLookup, name='theworkflow')
         self.assertEqual(len(wf_list), 1)
         workflow_data = wf_list[0]
         self.assertEqual(workflow_data['container_type'], None)

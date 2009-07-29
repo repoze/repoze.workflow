@@ -5,6 +5,7 @@ from zope.configuration.exceptions import ConfigurationError
 import zope.configuration.config
 
 from zope.configuration.fields import GlobalObject
+from zope.configuration.fields import GlobalInterface
 
 from zope.interface import Interface
 from zope.interface import implements
@@ -44,7 +45,7 @@ class IWorkflowDirective(Interface):
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=False)
     content_type = GlobalObject(title=u'content_type', required=False)
-    container_type = GlobalObject(title=u'container_type', required=False)
+    container_type = GlobalInterface(title=u'container_type', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
@@ -57,7 +58,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
-        self.content_type = content_type
+        self.content_type = content_type or Interface
         self.container_type = container_type
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
@@ -81,13 +82,13 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
 
             sm = getSiteManager()
 
-            workflows = queryUtility(IWorkflowLookup, name=self.name,
-                                     default=None)
-            if workflows is None:
-                workflows = {}
-                sm.registerUtility(workflows, IWorkflowLookup, name=self.name)
+            wf_list = sm.adapters.lookup((self.content_type,), IWorkflowLookup,
+                                         name=self.name, default=None)
+            if wf_list is None:
+                wf_list = []
+                sm.registerAdapter(wf_list, (self.content_type,),
+                                   IWorkflowLookup, self.name, self.info)
 
-            wf_list = workflows.setdefault(self.content_type, [])
             wf_list.append({'workflow':workflow,
                             'container_type':self.container_type})
                               

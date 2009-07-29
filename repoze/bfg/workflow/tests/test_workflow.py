@@ -591,7 +591,9 @@ class TestGetWorkflow(unittest.TestCase):
         from zope.interface import Interface
         class IDummy(Interface):
             pass
-        testing.registerUtility({}, IWorkflowLookup, name='')
+        class IContext(Interface):
+            pass
+        testing.registerAdapter([], (IDummy,), IWorkflowLookup, name='')
         result = self._callFUT(IDummy, '')
         self.assertEqual(result, None)
 
@@ -600,10 +602,12 @@ class TestGetWorkflow(unittest.TestCase):
         from zope.interface import Interface
         class IDummy(Interface):
             pass
+        class IContext(Interface):
+            pass
         workflow = object()
-        testing.registerUtility({IDummy:[{'container_type':None,
-                                         'workflow':workflow}]},
-                                 IWorkflowLookup, name='')
+        wflist = [{'container_type':None,
+                   'workflow':workflow}]
+        testing.registerAdapter(wflist, (IDummy,), IWorkflowLookup, name='')
         result = self._callFUT(IDummy, '')
         self.assertEqual(result, workflow)
 
@@ -612,14 +616,16 @@ class TestGetWorkflow(unittest.TestCase):
         from zope.interface import Interface
         class IDummy(Interface):
             pass
+        class IContext(Interface):
+            pass
         workflow = object()
-        testing.registerUtility({IDummy:[{'container_type':None,
-                                         'workflow':workflow}]},
-                                 IWorkflowLookup, name='')
+        wflist = [{'container_type':None,
+                   'workflow':workflow}]
+        testing.registerAdapter(wflist, (IDummy,), IWorkflowLookup, name='')
         context = object()
         result = self._callFUT(IDummy, '', context)
         self.assertEqual(result, workflow)
-        
+
     def test_interface_found(self):
         from repoze.bfg.workflow.interfaces import IWorkflowLookup
         from zope.interface import Interface
@@ -630,11 +636,11 @@ class TestGetWorkflow(unittest.TestCase):
             pass
         workflow = object()
         workflow2 = object()
-        testing.registerUtility({IDummy:[{'container_type':IContext,
-                                         'workflow':workflow},
-                                         {'container_type':None,
-                                          'workflow':workflow2}]},
-                                 IWorkflowLookup, name='')
+        wflist = [{'container_type':IContext,
+                   'workflow':workflow},
+                  {'container_type':None,
+                   'workflow':workflow2}]
+        testing.registerAdapter(wflist, (IDummy,), IWorkflowLookup, name='')
         context = ReviewedObject()
         directlyProvides(context, IContext)
         result = self._callFUT(IDummy, '', context)
@@ -649,11 +655,11 @@ class TestGetWorkflow(unittest.TestCase):
             pass
         workflow = object()
         workflow2 = object()
-        testing.registerUtility({IDummy:[{'container_type':IContext,
-                                         'workflow':workflow},
-                                         {'container_type':None,
-                                          'workflow':workflow2}]},
-                                 IWorkflowLookup, name='')
+        wflist = [{'container_type':IContext,
+                   'workflow':workflow},
+                  {'container_type':None,
+                   'workflow':workflow2}]
+        testing.registerAdapter(wflist, (IDummy,), IWorkflowLookup, name='')
         context = ReviewedObject()
         result = self._callFUT(IDummy, '', context)
         self.assertEqual(result, workflow2)

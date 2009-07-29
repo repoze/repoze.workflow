@@ -10,7 +10,8 @@ from repoze.bfg.traversal import find_interface
 
 from zope.interface import implements
 from zope.interface import classImplements
-from zope.component import queryUtility
+from zope.interface import Interface
+from zope.component import getSiteManager
 
 from repoze.bfg.security import has_permission
 
@@ -246,11 +247,13 @@ def get_workflow(content_type, name, context=None):
     """ Return a workflow based on a content_type, the workflow name,
     and (optionally) a context.  The context is used as a starting
     point to find a container type for placeful workflows."""
-
-    wf_lookup = queryUtility(IWorkflowLookup, name=name)
-    if wf_lookup is None:
+    sm = getSiteManager()
+    if content_type is None:
+        content_type = Interface
+    wf_list = sm.adapters.lookup((content_type,), IWorkflowLookup, name=name,
+                                 default=None)
+    if wf_list is None:
         return None
-    wf_list = wf_lookup.get(content_type, [])
 
     fallback = None
 
