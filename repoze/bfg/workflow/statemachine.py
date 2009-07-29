@@ -2,8 +2,12 @@
 Skip Montanaro's FSM from
 http://wiki.python.org/moin/FiniteStateMachine (ancient but simple #
 and useful!)"""
-from repoze.bfg.workflow.interfaces import IStateMachine
+from repoze.bfg.workflow.interfaces import IWorkflow
+from repoze.bfg.workflow.interfaces import IWorkflowFactory
 from zope.interface import implements
+from zope.interface import classImplements
+
+from repoze.bfg.security import has_permission
 
 _marker = object()
 
@@ -30,7 +34,8 @@ class StateMachine(object):
     callables to facilitate issues related to StateMachine
     persistence.
     """
-    implements(IStateMachine)
+    classImplements(IWorkflowFactory)
+    implements(IWorkflow)
     
     def __init__(self, state_attr, transitions=None, initial_state=None,
                  initializer=None):
@@ -49,7 +54,7 @@ class StateMachine(object):
         """
         if transitions is None:
             transitions = []
-        self._transitions = transitions
+        self._transition_data = transitions
         self._state_data = {}
         self._state_order = []
         self.state_attr = state_attr
@@ -75,9 +80,9 @@ class StateMachine(object):
         transition['from_state'] = from_state
         transition['to_state'] = to_state
         transition['callback'] = callback
-        self._transitions.append(transition)
+        self._transition_data.append(transition)
 
-    def execute(self, context, transition_name, guards=()):
+    def _execute(self, context, transition_name, guards=()):
         """ Execute a transition """
         state = getattr(context, self.state_attr, _marker) 
         if state is _marker:
@@ -85,7 +90,7 @@ class StateMachine(object):
         si = (state, transition_name)
 
         found = None
-        for transition in self._transitions:
+        for transition in self._transition_data:
             match = (transition['from_state'], transition['name'])
             if si == match:
                 found = transition
@@ -110,29 +115,30 @@ class StateMachine(object):
         state = getattr(context, self.state_attr, None)
         return state
 
-    def transitions(self, context, from_state=None):
+    def _transitions(self, context, from_state=None):
         if from_state is None:
             from_state = self.state_of(context)
-        transitions = [transition for transition in self._transitions
+        transitions = [transition for transition in self._transition_data
                        if from_state == transition['from_state']]
         return transitions
 
-    def transition_to_state(self, context, to_state, guards=(), skip_same=True):
+    def _transition_to_state(self, context, to_state, guards=(),
+                             skip_same=True):
         from_state = self.state_of(context)
         if (from_state == to_state) and skip_same:
             return
-        state_info = self.state_info(context)
+        state_info = self._state_info(context)
         for info in state_info:
             if info['name'] == to_state:
                 transitions = info['transitions']
                 if transitions:
                     transition = transitions[0]
-                    self.execute(context, transition['name'], guards)
+                    self._execute(context, transition['name'], guards)
                     return
         raise StateMachineError('No transition from state %r to state %r'
                 % (from_state, to_state))
 
-    def state_info(self, context, from_state=None):
+    def _state_info(self, context, from_state=None):
         context_state = self.state_of(context)
         if from_state is None:
             from_state = context_state
@@ -147,7 +153,7 @@ class StateMachine(object):
             D['current'] = state_name == context_state
             title = state_data.get('title', state_name)
             D['title'] = title
-            for transition in self._transitions:
+            for transition in self._transition_data:
                 if (transition['from_state'] == from_state and
                     transition['to_state'] == state_name):
                     transitions = D['transitions']
@@ -157,11 +163,60 @@ class StateMachine(object):
         return L
 
     def initialize(self, context):
-        transitions = [t for t in self._transitions if t['from_state'] == None
+        transitions = [t for t in self._transition_data
+                       if t['from_state'] == None
                        and t['to_state'] == self.initial_state]
         if transitions:
-            self.execute(context, transitions[0]['name'])
+            self._execute(context, transitions[0]['name'])
         else:
             setattr(context, self.state_attr, self.initial_state)
             
-        
+    def execute(self, context, request, transition_name, guards=()):
+        permission_guard = PermissionGuard(request, transition_name)
+        guards = list(guards)
+        guards.append(permission_guard)
+        self._execute(context, transition_name, guards=guards)
+
+    def transitions(self, context, request, from_state=None):
+        transitions = self._transitions(context, from_state)
+        L = []
+        for transition in transitions:
+            if 'permission' in transition:
+                if not has_permission(transition['permission'],
+                                      context, request):
+                    continue
+            L.append(transition)
+        return L
+
+    def state_info(self, context, request, from_state=None):
+        states = self._state_info(context, from_state)
+        for state in states:
+            L = []
+            for transition in state['transitions']:
+                if 'permission' in transition:
+                    if not has_permission(transition['permission'],
+                                          context, request):
+                        continue
+                L.append(transition)
+            state['transitions'] = L
+        return states
+
+    def transition_to_state(self, context, request, to_state):
+        permission_guard = PermissionGuard(request, to_state)
+        self._transition_to_state(context, to_state,
+                                  guards=(permission_guard,))
+
+class PermissionGuard:
+    def __init__(self, request, name):
+        self.request = request
+        self.name = name
+
+    def __call__(self, context, transition):
+        permission = transition.get('permission')
+        if self.request is not None and permission is not None:
+            if not has_permission(permission, context, self.request):
+                raise StateMachineError(
+                    '%s permission required for transition using %r' % (
+                    permission, self.name)
+                    )
+                    

@@ -13,15 +13,15 @@ class TestWorkflow(unittest.TestCase):
             machine = DummyMachine()
         return self._getTargetClass()(context, machine)
             
-    def test_class_conforms_to_IWorkflow(self):
-        from zope.interface.verify import verifyClass
-        from repoze.bfg.workflow.interfaces import IWorkflow
-        verifyClass(IWorkflow, self._getTargetClass())
+##     def test_class_conforms_to_IWorkflow(self):
+##         from zope.interface.verify import verifyClass
+##         from repoze.bfg.workflow.interfaces import IWorkflow
+##         verifyClass(IWorkflow, self._getTargetClass())
 
-    def test_instance_conforms_to_IWorkflow(self):
-        from zope.interface.verify import verifyObject
-        from repoze.bfg.workflow.interfaces import IWorkflow
-        verifyObject(IWorkflow, self._makeOne())
+##     def test_instance_conforms_to_IWorkflow(self):
+##         from zope.interface.verify import verifyObject
+##         from repoze.bfg.workflow.interfaces import IWorkflow
+##         verifyObject(IWorkflow, self._makeOne())
 
     def test_execute_permissive(self):
         workflow = self._makeOne()

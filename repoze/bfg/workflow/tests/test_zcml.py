@@ -63,7 +63,7 @@ class TestWorkflowDirective(unittest.TestCase):
         result = adapter(context)
         self.assertEqual(result.__class__, Workflow)
         self.assertEqual(
-            result.machine._transitions,
+            result.machine._transition_data,
             [{'from_state': 'private', 'callback': None,
               'name': 'make_public', 'to_state': 'public'},
              {'from_state': 'private', 'callback': None,
@@ -183,7 +183,7 @@ class TestFixtureApp(unittest.TestCase):
                           'title': u'Private'},
              None: {}},
             )
-        transitions = adapter.machine._transitions
+        transitions = adapter.machine._transition_data
         self.assertEqual(len(transitions), 3)
         self.assertEqual(transitions[0],
              {'from_state': None, 'callback': callback,
