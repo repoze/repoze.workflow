@@ -30,12 +30,15 @@ class TestDummyWorkflow(unittest.TestCase):
     def test_initialize(self):
         workflow = self._makeOne()
         workflow.initialize(None)
-        self.assertEqual(workflow.initialized, True)
+        self.assertEqual(workflow.initialized, [None])
 
     def test_execute(self):
         workflow = self._makeOne()
         workflow.execute(None, None, None)
-        self.assertEqual(workflow.executed, [None])
+        self.assertEqual(workflow.executed, [{'context':None,
+                                              'request':None,
+                                              'name':None,
+                                              'guards':()}])
 
     def test_transitions(self):
         workflow = self._makeOne()
@@ -48,7 +51,9 @@ class TestDummyWorkflow(unittest.TestCase):
     def transition_to_state(self):
         workflow = self._makeOne()
         workflow.transition_to_state(None, None, None)
-        self.assertEqual(workflow.transitioned, [None])
+        self.assertEqual(workflow.transitioned, [{'context':None,
+                                                  'to_state':None,
+                                                  'request':None}])
         
         
         
