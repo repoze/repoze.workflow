@@ -242,20 +242,8 @@ class PermissionGuard:
                     permission, self.name)
                     )
                     
-def get_workflow(content_type, name, context=None):
-    """ Return a workflow based on a content_type, the workflow name,
-    and (optionally) a context.  The context is used as a starting
-    point to find a container type for placeful workflows."""
-    sm = getSiteManager()
-    if content_type is None:
-        content_type = IDefaultWorkflow
-    wf_list = sm.adapters.lookup((content_type,), IWorkflowList, name=name,
-                                 default=None)
-    if wf_list is None:
-        return None
-
+def process_wf_list(wf_list, context):
     fallback = None
-
     for wf_def in wf_list:
         container_type = wf_def['container_type']
         workflow = wf_def['workflow']
@@ -264,6 +252,27 @@ def get_workflow(content_type, name, context=None):
         elif context is not None:
             if find_interface(context, container_type):
                 return workflow
-
     return fallback
+
+def get_workflow(content_type, name, context=None,
+                 process_wf_list=process_wf_list): # process_wf_list is for test
+    """ Return a workflow based on a content_type, the workflow name,
+    and (optionally) a context.  The context is used as a starting
+    point to find a container type for placeful workflows."""
+    sm = getSiteManager()
+    look = sm.adapters.lookup
+
+    if content_type not in (None, IDefaultWorkflow):
+        wf_list = look((content_type,), IWorkflowList, name=name, default=None)
+        if wf_list is not None:
+            wf = process_wf_list(wf_list, context)
+            if wf is not None:
+                return wf
+
+    wf_list = look((IDefaultWorkflow,), IWorkflowList, name=name, default=None)
+    if wf_list is not None:
+        wf = process_wf_list(wf_list, context)
+        if wf is not None:
+            return wf
+
             

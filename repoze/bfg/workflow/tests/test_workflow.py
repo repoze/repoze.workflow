@@ -27,12 +27,12 @@ class WorkflowTests(unittest.TestCase):
 
     def test_state_of_default(self):
         sm = self._makeOne()
-        ob = ReviewedObject()
+        ob = DummyContext()
         self.assertEqual(sm.state_of(ob), None)
 
     def state_of_nondefault(self):
         sm = self._makeOne()
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         self.assertEqual(sm.state_of(ob), 'pending')
 
@@ -99,7 +99,7 @@ class WorkflowTests(unittest.TestCase):
     def test__transitions_default_from_state(self):
         sm = self._makeOne(initial_state='pending')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         result = sm._transitions(ob)
         self.assertEqual(len(result), 2)
@@ -109,7 +109,7 @@ class WorkflowTests(unittest.TestCase):
     def test__transitions_overridden_from_state(self):
         sm = self._makeOne(initial_state='pending')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         result = sm._transitions(ob, from_state='private')
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['name'], 'submit')
@@ -117,7 +117,7 @@ class WorkflowTests(unittest.TestCase):
     def test__transitions_context_has_state(self):
         sm = self._makeOne(initial_state='pending')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'published'
         result = sm._transitions(ob)
         self.assertEqual(len(result), 1)
@@ -129,7 +129,7 @@ class WorkflowTests(unittest.TestCase):
         def dummy(context, transition):
             args.append((context, transition))
         self._add_transitions(sm, callback=dummy)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         sm._execute(ob, 'publish')
         self.assertEqual(ob.state, 'published')
@@ -165,7 +165,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test__execute_error(self):
         sm = self._makeOne(initial_state='pending')
-        ob = ReviewedObject()
+        ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._execute, ob, 'nosuch')
 
@@ -174,7 +174,7 @@ class WorkflowTests(unittest.TestCase):
             raise ValueError
         sm = self._makeOne(initial_state='pending')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         self.assertRaises(ValueError, sm._execute, ob, 'publish', (guard,))
 
@@ -184,7 +184,7 @@ class WorkflowTests(unittest.TestCase):
         def dummy(context, transition):
             args.append((context, transition))
         self._add_transitions(sm, callback=dummy)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         sm._transition_to_state(ob, 'published')
         self.assertEqual(ob.state, 'published')
@@ -218,21 +218,21 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition_to_state_error(self):
         sm = self._makeOne(initial_state='pending')
-        ob = ReviewedObject()
+        ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition_to_state, ob,
                           'nosuch')
 
     def test__transition_to_state_skip_same_false(self):
         sm = self._makeOne(initial_state='pending')
-        ob = ReviewedObject()
+        ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition_to_state, ob,
                           'pending', (), False)
 
     def test__transition_to_state_skip_same_true(self):
         sm = self._makeOne(initial_state='pending')
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         self.assertEqual(sm._transition_to_state(ob, 'pending', (), True), None)
 
@@ -240,7 +240,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         sm.add_state_info('pending', title='Pending')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         result = sm._state_info(ob)
         
@@ -259,7 +259,7 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state_info('published', desc='Published')
         sm.add_state_info('private', desc='Private')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'pending'
         result = sm._state_info(ob)
         self.assertEqual(len(result), 3)
@@ -297,7 +297,7 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state_info('published', desc='Published')
         sm.add_state_info('private', desc='Private')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'published'
         result = sm._state_info(ob)
         self.assertEqual(len(result), 3)
@@ -333,7 +333,7 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state_info('published', desc='Published')
         sm.add_state_info('private', desc='Private')
         self._add_transitions(sm)
-        ob = ReviewedObject()
+        ob = DummyContext()
         ob.state = 'private'
         result = sm._state_info(ob)
         self.assertEqual(len(result), 3)
@@ -365,7 +365,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test_initialize_no_initializer(self):
         sm = self._makeOne(initial_state='pending')
-        ob = ReviewedObject()
+        ob = DummyContext()
         sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
         
@@ -374,7 +374,7 @@ class WorkflowTests(unittest.TestCase):
             context.initialized = True
         sm = self._makeOne(initial_state='pending')
         sm.add_transition('initialize', None, 'pending', initializer)
-        ob = ReviewedObject()
+        ob = DummyContext()
         sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
         self.assertEqual(ob.initialized, True)
@@ -388,7 +388,7 @@ class WorkflowTests(unittest.TestCase):
         workflow._execute = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=True)
         request = testing.DummyRequest()
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.execute(context, request, 'publish')
         self.assertEqual(len(executed), 1)
@@ -409,7 +409,7 @@ class WorkflowTests(unittest.TestCase):
         workflow._execute = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.execute(context, request, 'publish')
         self.assertEqual(len(executed), 1)
@@ -428,7 +428,7 @@ class WorkflowTests(unittest.TestCase):
             executed.append(D)
         workflow._execute = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.execute(context, None, 'publish')
         self.assertEqual(len(executed), 1)
@@ -447,7 +447,7 @@ class WorkflowTests(unittest.TestCase):
         workflow._execute = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.execute(context, request, 'publish')
         self.assertEqual(len(executed), 1)
@@ -466,7 +466,7 @@ class WorkflowTests(unittest.TestCase):
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=True)
         request = testing.DummyRequest()
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, request, 'published')
         self.assertEqual(len(executed), 1)
@@ -486,7 +486,7 @@ class WorkflowTests(unittest.TestCase):
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, request, 'published')
         self.assertEqual(len(executed), 1)
@@ -505,7 +505,7 @@ class WorkflowTests(unittest.TestCase):
             executed.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, None, 'published')
         self.assertEqual(len(executed), 1)
@@ -523,7 +523,7 @@ class WorkflowTests(unittest.TestCase):
             executed.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
-        context = ReviewedObject()
+        context = DummyContext()
         context.state = 'pending'
         request = testing.DummyRequest()
         workflow.transition_to_state(context, request, 'published')
@@ -579,90 +579,159 @@ class TestGetWorkflow(unittest.TestCase):
     def tearDown(self):
         testing.cleanUp()
 
-    def _callFUT(self, iface, name, context=None):
-        from repoze.bfg.workflow import get_workflow
-        return get_workflow(iface, name, context)
-
-    def test_no_workflow_lookup(self):
-        self.assertEqual(self._callFUT(None, None), None)
-
-    def test_no_content_type(self):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
+    def _getIContent(self):
         from zope.interface import Interface
-        class IDummy(Interface):
+        class IContent(Interface):
             pass
-        class IContext(Interface):
+        return IContent
+
+    def _callFUT(self, iface, name, workflows=None, context=None):
+        if workflows is None:
+            wokflows = []
+        def process_workflow_list(wf_list, context):
+            if workflows:
+                return workflows.pop()
+        from repoze.bfg.workflow import get_workflow
+        return get_workflow(iface, name, context, process_workflow_list)
+
+    def _registerWorkflowList(self, content_type, name=''):
+        from repoze.bfg.workflow.interfaces import IWorkflowList
+        testing.registerAdapter([], (content_type,), IWorkflowList, name=name)
+
+    def test_content_type_is_None_no_registered_workflows(self):
+        self.assertEqual(self._callFUT(None, ''), None)
+
+    def test_content_type_is_IDefaultWorkflow_no_registered_workflows(self):
+        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        self.assertEqual(self._callFUT(IDefaultWorkflow, ''), None)
+
+    def test_content_type_is_None_registered_workflow(self):
+        from repoze.bfg.workflow.interfaces import IWorkflowList
+        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        workflow = object()
+        self._registerWorkflowList(IDefaultWorkflow)
+        result = self._callFUT(None, '', [workflow])
+        self.assertEqual(result, workflow)
+        
+    def test_content_type_is_IDefaultWorkflow_registered_workflow(self):
+        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        workflow = object()
+        self._registerWorkflowList(IDefaultWorkflow)
+        self.assertEqual(self._callFUT(IDefaultWorkflow, '', [workflow]),
+                         workflow)
+
+    def test_content_type_is_IContent_no_registered_workflows(self):
+        IContent = self._getIContent()
+        self.assertEqual(self._callFUT(IContent, ''), None)
+        
+    def test_content_type_is_IContent_finds_default(self):
+        IContent = self._getIContent()
+        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        workflow = object()
+        self._registerWorkflowList(IDefaultWorkflow)
+        self.assertEqual(self._callFUT(IContent, '', [workflow]), workflow)
+
+    def test_content_type_is_IContent_finds_specific(self):
+        IContent = self._getIContent()
+        workflow = object()
+        self._registerWorkflowList(IContent)
+        self.assertEqual(self._callFUT(IContent, '', [workflow]), workflow)
+
+    def test_content_type_is_IContent_finds_more_specific_first(self):
+        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        IContent = self._getIContent()
+        default_workflow = object()
+        specific_workflow = object()
+        self._registerWorkflowList(IContent)
+        self._registerWorkflowList(IDefaultWorkflow)
+        self.assertEqual(
+            self._callFUT(IContent, '', [specific_workflow]),
+            specific_workflow)
+        self.assertEqual(
+            self._callFUT(None, '', [default_workflow]),
+            default_workflow)
+
+    def test_content_type_inherits_from_IContent(self):
+        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        IContent = self._getIContent()
+        class IContent2(IContent):
             pass
-        testing.registerAdapter([], (IDummy,), IWorkflowList, name='')
-        result = self._callFUT(IDummy, '')
+        default_workflow = object()
+        specific_workflow = object()
+        self._registerWorkflowList(IContent)
+        self._registerWorkflowList(IDefaultWorkflow)
+        self.assertEqual(
+            self._callFUT(IContent2, '', [specific_workflow]),
+            specific_workflow)
+
+class TestProcessWFList(unittest.TestCase):
+    def _callFUT(self, wf_list, context):
+        from repoze.bfg.workflow.workflow import process_wf_list
+        return process_wf_list(wf_list, context)
+
+    def _getIContent(self):
+        from zope.interface import Interface
+        class IContent(Interface):
+            pass
+        return IContent
+
+    def test_nothing_in_wf_list_returns_None(self):
+        result = self._callFUT([], None)
         self.assertEqual(result, None)
 
-    def test_container_type_is_None_becomes_fallback(self):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
-        from zope.interface import Interface
-        class IDummy(Interface):
-            pass
-        class IContext(Interface):
-            pass
+    def test_context_is_None_container_type_is_None(self):
         workflow = object()
-        wflist = [{'container_type':None,
-                   'workflow':workflow}]
-        testing.registerAdapter(wflist, (IDummy,), IWorkflowList, name='')
-        result = self._callFUT(IDummy, '')
+        wflist = [{'container_type':None, 'workflow':workflow}]
+        result = self._callFUT(wflist, None)
         self.assertEqual(result, workflow)
 
-    def test_container_type_is_None_becomes_fallback_with_context(self):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
-        from zope.interface import Interface
-        class IDummy(Interface):
-            pass
-        class IContext(Interface):
-            pass
+    def test_context_is_None_container_type_not_None_no_fallback(self):
         workflow = object()
-        wflist = [{'container_type':None,
-                   'workflow':workflow}]
-        testing.registerAdapter(wflist, (IDummy,), IWorkflowList, name='')
+        IContent = self._getIContent()
+        wflist = [{'container_type':IContent, 'workflow':workflow}]
+        result = self._callFUT(wflist, None)
+        self.assertEqual(result, None)
+
+    def test_context_is_None_container_type_not_None_with_fallback(self):
+        workflow = object()
+        default = object()
+        IContent = self._getIContent()
+        wflist = [{'container_type':IContent, 'workflow':workflow},
+                  {'container_type':None, 'workflow':default}]
+        result = self._callFUT(wflist, None)
+        self.assertEqual(result, default)
+
+    def test_context_not_None_container_type_not_None_no_fallback(self):
+        workflow = object()
+        IContent = self._getIContent()
+        wflist = [{'container_type':IContent, 'workflow':workflow}]
         context = object()
-        result = self._callFUT(IDummy, '', context)
-        self.assertEqual(result, workflow)
+        result = self._callFUT(wflist, object)
+        self.assertEqual(result, None)
 
-    def test_interface_found(self):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
-        from zope.interface import Interface
+    def test_context_not_None_container_type_not_None_with_fallback(self):
+        workflow = object()
+        default = object()
+        IContent = self._getIContent()
+        context = object()
+        wflist = [{'container_type':IContent, 'workflow':workflow},
+                  {'container_type':None, 'workflow':default}]
+        result = self._callFUT(wflist, context)
+        self.assertEqual(result, default)
+
+    def test_context_not_None_container_type_not_None_interface_found(self):
         from zope.interface import directlyProvides
-        class IDummy(Interface):
-            pass
-        class IContext(Interface):
-            pass
         workflow = object()
-        workflow2 = object()
-        wflist = [{'container_type':IContext,
-                   'workflow':workflow},
-                  {'container_type':None,
-                   'workflow':workflow2}]
-        testing.registerAdapter(wflist, (IDummy,), IWorkflowList, name='')
-        context = ReviewedObject()
-        directlyProvides(context, IContext)
-        result = self._callFUT(IDummy, '', context)
+        default = object()
+        IContent = self._getIContent()
+        context = DummyContext()
+        directlyProvides(context, IContent)
+        wflist = [{'container_type':IContent, 'workflow':workflow},
+                  {'container_type':None, 'workflow':default}]
+        result = self._callFUT(wflist, context)
         self.assertEqual(result, workflow)
 
-    def test_interface_not_found(self):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
-        from zope.interface import Interface
-        class IDummy(Interface):
-            pass
-        class IContext(Interface):
-            pass
-        workflow = object()
-        workflow2 = object()
-        wflist = [{'container_type':IContext,
-                   'workflow':workflow},
-                  {'container_type':None,
-                   'workflow':workflow2}]
-        testing.registerAdapter(wflist, (IDummy,), IWorkflowList, name='')
-        context = ReviewedObject()
-        result = self._callFUT(IDummy, '', context)
-        self.assertEqual(result, workflow2)
 
-class ReviewedObject:
+class DummyContext:
     pass
+
