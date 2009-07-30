@@ -1,7 +1,3 @@
-""" Finite state machine, useful for workflow-like features, based on
-Skip Montanaro's FSM from
-http://wiki.python.org/moin/FiniteStateMachine (ancient but simple #
-and useful!)"""
 from repoze.bfg.workflow.interfaces import IWorkflow
 from repoze.bfg.workflow.interfaces import IWorkflowFactory
 from repoze.bfg.workflow.interfaces import IWorkflowList
