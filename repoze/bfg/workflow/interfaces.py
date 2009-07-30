@@ -12,9 +12,9 @@ class IWorkflow(Interface):
     def transitions(context, request, from_state=None):
         """ Return a sequence of transition dictionaries """
 
-class IWorkflowLookup(Interface):
+class IWorkflowList(Interface):
     """ Marker interface used internally by get_workflow and the ZCML
-    machinery.  An item registered as an IWorkflowLookup utility in
+    machinery.  An item registered as an IWorkflowList utility in
     the component registry is a dictionary that contains lists of
     workflow info dictionaries keyed by content type. """
     

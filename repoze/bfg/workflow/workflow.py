@@ -4,7 +4,7 @@ http://wiki.python.org/moin/FiniteStateMachine (ancient but simple #
 and useful!)"""
 from repoze.bfg.workflow.interfaces import IWorkflow
 from repoze.bfg.workflow.interfaces import IWorkflowFactory
-from repoze.bfg.workflow.interfaces import IWorkflowLookup
+from repoze.bfg.workflow.interfaces import IWorkflowList
 from repoze.bfg.workflow.interfaces import IDefaultWorkflow
 
 from repoze.bfg.traversal import find_interface
@@ -43,7 +43,7 @@ class Workflow(object):
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
     
-    def __init__(self, state_attr, initial_state=None, initializer=None):
+    def __init__(self, state_attr, initial_state=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -62,7 +62,6 @@ class Workflow(object):
         self._state_data = {}
         self._state_order = []
         self.state_attr = state_attr
-        self.initializer = initializer
         self.initial_state = initial_state
 
     def __call__(self, context):
@@ -250,7 +249,7 @@ def get_workflow(content_type, name, context=None):
     sm = getSiteManager()
     if content_type is None:
         content_type = IDefaultWorkflow
-    wf_list = sm.adapters.lookup((content_type,), IWorkflowLookup, name=name,
+    wf_list = sm.adapters.lookup((content_type,), IWorkflowList, name=name,
                                  default=None)
     if wf_list is None:
         return None

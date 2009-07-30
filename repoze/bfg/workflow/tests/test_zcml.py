@@ -31,10 +31,9 @@ class TestWorkflowDirective(unittest.TestCase):
         import types
         from zope.interface import Interface
         from zope.component import getSiteManager
-        from zope.component import getUtility
         from repoze.bfg.workflow.interfaces import IWorkflow
         from repoze.bfg.workflow.workflow import Workflow
-        from repoze.bfg.workflow.workflow import IWorkflowLookup
+        from repoze.bfg.workflow.workflow import IWorkflowList
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
@@ -52,7 +51,7 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(type(callback), types.FunctionType)
         callback()
         sm = getSiteManager()
-        wflist = sm.adapters.lookup((IDummy,), IWorkflowLookup, name="")
+        wflist = sm.adapters.lookup((IDummy,), IWorkflowList, name="")
         self.assertEqual(len(wflist), 1)
         wf_dict = wflist[0]
         self.assertEqual(wf_dict['container_type'], None)
@@ -70,6 +69,25 @@ class TestWorkflowDirective(unittest.TestCase):
             )
         self.assertEqual(workflow.initial_state, 'public')
         
+
+    def test_after_raises_error(self):
+        from zope.interface import Interface
+        from repoze.bfg.workflow.interfaces import IWorkflowList
+        from zope.configuration.exceptions import ConfigurationError
+        from zope.component import getSiteManager
+        class IDummy(Interface):
+            pass
+        directive = self._makeOne(initial_state='public',
+                                  content_type=IDummy)
+        directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
+        directive.transitions = [ DummyTransition('make_public'),
+                                  DummyTransition('make_public'),
+                                  ]
+        directive.after()
+        actions = directive.context.actions
+        action = actions[0]
+        callback = action[1]
+        self.assertRaises(ConfigurationError, callback)
 
 class TestTransitionDirective(unittest.TestCase):
     def setUp(self):
@@ -161,7 +179,7 @@ class TestFixtureApp(unittest.TestCase):
     def test_execute_actions(self):
         from zope.configuration import xmlconfig
         from zope.component import getSiteManager
-        from repoze.bfg.workflow.interfaces import IWorkflowLookup
+        from repoze.bfg.workflow.interfaces import IWorkflowList
         from repoze.bfg.workflow.workflow import Workflow
         from repoze.bfg.workflow.tests.fixtures.dummy import callback
         import repoze.bfg.workflow.tests.fixtures as package
@@ -169,7 +187,7 @@ class TestFixtureApp(unittest.TestCase):
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),
-                                     IWorkflowLookup, name='theworkflow')
+                                     IWorkflowList, name='theworkflow')
         self.assertEqual(len(wf_list), 1)
         workflow_data = wf_list[0]
         self.assertEqual(workflow_data['container_type'], None)

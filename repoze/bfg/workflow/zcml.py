@@ -12,7 +12,7 @@ from zope.interface import implements
 from zope.schema import TextLine
 
 from repoze.bfg.workflow.interfaces import IWorkflow
-from repoze.bfg.workflow.interfaces import IWorkflowLookup
+from repoze.bfg.workflow.interfaces import IWorkflowList
 from repoze.bfg.workflow.interfaces import IDefaultWorkflow
 
 from repoze.bfg.workflow.workflow import Workflow
@@ -58,7 +58,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
-        self.content_type = content_type or IDefaultWorkflow
+        self.content_type = content_type
         self.container_type = container_type
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
@@ -80,17 +80,9 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                 except StateMachineError, why:
                     raise ConfigurationError(str(why))
 
-            sm = getSiteManager()
+            register_workflow(workflow, self.name, self.content_type,
+                              self.container_type, self.info)
 
-            wf_list = sm.adapters.lookup((self.content_type,), IWorkflowLookup,
-                                         name=self.name, default=None)
-            if wf_list is None:
-                wf_list = []
-                sm.registerAdapter(wf_list, (self.content_type,),
-                                   IWorkflowLookup, self.name, self.info)
-
-            wf_list.append({'workflow':workflow,
-                            'container_type':self.container_type})
                               
         self.action(
             discriminator = (IWorkflow, self.content_type, self.container_type,
@@ -139,9 +131,16 @@ def key_value_pair(context, name, value):
         ob.extras = {}
     ob.extras[str(name)] = value
 
-class WorkflowList(object):
-    def __init__(self):
-        self.workflows = []
-        
+def register_workflow(workflow, name, content_type, container_type, info=None):
+    if content_type is None:
+        content_type = IDefaultWorkflow
+    sm = getSiteManager()
+    wf_list = sm.adapters.lookup((content_type,), IWorkflowList,
+                                 name=name, default=None)
+    if wf_list is None:
+        wf_list = []
+        sm.registerAdapter(wf_list, (content_type,),
+                           IWorkflowList, name, info)
 
-    
+    wf_list.append({'workflow':workflow,
+                    'container_type':container_type})
