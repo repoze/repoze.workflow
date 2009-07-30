@@ -70,13 +70,12 @@ class Workflow(object):
 
     def check(self):
         if not self.initial_state in self._state_order:
-            raise WorkflowError('Workflow must define an initial state')
+            raise WorkflowError('Workflow must define its initial state %r'
+                                % self.initial_state)
 
     def _transition(self, context, transition_name, guards=()):
         """ Execute a transition via a transition name """
-        state = getattr(context, self.state_attr, _marker) 
-        if state is _marker:
-            state = None
+        state = self.state_of(context)
 
         si = (state, transition_name)
 
@@ -110,8 +109,14 @@ class Workflow(object):
 
         setattr(context, self.state_attr, to_state)
 
-    def state_of(self, context):
+    def _state_of(self, context):
         state = getattr(context, self.state_attr, None)
+        return state
+
+    def state_of(self, context):
+        state = self._state_of(context)
+        if state is None:
+            state = self.initialize(context)
         return state
 
     def _get_transitions(self, context, from_state=None):
@@ -172,6 +177,7 @@ class Workflow(object):
         if callback is not None:
             callback(context, {})
         setattr(context, self.state_attr, self.initial_state)
+        return self.initial_state
             
     def transition(self, context, request, transition_name, guards=()):
         permission_guard = PermissionGuard(request, transition_name)

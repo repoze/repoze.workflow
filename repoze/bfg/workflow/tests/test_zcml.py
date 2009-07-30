@@ -128,29 +128,18 @@ class TestTransitionDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import TransitionDirective
         return TransitionDirective
 
-    def _makeOne(self, context=None, name=None, callback=None, from_state=None,
-                 to_state=None, permission=None):
-        return self._getTargetClass()(context, name, callback, from_state,
-                                      to_state, permission)
+    def _makeOne(self, context=None, name=None, from_state=None,
+                 to_state=None, callback=None, permission=None):
+        return self._getTargetClass()(context, name, from_state,
+                                      to_state, callback, permission)
 
     def test_ctor(self):
-        directive = self._makeOne('context', 'name', 'callback', 'from_state',
-                                  'to_state', 'permission')
+        directive = self._makeOne('context', 'name', 'from_state',
+                                  'to_state', 'callback', 'permission')
         self.assertEqual(directive.context, 'context')
         self.assertEqual(directive.name, 'name')
         self.assertEqual(directive.callback, 'callback')
         self.assertEqual(directive.from_state, 'from_state')
-        self.assertEqual(directive.to_state, 'to_state')
-        self.assertEqual(directive.permission, 'permission')
-        self.assertEqual(directive.extras, {})
-
-    def test_ctor_no_from_state(self):
-        directive = self._makeOne('context', 'name', 'callback', '',
-                                  'to_state', 'permission')
-        self.assertEqual(directive.context, 'context')
-        self.assertEqual(directive.name, 'name')
-        self.assertEqual(directive.callback, 'callback')
-        self.assertEqual(directive.from_state, None)
         self.assertEqual(directive.to_state, 'to_state')
         self.assertEqual(directive.permission, 'permission')
         self.assertEqual(directive.extras, {})

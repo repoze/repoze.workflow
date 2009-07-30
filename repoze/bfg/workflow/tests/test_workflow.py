@@ -51,10 +51,23 @@ class WorkflowTests(unittest.TestCase):
         workflow = self._makeOne()
         self.assertEqual(workflow(None), workflow)
 
-    def test_state_of_default(self):
+    def test__state_of_uninitialized(self):
         sm = self._makeOne()
         ob = DummyContext()
-        self.assertEqual(sm.state_of(ob), None)
+        self.assertEqual(sm._state_of(ob),  None)
+
+    def test__state_of_initialized(self):
+        sm = self._makeOne()
+        ob = DummyContext()
+        ob.state = 'pending'
+        self.assertEqual(sm._state_of(ob),  'pending')
+
+    def test_state_of_does_initialization(self):
+        sm = self._makeOne()
+        sm.add_state('pending')
+        ob = DummyContext()
+        self.assertEqual(sm.state_of(ob), 'pending')
+        self.assertEqual(ob.state, 'pending')
 
     def state_of_nondefault(self):
         sm = self._makeOne()
@@ -219,6 +232,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition_error(self):
         sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
         ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition, ob, 'nosuch')
@@ -270,6 +284,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition_to_state_error(self):
         sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
         ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition_to_state, ob,
@@ -277,6 +292,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition_to_state_skip_same_false(self):
         sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
         ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition_to_state, ob,
