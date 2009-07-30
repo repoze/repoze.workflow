@@ -17,7 +17,7 @@ from repoze.bfg.security import has_permission
 
 _marker = object()
 
-class StateMachineError(Exception):
+class WorkflowError(Exception):
     """ Invalid input to finite state machine"""
 
 class Workflow(object):
@@ -80,7 +80,7 @@ class Workflow(object):
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
         if transition_name in self._transition_order:
-            raise StateMachineError('Duplicate transition name %s' %
+            raise WorkflowError('Duplicate transition name %s' %
                                     transition_name)
         if from_state is not None:
             self.add_state_info(from_state)
@@ -110,7 +110,7 @@ class Workflow(object):
                 break
 
         if found is None:
-            raise StateMachineError(
+            raise WorkflowError(
                 'No transition from %r using transition %r'
                 % (state, transition_name))
 
@@ -153,7 +153,7 @@ class Workflow(object):
                     transition = transitions[0]
                     self._execute(context, transition['name'], guards)
                     return
-        raise StateMachineError('No transition from state %r to state %r'
+        raise WorkflowError('No transition from state %r to state %r'
                 % (from_state, to_state))
 
     def _state_info(self, context, from_state=None):
@@ -237,7 +237,7 @@ class PermissionGuard:
         permission = transition.get('permission')
         if self.request is not None and permission is not None:
             if not has_permission(permission, context, self.request):
-                raise StateMachineError(
+                raise WorkflowError(
                     '%s permission required for transition using %r' % (
                     permission, self.name)
                     )

@@ -16,7 +16,7 @@ from repoze.bfg.workflow.interfaces import IWorkflowList
 from repoze.bfg.workflow.interfaces import IDefaultWorkflow
 
 from repoze.bfg.workflow.workflow import Workflow
-from repoze.bfg.workflow.workflow import StateMachineError
+from repoze.bfg.workflow.workflow import WorkflowError
 
 def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)
@@ -77,7 +77,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                             transition.to_state,
                                             transition.callback,
                                             **transition.extras)
-                except StateMachineError, why:
+                except WorkflowError, why:
                     raise ConfigurationError(str(why))
 
             register_workflow(workflow, self.name, self.content_type,

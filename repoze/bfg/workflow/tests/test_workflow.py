@@ -166,8 +166,8 @@ class WorkflowTests(unittest.TestCase):
     def test__execute_error(self):
         sm = self._makeOne(initial_state='pending')
         ob = ReviewedObject()
-        from repoze.bfg.workflow import StateMachineError
-        self.assertRaises(StateMachineError, sm._execute, ob, 'nosuch')
+        from repoze.bfg.workflow import WorkflowError
+        self.assertRaises(WorkflowError, sm._execute, ob, 'nosuch')
 
     def test__execute_guard(self):
         def guard(context, transition):
@@ -219,15 +219,15 @@ class WorkflowTests(unittest.TestCase):
     def test__transition_to_state_error(self):
         sm = self._makeOne(initial_state='pending')
         ob = ReviewedObject()
-        from repoze.bfg.workflow import StateMachineError
-        self.assertRaises(StateMachineError, sm._transition_to_state, ob,
+        from repoze.bfg.workflow import WorkflowError
+        self.assertRaises(WorkflowError, sm._transition_to_state, ob,
                           'nosuch')
 
     def test__transition_to_state_skip_same_false(self):
         sm = self._makeOne(initial_state='pending')
         ob = ReviewedObject()
-        from repoze.bfg.workflow import StateMachineError
-        self.assertRaises(StateMachineError, sm._transition_to_state, ob,
+        from repoze.bfg.workflow import WorkflowError
+        self.assertRaises(WorkflowError, sm._transition_to_state, ob,
                           'pending', (), False)
 
     def test__transition_to_state_skip_same_true(self):
@@ -400,7 +400,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result, None)
 
     def test_execute_not_permissive(self):
-        from repoze.bfg.workflow import StateMachineError
+        from repoze.bfg.workflow import WorkflowError
         workflow = self._makeOne()
         executed = []
         def append(context, name, guards=()):
@@ -417,7 +417,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(executed['context'], context)
         self.assertEqual(executed['name'], 'publish')
         permitted = executed['guards'][0]
-        self.assertRaises(StateMachineError, permitted, None,
+        self.assertRaises(WorkflowError, permitted, None,
                           {'permission':'view'})
 
     def test_execute_request_is_None(self):
@@ -477,7 +477,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(None, permitted(None, {'permission':'view'}))
 
     def test_transition_to_state_not_permissive(self):
-        from repoze.bfg.workflow import StateMachineError
+        from repoze.bfg.workflow import WorkflowError
         workflow = self._makeOne()
         executed = []
         def append(context, name, guards=()):
@@ -494,7 +494,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(executed['context'], context)
         self.assertEqual(executed['name'], 'published')
         permitted = executed['guards'][0]
-        self.assertRaises(StateMachineError,
+        self.assertRaises(WorkflowError,
                           permitted, None, {'permission':'view'})
 
     def test_transition_to_state_request_is_None(self):
