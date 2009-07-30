@@ -18,23 +18,6 @@ class WorkflowError(Exception):
 
 class Workflow(object):
     """ Finite state machine featuring transition actions.
-
-    The class stores a sequence of transition dictionaries.
-
-    When a (state, transition_name) search is performed via ``execute``:
-
-      * an exact match is checked first,
-      * (state, None) is checked next.
-
-    The callback must be of the following form:
-    * callback(context, transition_info)
-
-    ``transition_info`` passed to the transition funciton is a
-    dictionary containing transition information.
-
-    It is recommended that all transition functions be module level
-    callables to facilitate issues related to StateMachine
-    persistence.
     """
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
@@ -45,13 +28,9 @@ class Workflow(object):
                        state will be stored (object is responsible for
                        persisting)
                        
-        o transitions - initial list of transition dictionaries
-
         o initial_state - initial state for any object using this
                           state machine
 
-        o initializer - callback function that accepts a context
-          to initialize a context object to the initial state
         """
         self._transition_data = {}
         self._transition_order = []
