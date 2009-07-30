@@ -4,41 +4,36 @@
 
 <workflow
    name="theworkflow"
-   initial_state="private"
    state_attr="state"
+   initial_state="private"
    content_type=".dummy.IContent"
    >
 
-   <state name="private">
-     <key name="title" value="Private"/>
-     <key name="description" value="Nobody can see it"/>
+   <state name="private" 
+      callback=".dummy.callback">
+        <key name="title" value="Private"/>
+        <key name="description" value="Nobody can see it"/>
    </state>
 
-   <state name="public">
+   <state name="public"
+      callback=".dummy.callback">
      <key name="title" value="Public"/>
      <key name="description" value="Everybody can see it"/>
    </state>
 
    <transition
-      name="initialize"
-      callback=".dummy.callback"
-      from_state=""
-      to_state="private"
-      />
-
-   <transition
-      name="to_public"
-      callback=".dummy.callback"
-      from_state="private"
-      to_state="public"
-      permission="administer"
-      />
-
-   <transition
-      name="to_private"
+      name="public_to_private"
       callback=".dummy.callback"
       from_state="public"
       to_state="private"
+      permission="moderate"
+      />
+
+   <transition
+      name="private_to_public"
+      callback=".dummy.callback"
+      from_state="private"
+      to_state="public"
       permission="moderate"
       />
 

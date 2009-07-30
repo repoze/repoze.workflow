@@ -39,21 +39,21 @@ class IStateDirective(Interface):
     """ The interface for a state directive """
     name = TextLine(title=u'name', required=True)
     title = TextLine(title=u'title', required=False)
+    callback = GlobalObject(title=u'enter state callback', required=False)
 
 class IWorkflowDirective(Interface):
-    name = TextLine(title=u'name', required=False)
+    name = TextLine(title=u'name', required=True)
     initial_state = TextLine(title=u'initial_state', required=True)
-    state_attr = TextLine(title=u'state_attr', required=False)
+    state_attr = TextLine(title=u'state_attr', required=True)
     content_type = GlobalObject(title=u'content_type', required=False)
     container_type = GlobalInterface(title=u'container_type', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
-    def __init__(self, context, initial_state, name=None, state_attr=None,
+    def __init__(self, context, name, state_attr, initial_state,
                  content_type=None, container_type=None):
         self.context = context
-        self.initial_state = initial_state
         self.name = name or ''
         if state_attr is None:
             state_attr = name
@@ -62,13 +62,18 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         self.container_type = container_type
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
+        self.initial_state = initial_state
 
     def after(self):
         def register():
-            workflow = Workflow(self.state_attr,
-                                initial_state=self.initial_state)
+            workflow = Workflow(self.state_attr, self.initial_state)
             for state in self.states:
-                workflow.add_state_info(state.name, **state.extras)
+                try:
+                    workflow.add_state(state.name,
+                                       state.callback,
+                                       **state.extras)
+                except WorkflowError, why:
+                    raise ConfigurationError(str(why))
 
             for transition in self.transitions:
                 try:
@@ -80,9 +85,13 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                 except WorkflowError, why:
                     raise ConfigurationError(str(why))
 
+            try:
+                workflow.check()
+            except WorkflowError, why:
+                raise ConfigurationError(str(why))
+
             register_workflow(workflow, self.name, self.content_type,
                               self.container_type, self.info)
-
                               
         self.action(
             discriminator = (IWorkflow, self.content_type, self.container_type,
@@ -115,11 +124,10 @@ class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
 class StateDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IStateDirective)
-    def __init__(self, context, name, title=None):
+    def __init__(self, context, name, callback=None, title=None):
         self.context = context
         self.name = name
-        if title is None:
-            title = name
+        self.callback = callback
         self.extras = {'title':title} # mutated by subdirectives
 
     def after(self):

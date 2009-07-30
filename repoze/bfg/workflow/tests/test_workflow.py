@@ -7,9 +7,35 @@ class WorkflowTests(unittest.TestCase):
         from repoze.bfg.workflow import Workflow
         return Workflow
 
-    def _makeOne(self, attr='state', initial_state=None):
+    def _makeOne(self, attr='state', initial_state='pending'):
         klass = self._getTargetClass()
         return klass(attr, initial_state)
+
+    def _makePopulated(self, state_callback=None, transition_callback=None):
+        sm = self._makeOne()
+        sm._state_order = ['pending', 'published', 'private']
+        sm._state_data.setdefault('pending', {'callback':state_callback})
+        sm._state_data.setdefault('published', {'callback':state_callback})
+        sm._state_data.setdefault('private', {'callback':state_callback})
+        tdata = sm._transition_data
+        tdata['publish'] =  dict(name='publish',
+                                 from_state='pending',
+                                 to_state='published',
+                                 callback=transition_callback)
+        tdata['reject'] = dict(name='reject',
+                               from_state='pending',
+                               to_state='private',
+                               callback=transition_callback)
+        tdata['retract'] = dict(name='retract',
+                                from_state='published',
+                                to_state='pending',
+                                callback=transition_callback)
+        tdata['submit'] = dict(name='submit',
+                               from_state='private',
+                               to_state='pending',
+                               callback=transition_callback)
+        sm._transition_order = ['publish', 'reject', 'retract', 'submit']
+        return sm
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
@@ -36,22 +62,32 @@ class WorkflowTests(unittest.TestCase):
         ob.state = 'pending'
         self.assertEqual(sm.state_of(ob), 'pending')
 
-    def test_add_state_info_state_exists(self):
+    def test_add_state_state_exists(self):
+        from repoze.bfg.workflow import WorkflowError
         sm = self._makeOne()
-        sm._state_names = ['foo']
+        sm._state_order = ['foo']
         sm._state_data = {'foo':{'c':5}}
-        sm.add_state_info('foo', a=1, b=2)
-        self.assertEqual(sm._state_order, ['foo'])
-        self.assertEqual(sm._state_data, {'foo':{'a':1, 'b':2, 'c':5}})
+        self.assertRaises(WorkflowError, sm.add_state, 'foo')
 
     def test_add_state_info_state_doesntexist(self):
         sm = self._makeOne()
-        sm.add_state_info('foo', a=1, b=2)
+        callback = object()
+        sm.add_state('foo', callback, a=1, b=2)
         self.assertEqual(sm._state_order, ['foo'])
-        self.assertEqual(sm._state_data, {'foo':{'a':1, 'b':2}})
+        self.assertEqual(sm._state_data, {'foo':{'callback':callback,
+                                                 'a':1, 'b':2}})
+
+    def test_add_state_defaults(self):
+        sm = self._makeOne()
+        callback = object()
+        sm.add_state('foo')
+        self.assertEqual(sm._state_order, ['foo'])
+        self.assertEqual(sm._state_data, {'foo':{'callback':None}})
 
     def test_add_transition(self):
         sm = self._makeOne()
+        sm.add_state('public')
+        sm.add_state('private')
         sm.add_transition('make_public', 'private', 'public', None, a=1)
         sm.add_transition('make_private', 'public', 'private', None, b=2)
         self.assertEqual(len(sm._transition_data), 2)
@@ -68,76 +104,80 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(make_private['to_state'], 'private')
         self.assertEqual(make_private['callback'], None)
         self.assertEqual(make_private['b'], 2)
-
         self.assertEqual(len(sm._state_order), 2)
 
-    def _add_transitions(self, sm, callback=None):
-        tdata = sm._transition_data
-        tdata['publish'] =  dict(name='publish',
-                                 from_state='pending',
-                                 to_state='published',
-                                 callback=callback)
-        tdata['reject'] = dict(name='reject',
-                               from_state='pending',
-                               to_state='private',
-                               callback=callback)
-        tdata['retract'] = dict(name='retract',
-                                from_state='published',
-                                to_state='pending',
-                                callback=callback)
-        tdata['submit'] = dict(name='submit',
-                               from_state='private',
-                               to_state='pending',
-                               callback=callback)
-        sm._transition_order = ['publish', 'reject', 'retract', 'submit']
-        if not sm._state_order:
-            sm._state_order = ['pending', 'published', 'private']
-        sm._state_data.setdefault('pending', {})
-        sm._state_data.setdefault('published', {})
-        sm._state_data.setdefault('private', {})
+    def test_add_transition_transition_name_already_exists(self):
+        from repoze.bfg.workflow import WorkflowError
+        sm = self._makeOne()
+        sm.add_state('public')
+        sm.add_state('private')
+        sm.add_transition('make_public', 'private', 'public', None, a=1)
+        self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
+                          'private', 'public')
 
-    def test__transitions_default_from_state(self):
-        sm = self._makeOne(initial_state='pending')
-        self._add_transitions(sm)
+    def test_add_transition_from_state_doesnt_exist(self):
+        from repoze.bfg.workflow import WorkflowError
+        sm = self._makeOne()
+        sm.add_state('public')
+        self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
+                          'private', 'public')
+
+    def test_add_transition_to_state_doesnt_exist(self):
+        from repoze.bfg.workflow import WorkflowError
+        sm = self._makeOne()
+        sm.add_state('private')
+        self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
+                          'private', 'public')
+
+    def test_check_fails(self):
+        from repoze.bfg.workflow import WorkflowError
+        sm = self._makeOne()
+        self.assertRaises(WorkflowError, sm.check)
+        
+    def test_check_succeeds(self):
+        from repoze.bfg.workflow import WorkflowError
+        sm = self._makeOne()
+        sm.add_state('pending')
+        self.assertEqual(sm.check(), None)
+
+    def test__get_transitions_default_from_state(self):
+        sm = self._makePopulated()
         ob = DummyContext()
         ob.state = 'pending'
-        result = sm._transitions(ob)
+        result = sm._get_transitions(ob)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['name'], 'publish')
         self.assertEqual(result[1]['name'], 'reject')
 
-    def test__transitions_overridden_from_state(self):
-        sm = self._makeOne(initial_state='pending')
-        self._add_transitions(sm)
+    def test__get_transitions_overridden_from_state(self):
+        sm = self._makePopulated()
         ob = DummyContext()
-        result = sm._transitions(ob, from_state='private')
+        result = sm._get_transitions(ob, from_state='private')
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['name'], 'submit')
 
-    def test__transitions_context_has_state(self):
-        sm = self._makeOne(initial_state='pending')
-        self._add_transitions(sm)
+    def test__get_transitions_context_has_state(self):
+        sm = self._makePopulated()
         ob = DummyContext()
         ob.state = 'published'
-        result = sm._transitions(ob)
+        result = sm._get_transitions(ob)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['name'], 'retract')
 
-    def test__execute(self):
-        sm = self._makeOne(initial_state='pending')
+    def test__transition(self):
         args = []
         def dummy(context, transition):
             args.append((context, transition))
-        self._add_transitions(sm, callback=dummy)
+        sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContext()
         ob.state = 'pending'
-        sm._execute(ob, 'publish')
+        sm._transition(ob, 'publish')
         self.assertEqual(ob.state, 'published')
-        sm._execute(ob, 'retract')
+        sm._transition(ob, 'retract')
         self.assertEqual(ob.state, 'pending')
-        sm._execute(ob, 'reject')
+        sm._transition(ob, 'reject')
         self.assertEqual(ob.state, 'private')
-        sm._execute(ob, 'submit')
+        sm._transition(ob, 'submit')
         self.assertEqual(ob.state, 'pending')
 
         self.assertEqual(len(args), 4)
@@ -163,27 +203,39 @@ class WorkflowTests(unittest.TestCase):
                                       'name': 'submit'})
 
 
-    def test__execute_error(self):
+    def test__transition_with_state_callback(self):
+        def dummy(context, transition):
+            context.transition = transition
+        sm = self._makePopulated(state_callback=dummy)
+        ob = DummyContext()
+        ob.state = 'pending'
+        sm._transition(ob, 'publish')
+        self.assertEqual(ob.transition,
+                         {'from_state': 'pending',
+                          'callback': None,
+                          'to_state':
+                          'published',
+                          'name': 'publish'})
+
+    def test__transition_error(self):
         sm = self._makeOne(initial_state='pending')
         ob = DummyContext()
         from repoze.bfg.workflow import WorkflowError
-        self.assertRaises(WorkflowError, sm._execute, ob, 'nosuch')
+        self.assertRaises(WorkflowError, sm._transition, ob, 'nosuch')
 
-    def test__execute_guard(self):
+    def test__transition_guard(self):
         def guard(context, transition):
             raise ValueError
-        sm = self._makeOne(initial_state='pending')
-        self._add_transitions(sm)
+        sm = self._makePopulated()
         ob = DummyContext()
         ob.state = 'pending'
-        self.assertRaises(ValueError, sm._execute, ob, 'publish', (guard,))
+        self.assertRaises(ValueError, sm._transition, ob, 'publish', (guard,))
 
     def test__transition_to_state(self):
-        sm = self._makeOne(initial_state='pending')
         args = []
         def dummy(context, transition):
             args.append((context, transition))
-        self._add_transitions(sm, callback=dummy)
+        sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContext()
         ob.state = 'pending'
         sm._transition_to_state(ob, 'published')
@@ -236,10 +288,9 @@ class WorkflowTests(unittest.TestCase):
         ob.state = 'pending'
         self.assertEqual(sm._transition_to_state(ob, 'pending', (), True), None)
 
-    def test__state_info_with_title(self):
-        sm = self._makeOne(initial_state='pending')
-        sm.add_state_info('pending', title='Pending')
-        self._add_transitions(sm)
+    def test__state_with_title(self):
+        sm = self._makeOne()
+        sm.add_state('pending', title='Pending')
         ob = DummyContext()
         ob.state = 'pending'
         result = sm._state_info(ob)
@@ -249,16 +300,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], True)
         self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'Pending')
-        self.assertEqual(state['data'], {'title':'Pending'})
+        self.assertEqual(state['data'], {'callback':None, 'title':'Pending'})
         self.assertEqual(len(state['transitions']), 0)
 
 
     def test__state_info_pending(self):
-        sm = self._makeOne(initial_state='pending')
-        sm.add_state_info('pending', desc='Pending')
-        sm.add_state_info('published', desc='Published')
-        sm.add_state_info('private', desc='Private')
-        self._add_transitions(sm)
+        sm = self._makePopulated()
         ob = DummyContext()
         ob.state = 'pending'
         result = sm._state_info(ob)
@@ -269,7 +316,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], True)
         self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'pending')
-        self.assertEqual(state['data'], {'desc':'Pending'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
         state = result[1]
@@ -277,7 +324,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'published')
         self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'desc':'Published'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEquals(state['transitions'][0]['name'], 'publish')
 
@@ -286,17 +333,13 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'private')
         self.assertEqual(state['title'], 'private')
-        self.assertEqual(state['data'], {'desc':'Private'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEqual(state['transitions'][0]['name'], 'reject')
 
 
     def test__state_info_published(self):
-        sm = self._makeOne(initial_state='pending')
-        sm.add_state_info('pending', desc='Pending')
-        sm.add_state_info('published', desc='Published')
-        sm.add_state_info('private', desc='Private')
-        self._add_transitions(sm)
+        sm = self._makePopulated()
         ob = DummyContext()
         ob.state = 'published'
         result = sm._state_info(ob)
@@ -307,7 +350,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'pending')
-        self.assertEqual(state['data'], {'desc':'Pending'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEquals(state['transitions'][0]['name'], 'retract')
 
@@ -316,7 +359,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], True)
         self.assertEqual(state['name'], 'published')
         self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'desc':'Published'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
         state = result[2]
@@ -324,15 +367,11 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'private')
         self.assertEqual(state['title'], 'private')
-        self.assertEqual(state['data'], {'desc':'Private'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
     def test__state_info_private(self):
-        sm = self._makeOne(initial_state='pending')
-        sm.add_state_info('pending', desc='Pending')
-        sm.add_state_info('published', desc='Published')
-        sm.add_state_info('private', desc='Private')
-        self._add_transitions(sm)
+        sm = self._makePopulated()
         ob = DummyContext()
         ob.state = 'private'
         result = sm._state_info(ob)
@@ -343,7 +382,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'pending')
-        self.assertEqual(state['data'], {'desc':'Pending'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEquals(state['transitions'][0]['name'], 'submit')
 
@@ -352,7 +391,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'published')
         self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'desc':'Published'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
         state = result[2]
@@ -360,11 +399,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['current'], True)
         self.assertEqual(state['name'], 'private')
         self.assertEqual(state['title'], 'private')
-        self.assertEqual(state['data'], {'desc':'Private'})
+        self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
     def test_initialize_no_initializer(self):
         sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
         ob = DummyContext()
         sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
@@ -373,181 +413,181 @@ class WorkflowTests(unittest.TestCase):
         def initializer(context, transition):
             context.initialized = True
         sm = self._makeOne(initial_state='pending')
-        sm.add_transition('initialize', None, 'pending', initializer)
+        sm.add_state('pending', initializer)
         ob = DummyContext()
         sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
         self.assertEqual(ob.initialized, True)
 
-    def test_execute_permissive(self):
+    def test_transition_permissive(self):
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
-        workflow._execute = lambda *arg, **kw: append(*arg, **kw)
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=True)
         request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
-        workflow.execute(context, request, 'publish')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'publish')
-        permitted = executed['guards'][0]
+        workflow.transition(context, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'publish')
+        permitted = transitioned['guards'][0]
         result = permitted(None, {'permission':'view'})
         self.assertEqual(result, None)
 
-    def test_execute_not_permissive(self):
+    def test_transition_not_permissive(self):
         from repoze.bfg.workflow import WorkflowError
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
-        workflow._execute = lambda *arg, **kw: append(*arg, **kw)
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
-        workflow.execute(context, request, 'publish')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'publish')
-        permitted = executed['guards'][0]
+        workflow.transition(context, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'publish')
+        permitted = transitioned['guards'][0]
         self.assertRaises(WorkflowError, permitted, None,
                           {'permission':'view'})
 
-    def test_execute_request_is_None(self):
+    def test_transition_request_is_None(self):
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
-        workflow._execute = lambda *arg, **kw: append(*arg, **kw)
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         context = DummyContext()
         context.state = 'pending'
-        workflow.execute(context, None, 'publish')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'publish')
-        permitted = executed['guards'][0]
+        workflow.transition(context, None, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'publish')
+        permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {'permission':'view'}))
 
-    def test_execute_permission_is_None(self):
+    def test_transition_permission_is_None(self):
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
-        workflow._execute = lambda *arg, **kw: append(*arg, **kw)
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
-        workflow.execute(context, request, 'publish')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'publish')
-        permitted = executed['guards'][0]
+        workflow.transition(context, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'publish')
+        permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {}))
 
     def test_transition_to_state_permissive(self):
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
+            transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=True)
         request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, request, 'published')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'published')
-        permitted = executed['guards'][0]
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'published')
+        permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {'permission':'view'}))
 
     def test_transition_to_state_not_permissive(self):
         from repoze.bfg.workflow import WorkflowError
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
+            transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, request, 'published')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'published')
-        permitted = executed['guards'][0]
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'published')
+        permitted = transitioned['guards'][0]
         self.assertRaises(WorkflowError,
                           permitted, None, {'permission':'view'})
 
     def test_transition_to_state_request_is_None(self):
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
+            transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, None, 'published')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'published')
-        permitted = executed['guards'][0]
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'published')
+        permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {'permission':'view'}))
 
     def test_transition_to_state_permission_is_None(self):
         workflow = self._makeOne()
-        executed = []
+        transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
-            executed.append(D)
+            transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         testing.registerDummySecurityPolicy(permissive=False)
         context = DummyContext()
         context.state = 'pending'
         request = testing.DummyRequest()
         workflow.transition_to_state(context, request, 'published')
-        self.assertEqual(len(executed), 1)
-        executed = executed[0]
-        self.assertEqual(executed['context'], context)
-        self.assertEqual(executed['name'], 'published')
-        permitted = executed['guards'][0]
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['context'], context)
+        self.assertEqual(transitioned['name'], 'published')
+        permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {}))
 
-    def test_transitions_permissive(self):
+    def test_get_transitions_permissive(self):
         workflow = self._makeOne()
-        workflow._transitions = lambda *arg, **kw: [{'permission':'view'}, {}]
+        workflow._get_transitions=lambda *arg, **kw: [{'permission':'view'}, {}]
         testing.registerDummySecurityPolicy(permissive=True)
         request = testing.DummyRequest()
-        transitions = workflow.transitions(None, request, 'private')
+        transitions = workflow.get_transitions(None, request, 'private')
         self.assertEqual(len(transitions), 2)
 
-    def test_transitions_nonpermissive(self):
+    def test_get_transitions_nonpermissive(self):
         workflow = self._makeOne()
-        workflow._transitions = lambda *arg, **kw: [{'permission':'view'}, {}]
+        workflow._get_transitions=lambda *arg, **kw: [{'permission':'view'}, {}]
         testing.registerDummySecurityPolicy(permissive=False)
         request = testing.DummyRequest()
-        transitions = workflow.transitions(request, 'private')
+        transitions = workflow.get_transitions(request, 'private')
         self.assertEqual(len(transitions), 1)
 
     def test_state_info_permissive(self):

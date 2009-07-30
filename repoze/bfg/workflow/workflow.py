@@ -22,15 +22,12 @@ class Workflow(object):
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
     
-    def __init__(self, state_attr, initial_state=None):
+    def __init__(self, state_attr, initial_state):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
                        persisting)
                        
-        o initial_state - initial state for any object using this
-                          state machine
-
         """
         self._transition_data = {}
         self._transition_order = []
@@ -42,25 +39,27 @@ class Workflow(object):
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
 
-    def add_state_info(self, state_name, **kw):
-        if not state_name in self._state_order:
-            self._state_order.append(state_name)
-        if not state_name in self._state_data:
-            self._state_data[state_name] = {}
-        self._state_data[state_name].update(kw)
+    def add_state(self, state_name, callback=None, **kw):
+        """ Add a state to the FSM.  ``**kw`` must not contain the key
+        ``callback``.  This name is reserved for internal use."""
+        if state_name in self._state_order:
+            raise WorkflowError('State %s already defined' % state_name)
+        kw['callback'] = callback
+        self._state_data[state_name] = kw
+        self._state_order.append(state_name)
 
     def add_transition(self, transition_name, from_state, to_state,
-                       callback, **kw):
+                       callback=None, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
         if transition_name in self._transition_order:
             raise WorkflowError('Duplicate transition name %s' %
                                     transition_name)
-        if from_state is not None:
-            self.add_state_info(from_state)
-        if to_state is not None:
-            self.add_state_info(to_state)
+        if not from_state in self._state_order:
+            raise WorkflowError('No such state %r' % from_state)
+        if not to_state in self._state_order:
+            raise WorkflowError('No such state %r' % to_state)
         transition = kw
         transition['name'] = transition_name
         transition['from_state'] = from_state
@@ -69,41 +68,53 @@ class Workflow(object):
         self._transition_data[transition_name] = transition
         self._transition_order.append(transition_name)
 
-    def _execute(self, context, transition_name, guards=()):
-        """ Execute a transition """
+    def check(self):
+        if not self.initial_state in self._state_order:
+            raise WorkflowError('Workflow must define an initial state')
+
+    def _transition(self, context, transition_name, guards=()):
+        """ Execute a transition via a transition name """
         state = getattr(context, self.state_attr, _marker) 
         if state is _marker:
             state = None
+
         si = (state, transition_name)
 
-        found = None
+        transition = None
         for tname in self._transition_order:
-            transition = self._transition_data[tname]
-            match = (transition['from_state'], transition['name'])
+            t = self._transition_data[tname]
+            match = (t['from_state'], t['name'])
             if si == match:
-                found = transition
+                transition = t
                 break
 
-        if found is None:
+        if transition is None:
             raise WorkflowError(
-                'No transition from %r using transition %r'
+                'No transition from %r using transition name %r'
                 % (state, transition_name))
 
         if guards:
             for guard in guards:
-                guard(context, found)
+                guard(context, transition)
 
-        callback = found['callback']
-        if callback is not None:
-            callback(context, found)
-        to_state = found['to_state']
+        from_state = transition['from_state']
+        to_state = transition['to_state']
+
+        transition_callback = transition['callback']
+        if transition_callback is not None:
+            transition_callback(context, transition)
+
+        state_callback = self._state_data[to_state]['callback']
+        if state_callback is not None:
+            state_callback(context, transition)
+
         setattr(context, self.state_attr, to_state)
 
     def state_of(self, context):
         state = getattr(context, self.state_attr, None)
         return state
 
-    def _transitions(self, context, from_state=None):
+    def _get_transitions(self, context, from_state=None):
         if from_state is None:
             from_state = self.state_of(context)
 
@@ -126,7 +137,7 @@ class Workflow(object):
                 transitions = info['transitions']
                 if transitions:
                     transition = transitions[0]
-                    self._execute(context, transition['name'], guards)
+                    self._transition(context, transition['name'], guards)
                     return
         raise WorkflowError('No transition from state %r to state %r'
                 % (from_state, to_state))
@@ -157,25 +168,25 @@ class Workflow(object):
         return L
 
     def initialize(self, context):
-        transitions = []
-        for tname in self._transition_order:
-            transition = self._transition_data[tname]
-            if  ( (transition['from_state'] == None) and
-                  (transition['to_state'] == self.initial_state) ):
-                transitions.append(transition)
-        if transitions:
-            self._execute(context, transitions[0]['name'])
-        else:
-            setattr(context, self.state_attr, self.initial_state)
+        callback = self._state_data[self.initial_state]['callback']
+        if callback is not None:
+            callback(context, {})
+        setattr(context, self.state_attr, self.initial_state)
             
-    def execute(self, context, request, transition_name, guards=()):
+    def transition(self, context, request, transition_name, guards=()):
         permission_guard = PermissionGuard(request, transition_name)
         guards = list(guards)
         guards.append(permission_guard)
-        self._execute(context, transition_name, guards=guards)
+        self._transition(context, transition_name, guards=guards)
 
-    def transitions(self, context, request, from_state=None):
-        transitions = self._transitions(context, from_state)
+    def transition_to_state(self, context, request, to_state, guards=()):
+        permission_guard = PermissionGuard(request, to_state)
+        guards = list(guards)
+        guards.append(permission_guard)
+        self._transition_to_state(context, to_state, guards=guards)
+
+    def get_transitions(self, context, request, from_state=None):
+        transitions = self._get_transitions(context, from_state)
         L = []
         for transition in transitions:
             if 'permission' in transition:
@@ -197,11 +208,6 @@ class Workflow(object):
                 L.append(transition)
             state['transitions'] = L
         return states
-
-    def transition_to_state(self, context, request, to_state):
-        permission_guard = PermissionGuard(request, to_state)
-        self._transition_to_state(context, to_state,
-                                  guards=(permission_guard,))
 
 class PermissionGuard:
     def __init__(self, request, name):

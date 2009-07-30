@@ -12,11 +12,11 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.bfg.workflow.zcml import WorkflowDirective
         return WorkflowDirective
 
-    def _makeOne(self, context=None, initial_state=None, name=None,
-                 state_attr=None, content_type=None):
+    def _makeOne(self, context=None, name=None, state_attr=None,
+                 initial_state=None, content_type=None):
         if context is None:
             context = DummyContext()
-        return self._getTargetClass()(context, initial_state, name, state_attr,
+        return self._getTargetClass()(context, name, state_attr, initial_state,
                                       content_type)
 
     def test_ctor_with_state_attr(self):
@@ -38,7 +38,8 @@ class TestWorkflowDirective(unittest.TestCase):
             pass
         directive = self._makeOne(initial_state='public',
                                   content_type=IDummy)
-        directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
+        directive.states = [ DummyState('private', a=1),
+                             DummyState('public', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_private'),
                                   ]
@@ -70,11 +71,9 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(workflow.initial_state, 'public')
         
 
-    def test_after_raises_error(self):
+    def test_after_raises_error_during_transition_add(self):
         from zope.interface import Interface
-        from repoze.bfg.workflow.interfaces import IWorkflowList
         from zope.configuration.exceptions import ConfigurationError
-        from zope.component import getSiteManager
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
@@ -83,6 +82,35 @@ class TestWorkflowDirective(unittest.TestCase):
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_public'),
                                   ]
+        directive.after()
+        actions = directive.context.actions
+        action = actions[0]
+        callback = action[1]
+        self.assertRaises(ConfigurationError, callback)
+
+    def test_after_raises_error_during_state_add(self):
+        from zope.interface import Interface
+        from zope.configuration.exceptions import ConfigurationError
+        class IDummy(Interface):
+            pass
+        directive = self._makeOne(initial_state='public',
+                                  content_type=IDummy)
+        directive.states = [ DummyState('public', a=1),
+                             DummyState('public', b=2) ]
+        directive.after()
+        actions = directive.context.actions
+        action = actions[0]
+        callback = action[1]
+        self.assertRaises(ConfigurationError, callback)
+
+    def test_after_raises_error_during_check(self):
+        from zope.interface import Interface
+        from zope.configuration.exceptions import ConfigurationError
+        class IDummy(Interface):
+            pass
+        directive = self._makeOne(initial_state='public',
+                                  content_type=IDummy)
+        directive.states = [ DummyState('only', a=1)]
         directive.after()
         actions = directive.context.actions
         action = actions[0]
@@ -199,22 +227,21 @@ class TestFixtureApp(unittest.TestCase):
             )
         self.assertEqual(
             workflow._state_data,
-            {u'public': {'description': u'Everybody can see it',
+            {u'public': {'callback':callback,
+                         'description': u'Everybody can see it',
                          'title': u'Public'},
-             u'private': {'description': u'Nobody can see it',
+             u'private': {'callback':callback,
+                          'description': u'Nobody can see it',
                           'title': u'Private'}},
             )
         transitions = workflow._transition_data
-        self.assertEqual(len(transitions), 3)
-        self.assertEqual(transitions['initialize'],
-             {'from_state': None, 'callback': callback,
-              'name': 'initialize', 'to_state': u'private'},)
-        self.assertEqual(transitions['to_public'],
+        self.assertEqual(len(transitions), 2)
+        self.assertEqual(transitions['private_to_public'],
             {'from_state': u'private', 'callback': callback,
-              'name': u'to_public', 'to_state': u'public'},)
-        self.assertEqual(transitions['to_private'],
+              'name': u'private_to_public', 'to_state': u'public'},)
+        self.assertEqual(transitions['public_to_private'],
              {'from_state': u'public', 'callback': callback,
-              'name': 'to_private', 'to_state': u'private'}
+              'name': 'public_to_private', 'to_state': u'private'}
             )
 
 class DummyContext:
@@ -224,8 +251,9 @@ class DummyContext:
         self.__dict__.update(kw)
 
 class DummyState:
-    def __init__(self, name, **extras):
+    def __init__(self, name, title=None, callback=None, **extras):
         self.name = name
+        self.callback = callback
         self.extras = extras
         
 class DummyTransition:

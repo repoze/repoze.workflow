@@ -1,4 +1,6 @@
+from zope.interface import implements
 from repoze.bfg.workflow.zcml import register_workflow
+from repoze.bfg.workflow.interfaces import IWorkflow
 
 def registerDummyWorkflow(name, workflow=None, content_type=None,
                           container_type=None):
@@ -11,10 +13,28 @@ def registerDummyWorkflow(name, workflow=None, content_type=None,
 class DummyWorkflow:
     state_attr = 'state'
     initial_state = 'initial'
+    implements(IWorkflow)
     def __init__(self):
         self.executed = []
         self.transitioned = []
         self.initialized = []
+        self.states_added = []
+        self.transitions_added = []
+        
+    def add_state(self, name, callback=None, **kw):
+        self.states_added.append({'name':name,
+                                  'callback':callback,
+                                  'extra':kw})
+
+    def add_transition(self, name, from_state, to_state, callback=None, **kw):
+        self.transitions_added.append({'name':name,
+                                       'from_state':from_state,
+                                       'to_state':to_state,
+                                       'callback':callback,
+                                       'extra':kw})
+
+    def check(self):
+        return True
 
     def state_of(self, context):
         return 'state'
@@ -22,18 +42,19 @@ class DummyWorkflow:
     def initialize(self, context):
         self.initialized.append(context)
 
-    def execute(self, context, request, transition_name, guards=()):
+    def transition(self, context, request, transition_name, guards=()):
         self.executed.append({'context':context, 'name':transition_name,
                               'guards':guards, 'request':request})
 
-    def transitions(self, context, request, from_state=None):
+    def transition_to_state(self, context, request, to_state, guards=()):
+        self.transitioned.append({'to_state':to_state, 'context':context,
+                                  'request':request})
+
+    def get_transitions(self, context, request, from_state=None):
         return []
 
     def state_info(self, context, request, from_state=None):
         return []
 
-    def transition_to_state(self, context, request, to_state):
-        self.transitioned.append({'to_state':to_state, 'context':context,
-                                  'request':request})
 
     
