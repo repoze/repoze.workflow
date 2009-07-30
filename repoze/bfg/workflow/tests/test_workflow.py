@@ -69,11 +69,15 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(sm.state_of(ob), 'pending')
         self.assertEqual(ob.state, 'pending')
 
-    def state_of_nondefault(self):
+    def test_state_of_nondefault(self):
         sm = self._makeOne()
         ob = DummyContext()
         ob.state = 'pending'
         self.assertEqual(sm.state_of(ob), 'pending')
+
+    def test_state_of_None_is_initial_state(self):
+        sm = self._makeOne()
+        self.assertEqual(sm.state_of(None), 'pending')
 
     def test_add_state_state_exists(self):
         from repoze.bfg.workflow import WorkflowError

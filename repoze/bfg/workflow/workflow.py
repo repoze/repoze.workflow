@@ -114,6 +114,8 @@ class Workflow(object):
         return state
 
     def state_of(self, context):
+        if context is None: # for add forms
+            return self.initial_state
         state = self._state_of(context)
         if state is None:
             state = self.initialize(context)
@@ -172,6 +174,19 @@ class Workflow(object):
 
         return L
 
+    def state_info(self, context, request, from_state=None):
+        states = self._state_info(context, from_state)
+        for state in states:
+            L = []
+            for transition in state['transitions']:
+                if 'permission' in transition:
+                    if not has_permission(transition['permission'],
+                                          context, request):
+                        continue
+                L.append(transition)
+            state['transitions'] = L
+        return states
+
     def initialize(self, context):
         callback = self._state_data[self.initial_state]['callback']
         if callback is not None:
@@ -201,19 +216,6 @@ class Workflow(object):
                     continue
             L.append(transition)
         return L
-
-    def state_info(self, context, request, from_state=None):
-        states = self._state_info(context, from_state)
-        for state in states:
-            L = []
-            for transition in state['transitions']:
-                if 'permission' in transition:
-                    if not has_permission(transition['permission'],
-                                          context, request):
-                        continue
-                L.append(transition)
-            state['transitions'] = L
-        return states
 
 class PermissionGuard:
     def __init__(self, request, name):
@@ -262,4 +264,5 @@ def get_workflow(content_type, name, context=None,
         if wf is not None:
             return wf
 
-            
+class DummyContext:
+    pass
