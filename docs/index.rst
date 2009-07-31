@@ -8,6 +8,7 @@ Documentation for repoze.workflow
    :maxdepth: 2
 
    configuration.rst
+   usage.rst
    api.rst
 
 
