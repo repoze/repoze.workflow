@@ -1,19 +1,14 @@
 Documentation for repoze.workflow
 =================================
 
-Put the overview of the purpose of the package here.
-
+:mod:`repoze.bfg.workflow` is a content workflow system for the
+:term:`repoze.bfg` web framework.
 
 .. toctree::
    :maxdepth: 2
 
+   configuration.rst
    api.rst
-
-
-Topic A
--------
-
-Explain topic.
 
 
 Indices and tables
