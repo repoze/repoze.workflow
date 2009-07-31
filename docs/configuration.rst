@@ -54,8 +54,8 @@ workflow.
    </configure>
 
 This configuration defines *states* and *transitions*.  A state is an
-"end point" associated with a piece of content.  A transition is the
-path between two states.
+"end point" associated with a piece of content.  A transition is a
+path from one state to another state (unidirectional).
 
 A state can be associated with a :term:`callback`.  A callback is a
 Python callable that accepts two arguments: a ``content`` and a
