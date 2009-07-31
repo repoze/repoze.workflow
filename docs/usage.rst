@@ -46,6 +46,9 @@ Workflow Objects
 ----------------
 
 Workflow objects can be used to initialize and transition content.
+Typically to use these APIs you need a :mod:`repoze.bfg` "request"
+object.  This object is available in BFG views as the "request"
+parameter to the view.
 
 Here is how you initialize a piece of content to the initial workflow
 state:
@@ -55,6 +58,8 @@ state:
 
    workflow.initialize(content)
 
+No permission is ever required to initialize a piece of content, so
+the API does not accept a request.
 
 Here is how you transition a piece of content using a particular
 transition name:
@@ -62,7 +67,7 @@ transition name:
 .. code-block:: python
    :linenos:
 
-   workflow.transition(content, 'to_public')
+   workflow.transition(content, request, 'to_public')
 
 Here is how you transition a piece of content to a particular state
 (there must be a valid transition to this state from its current
