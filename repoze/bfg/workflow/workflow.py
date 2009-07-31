@@ -234,20 +234,20 @@ class PermissionGuard:
 def process_wf_list(wf_list, context):
     fallback = None
     for wf_def in wf_list:
-        container_type = wf_def['container_type']
+        elector = wf_def['elector']
         workflow = wf_def['workflow']
-        if container_type is None:
+        if elector is None:
             fallback = workflow
         elif context is not None:
-            if find_interface(context, container_type):
+            if elector(context):
                 return workflow
     return fallback
 
 def get_workflow(content_type, name, context=None,
                  process_wf_list=process_wf_list): # process_wf_list is for test
     """ Return a workflow based on a content_type, the workflow name,
-    and (optionally) a context.  The context is used as a starting
-    point to find a container type for placeful workflows."""
+    and (optionally) a context.  The context is used as an argument to
+    the elector for placeful workflows."""
     sm = getSiteManager()
     look = sm.adapters.lookup
 

@@ -7,6 +7,7 @@
    state_attr="state"
    initial_state="private"
    content_type=".dummy.IContent"
+   elector=".dummy.elector"
    >
 
    <state name="private" 

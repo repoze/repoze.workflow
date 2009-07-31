@@ -739,58 +739,60 @@ class TestProcessWFList(unittest.TestCase):
         result = self._callFUT([], None)
         self.assertEqual(result, None)
 
-    def test_context_is_None_container_type_is_None(self):
+    def test_context_is_None_elector_is_None(self):
         workflow = object()
-        wflist = [{'container_type':None, 'workflow':workflow}]
+        wflist = [{'elector':None, 'workflow':workflow}]
         result = self._callFUT(wflist, None)
         self.assertEqual(result, workflow)
 
-    def test_context_is_None_container_type_not_None_no_fallback(self):
+    def test_context_is_None_elector_not_None_no_fallback(self):
         workflow = object()
-        IContent = self._getIContent()
-        wflist = [{'container_type':IContent, 'workflow':workflow}]
+        def elector(context):
+            return False
+        wflist = [{'elector':elector, 'workflow':workflow}]
         result = self._callFUT(wflist, None)
         self.assertEqual(result, None)
 
-    def test_context_is_None_container_type_not_None_with_fallback(self):
+    def test_context_is_None_elector_not_None_with_fallback(self):
         workflow = object()
         default = object()
-        IContent = self._getIContent()
-        wflist = [{'container_type':IContent, 'workflow':workflow},
-                  {'container_type':None, 'workflow':default}]
+        def elector(context):
+            return False
+        wflist = [{'elector':elector, 'workflow':workflow},
+                  {'elector':None, 'workflow':default}]
         result = self._callFUT(wflist, None)
         self.assertEqual(result, default)
 
-    def test_context_not_None_container_type_not_None_no_fallback(self):
+    def test_context_not_None_elector_not_None_no_fallback(self):
         workflow = object()
-        IContent = self._getIContent()
-        wflist = [{'container_type':IContent, 'workflow':workflow}]
+        def elector(context):
+            return False
+        wflist = [{'elector':elector, 'workflow':workflow}]
         context = object()
         result = self._callFUT(wflist, object)
         self.assertEqual(result, None)
 
-    def test_context_not_None_container_type_not_None_with_fallback(self):
+    def test_context_not_None_elector_not_None_with_fallback(self):
         workflow = object()
         default = object()
-        IContent = self._getIContent()
         context = object()
-        wflist = [{'container_type':IContent, 'workflow':workflow},
-                  {'container_type':None, 'workflow':default}]
+        def elector(context):
+            return False
+        wflist = [{'elector':elector, 'workflow':workflow},
+                  {'elector':None, 'workflow':default}]
         result = self._callFUT(wflist, context)
         self.assertEqual(result, default)
 
-    def test_context_not_None_container_type_not_None_interface_found(self):
-        from zope.interface import directlyProvides
+    def test_context_not_None_elector_not_None_interface_found(self):
         workflow = object()
         default = object()
-        IContent = self._getIContent()
-        context = DummyContext()
-        directlyProvides(context, IContent)
-        wflist = [{'container_type':IContent, 'workflow':workflow},
-                  {'container_type':None, 'workflow':default}]
+        context = object()
+        def elector(context):
+            return True
+        wflist = [{'elector':elector, 'workflow':workflow},
+                  {'elector':None, 'workflow':default}]
         result = self._callFUT(wflist, context)
         self.assertEqual(result, workflow)
-
 
 class DummyContext:
     pass

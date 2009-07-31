@@ -2,11 +2,10 @@ from zope.interface import implements
 from repoze.bfg.workflow.zcml import register_workflow
 from repoze.bfg.workflow.interfaces import IWorkflow
 
-def registerDummyWorkflow(name, workflow=None, content_type=None,
-                          container_type=None):
+def registerDummyWorkflow(name, workflow=None, content_type=None, elector=None):
     if workflow is None:
         workflow = DummyWorkflow()
-    register_workflow(workflow, name, content_type, container_type)
+    register_workflow(workflow, name, content_type, elector)
 
     return workflow
 

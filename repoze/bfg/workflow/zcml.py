@@ -46,20 +46,20 @@ class IWorkflowDirective(Interface):
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=True)
     content_type = GlobalObject(title=u'content_type', required=False)
-    container_type = GlobalInterface(title=u'container_type', required=False)
+    elector = GlobalObject(title=u'elector', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, name, state_attr, initial_state,
-                 content_type=None, container_type=None):
+                 content_type=None, elector=None):
         self.context = context
         self.name = name or ''
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
         self.content_type = content_type
-        self.container_type = container_type
+        self.elector = elector
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
         self.initial_state = initial_state
@@ -91,10 +91,15 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                 raise ConfigurationError(str(why))
 
             register_workflow(workflow, self.name, self.content_type,
-                              self.container_type, self.info)
+                              self.elector, self.info)
+
+        if self.elector is not None:
+            elector_id = id(self.elector)
+        else:
+            elector_id = None
                               
         self.action(
-            discriminator = (IWorkflow, self.content_type, self.container_type,
+            discriminator = (IWorkflow, self.content_type, elector_id,
                              self.name),
             callable = register,
             args = (),
@@ -139,7 +144,7 @@ def key_value_pair(context, name, value):
         ob.extras = {}
     ob.extras[str(name)] = value
 
-def register_workflow(workflow, name, content_type, container_type, info=None):
+def register_workflow(workflow, name, content_type, elector, info=None):
     if content_type is None:
         content_type = IDefaultWorkflow
     sm = getSiteManager()
@@ -150,5 +155,4 @@ def register_workflow(workflow, name, content_type, container_type, info=None):
         sm.registerAdapter(wf_list, (content_type,),
                            IWorkflowList, name, info)
 
-    wf_list.append({'workflow':workflow,
-                    'container_type':container_type})
+    wf_list.append({'workflow':workflow, 'elector':elector})

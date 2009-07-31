@@ -12,3 +12,5 @@ class Content(object):
 def callback(context, transition):
     pass
 
+def elector(context):
+    return True

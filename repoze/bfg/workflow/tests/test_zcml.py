@@ -55,7 +55,7 @@ class TestWorkflowDirective(unittest.TestCase):
         wflist = sm.adapters.lookup((IDummy,), IWorkflowList, name="")
         self.assertEqual(len(wflist), 1)
         wf_dict = wflist[0]
-        self.assertEqual(wf_dict['container_type'], None)
+        self.assertEqual(wf_dict['elector'], None)
         self.assertEqual(wf_dict['workflow'].__class__, Workflow)
         workflow = wf_dict['workflow']
         self.assertEqual(
@@ -201,13 +201,14 @@ class TestFixtureApp(unittest.TestCase):
         from repoze.bfg.workflow.tests.fixtures.dummy import callback
         import repoze.bfg.workflow.tests.fixtures as package
         from repoze.bfg.workflow.tests.fixtures.dummy import IContent
+        from repoze.bfg.workflow.tests.fixtures.dummy import elector
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),
                                      IWorkflowList, name='theworkflow')
         self.assertEqual(len(wf_list), 1)
         workflow_data = wf_list[0]
-        self.assertEqual(workflow_data['container_type'], None)
+        self.assertEqual(workflow_data['elector'], elector)
         workflow = workflow_data['workflow']
         self.assertEqual(workflow.__class__, Workflow)
         self.assertEqual(
