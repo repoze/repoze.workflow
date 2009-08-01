@@ -46,26 +46,29 @@ class IWorkflowDirective(Interface):
     state_attr = TextLine(title=u'state_attr', required=True)
     content_type = GlobalObject(title=u'content_type', required=False)
     elector = GlobalObject(title=u'elector', required=False)
+    permission_checker = GlobalObject(title=u'checker', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, name, state_attr, initial_state,
-                 content_type=None, elector=None):
+                 content_type=None, elector=None, permission_checker=None):
         self.context = context
         self.name = name or ''
         if state_attr is None:
             state_attr = name
         self.state_attr = state_attr
+        self.initial_state = initial_state
         self.content_type = content_type
         self.elector = elector
+        self.permission_checker = permission_checker
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
-        self.initial_state = initial_state
 
     def after(self):
         def register():
-            workflow = Workflow(self.state_attr, self.initial_state)
+            workflow = Workflow(self.state_attr, self.initial_state,
+                                self.permission_checker)
             for state in self.states:
                 try:
                     workflow.add_state(state.name,

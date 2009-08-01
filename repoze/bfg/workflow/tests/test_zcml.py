@@ -62,10 +62,12 @@ class TestWorkflowDirective(unittest.TestCase):
             workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_public', 'to_state': 'public'},
+              'name': 'make_public', 'to_state': 'public',
+              'permission':None},
              'make_private':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_private', 'to_state': 'public'},
+              'name': 'make_private', 'to_state': 'public',
+              'permission':None},
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
@@ -202,6 +204,7 @@ class TestFixtureApp(unittest.TestCase):
         import repoze.bfg.workflow.tests.fixtures as package
         from repoze.bfg.workflow.tests.fixtures.dummy import IContent
         from repoze.bfg.workflow.tests.fixtures.dummy import elector
+        from repoze.bfg.workflow.tests.fixtures.dummy import has_permission
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),
@@ -211,6 +214,7 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(workflow_data['elector'], elector)
         workflow = workflow_data['workflow']
         self.assertEqual(workflow.__class__, Workflow)
+        self.assertEqual(workflow.permission_checker, has_permission)
         self.assertEqual(
             workflow._state_order,
             ['private', 'public'],
@@ -228,10 +232,12 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(len(transitions), 2)
         self.assertEqual(transitions['private_to_public'],
             {'from_state': u'private', 'callback': callback,
-              'name': u'private_to_public', 'to_state': u'public'},)
+             'name': u'private_to_public', 'to_state': u'public',
+             'permission':None}),
         self.assertEqual(transitions['public_to_private'],
              {'from_state': u'public', 'callback': callback,
-              'name': 'public_to_private', 'to_state': u'private'}
+              'name': 'public_to_private', 'to_state': u'private',
+              'permission':None,}
             )
 
 class DummyContext:

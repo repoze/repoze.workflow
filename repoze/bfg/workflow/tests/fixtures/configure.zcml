@@ -8,6 +8,7 @@
    initial_state="private"
    content_type=".dummy.IContent"
    elector=".dummy.elector"
+   permission_checker=".dummy.has_permission"
    >
 
    <state name="private" 

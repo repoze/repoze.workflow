@@ -1,5 +1,5 @@
 import unittest
-from repoze.bfg import testing
+from zope.testing.cleanup import cleanUp
 
 class WorkflowTests(unittest.TestCase):
 
@@ -7,9 +7,10 @@ class WorkflowTests(unittest.TestCase):
         from repoze.bfg.workflow import Workflow
         return Workflow
 
-    def _makeOne(self, attr='state', initial_state='pending'):
+    def _makeOne(self, attr='state', initial_state='pending',
+                 permission_checker=None):
         klass = self._getTargetClass()
-        return klass(attr, initial_state)
+        return klass(attr, initial_state, permission_checker)
 
     def _makePopulated(self, state_callback=None, transition_callback=None):
         sm = self._makeOne()
@@ -146,13 +147,20 @@ class WorkflowTests(unittest.TestCase):
         self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
                           'private', 'public')
 
+    def test_add_transition_with_permission_no_permission_checker(self):
+        from repoze.bfg.workflow import WorkflowError
+        sm = self._makeOne()
+        sm.add_state('private')
+        sm.add_state('public')
+        self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
+                          'private', 'public', permission='permission')
+
     def test_check_fails(self):
         from repoze.bfg.workflow import WorkflowError
         sm = self._makeOne()
         self.assertRaises(WorkflowError, sm.check)
         
     def test_check_succeeds(self):
-        from repoze.bfg.workflow import WorkflowError
         sm = self._makeOne()
         sm.add_state('pending')
         self.assertEqual(sm.check(), None)
@@ -440,16 +448,19 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.initialized, True)
 
     def test_transition_permissive(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=True)
-        request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
+        request = object()
         workflow.transition(context, request, 'publish')
         self.assertEqual(len(transitioned), 1)
         transitioned = transitioned[0]
@@ -458,17 +469,21 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         result = permitted(None, {'permission':'view'})
         self.assertEqual(result, None)
+        self.assertEqual(args, [('view', None, request)])
 
     def test_transition_not_permissive(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
         from repoze.bfg.workflow import WorkflowError
-        workflow = self._makeOne()
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=False)
-        request = testing.DummyRequest()
+        request = object()
         context = DummyContext()
         context.state = 'pending'
         workflow.transition(context, request, 'publish')
@@ -479,15 +494,19 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         self.assertRaises(WorkflowError, permitted, None,
                           {'permission':'view'})
+        self.assertEqual(args, [('view', None, request)])
 
     def test_transition_request_is_None(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=False)
         context = DummyContext()
         context.state = 'pending'
         workflow.transition(context, None, 'publish')
@@ -497,18 +516,22 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'publish')
         permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {'permission':'view'}))
+        self.assertEqual(args, []) # not called
 
     def test_transition_permission_is_None(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=False)
-        request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
+        request = object()
         workflow.transition(context, request, 'publish')
         self.assertEqual(len(transitioned), 1)
         transitioned = transitioned[0]
@@ -516,18 +539,22 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'publish')
         permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {}))
+        self.assertEqual(args, []) # not called
 
     def test_transition_to_state_permissive(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=True)
-        request = testing.DummyRequest()
         context = DummyContext()
         context.state = 'pending'
+        request = object()
         workflow.transition_to_state(context, request, 'published')
         self.assertEqual(len(transitioned), 1)
         transitioned = transitioned[0]
@@ -535,17 +562,21 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'published')
         permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {'permission':'view'}))
+        self.assertEqual(args, [('view', None, request)])
 
     def test_transition_to_state_not_permissive(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
         from repoze.bfg.workflow import WorkflowError
-        workflow = self._makeOne()
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=False)
-        request = testing.DummyRequest()
+        request = object()
         context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, request, 'published')
@@ -556,15 +587,19 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         self.assertRaises(WorkflowError,
                           permitted, None, {'permission':'view'})
+        self.assertEqual(args, [('view', None, request)])
 
     def test_transition_to_state_request_is_None(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=False)
         context = DummyContext()
         context.state = 'pending'
         workflow.transition_to_state(context, None, 'published')
@@ -574,18 +609,22 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'published')
         permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {'permission':'view'}))
+        self.assertEqual(args, []) # not called
 
     def test_transition_to_state_permission_is_None(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
             D = {'context':context, 'name': name, 'guards':guards }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
-        testing.registerDummySecurityPolicy(permissive=False)
         context = DummyContext()
         context.state = 'pending'
-        request = testing.DummyRequest()
+        request = object()
         workflow.transition_to_state(context, request, 'published')
         self.assertEqual(len(transitioned), 1)
         transitioned = transitioned[0]
@@ -593,51 +632,68 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'published')
         permitted = transitioned['guards'][0]
         self.assertEqual(None, permitted(None, {}))
+        self.assertEqual(args, []) # not called
 
     def test_get_transitions_permissive(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
+        workflow = self._makeOne(permission_checker=checker)
         workflow._get_transitions=lambda *arg, **kw: [{'permission':'view'}, {}]
-        testing.registerDummySecurityPolicy(permissive=True)
-        request = testing.DummyRequest()
-        transitions = workflow.get_transitions(None, request, 'private')
+        transitions = workflow.get_transitions(None, None, 'private')
         self.assertEqual(len(transitions), 2)
+        self.assertEqual(args, [('view', None, None)])
 
     def test_get_transitions_nonpermissive(self):
-        workflow = self._makeOne()
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        workflow = self._makeOne(permission_checker=checker)
         workflow._get_transitions=lambda *arg, **kw: [{'permission':'view'}, {}]
-        testing.registerDummySecurityPolicy(permissive=False)
-        request = testing.DummyRequest()
-        transitions = workflow.get_transitions(request, 'private')
+        transitions = workflow.get_transitions(None, 'private')
         self.assertEqual(len(transitions), 1)
+        self.assertEqual(args, [('view', None, 'private')])
 
     def test_state_info_permissive(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
         state_info = []
         state_info.append({'transitions':[{'permission':'view'}, {}]})
         state_info.append({'transitions':[{'permission':'view'}, {}]})
-        workflow = self._makeOne()
+        workflow = self._makeOne(permission_checker=checker)
         workflow._state_info = lambda *arg, **kw: state_info
-        request = testing.DummyRequest()
-        testing.registerDummySecurityPolicy(permissive=True)
+        request = object()
         result = workflow.state_info(request, 'whatever')
         self.assertEqual(result, state_info)
+        self.assertEqual(args, [('view', request, 'whatever'),
+                                ('view', request, 'whatever')])
 
     def test_state_info_nonpermissive(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
         state_info = []
         state_info.append({'transitions':[{'permission':'view'}, {}]})
         state_info.append({'transitions':[{'permission':'view'}, {}]})
-        workflow = self._makeOne()
+        workflow = self._makeOne(permission_checker=checker)
         workflow._state_info = lambda *arg, **kw: state_info
-        request = testing.DummyRequest()
-        testing.registerDummySecurityPolicy(permissive=False)
+        request = object()
         result = workflow.state_info(request, 'whatever')
         self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
+        self.assertEqual(args, [('view', request, 'whatever'),
+                                ('view', request, 'whatever')])
 
 class TestGetWorkflow(unittest.TestCase):
     def setUp(self):
-        testing.cleanUp()
+        cleanUp()
 
     def tearDown(self):
-        testing.cleanUp()
+        cleanUp()
 
     def _getIContent(self):
         from zope.interface import Interface
@@ -656,7 +712,9 @@ class TestGetWorkflow(unittest.TestCase):
 
     def _registerWorkflowList(self, content_type, name=''):
         from repoze.bfg.workflow.interfaces import IWorkflowList
-        testing.registerAdapter([], (content_type,), IWorkflowList, name=name)
+        from zope.component import getSiteManager
+        sm = getSiteManager()
+        sm.registerAdapter([], (content_type,), IWorkflowList, name=name)
 
     def test_content_type_is_None_no_registered_workflows(self):
         self.assertEqual(self._callFUT(None, ''), None)

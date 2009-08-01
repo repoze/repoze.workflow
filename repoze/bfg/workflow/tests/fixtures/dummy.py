@@ -14,3 +14,6 @@ def callback(context, transition):
 
 def elector(context):
     return True
+
+def has_permission(permission, context, request):
+    pass

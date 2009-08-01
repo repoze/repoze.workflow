@@ -7,8 +7,6 @@ from zope.interface import implements
 from zope.interface import classImplements
 from zope.component import getSiteManager
 
-from repoze.bfg.security import has_permission
-
 _marker = object()
 
 class WorkflowError(Exception):
@@ -20,7 +18,7 @@ class Workflow(object):
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
     
-    def __init__(self, state_attr, initial_state):
+    def __init__(self, state_attr, initial_state, permission_checker=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -33,6 +31,7 @@ class Workflow(object):
         self._state_order = []
         self.state_attr = state_attr
         self.initial_state = initial_state
+        self.permission_checker = permission_checker
 
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
@@ -47,7 +46,7 @@ class Workflow(object):
         self._state_order.append(state_name)
 
     def add_transition(self, transition_name, from_state, to_state,
-                       callback=None, **kw):
+                       callback=None, permission=None, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
@@ -58,11 +57,16 @@ class Workflow(object):
             raise WorkflowError('No such state %r' % from_state)
         if not to_state in self._state_order:
             raise WorkflowError('No such state %r' % to_state)
+        if permission is not None and self.permission_checker is None:
+            raise WorkflowError(
+                'Permission %r defined without permission checker on '
+                'workflow' % permission)
         transition = kw
         transition['name'] = transition_name
         transition['from_state'] = from_state
         transition['to_state'] = to_state
         transition['callback'] = callback
+        transition['permission'] = permission
         self._transition_data[transition_name] = transition
         self._transition_order.append(transition_name)
 
@@ -177,9 +181,9 @@ class Workflow(object):
         for state in states:
             L = []
             for transition in state['transitions']:
-                if 'permission' in transition:
-                    if not has_permission(transition['permission'],
-                                          context, request):
+                permission = transition.get('permission')
+                if permission is not None:
+                    if not self.permission_checker(permission, context,request):
                         continue
                 L.append(transition)
             state['transitions'] = L
@@ -193,37 +197,43 @@ class Workflow(object):
         return self.initial_state
             
     def transition(self, context, request, transition_name, guards=()):
-        permission_guard = PermissionGuard(request, transition_name)
-        guards = list(guards)
-        guards.append(permission_guard)
+        if self.permission_checker:
+            guards = list(guards)
+            permission_guard = PermissionGuard(request, transition_name,
+                                               self.permission_checker)
+            guards.append(permission_guard)
         self._transition(context, transition_name, guards=guards)
 
     def transition_to_state(self, context, request, to_state, guards=()):
-        permission_guard = PermissionGuard(request, to_state)
-        guards = list(guards)
-        guards.append(permission_guard)
+        if self.permission_checker:
+            guards = list(guards)
+            permission_guard = PermissionGuard(request, to_state,
+                                               self.permission_checker)
+            guards.append(permission_guard)
         self._transition_to_state(context, to_state, guards=guards)
 
     def get_transitions(self, context, request, from_state=None):
         transitions = self._get_transitions(context, from_state)
         L = []
         for transition in transitions:
-            if 'permission' in transition:
-                if not has_permission(transition['permission'],
-                                      context, request):
-                    continue
+            permission = transition.get('permission')
+            if permission is not None:
+                if self.permission_checker:
+                    if not self.permission_checker(permission, context,request):
+                        continue
             L.append(transition)
         return L
 
 class PermissionGuard:
-    def __init__(self, request, name):
+    def __init__(self, request, name, checker):
         self.request = request
         self.name = name
+        self.checker = checker
 
     def __call__(self, context, transition):
         permission = transition.get('permission')
         if self.request is not None and permission is not None:
-            if not has_permission(permission, context, self.request):
+            if not self.checker(permission, context, self.request):
                 raise WorkflowError(
                     '%s permission required for transition using %r' % (
                     permission, self.name)

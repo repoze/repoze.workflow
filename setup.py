@@ -27,7 +27,11 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'setuptools',
-    'repoze.bfg'
+    'repoze.zcml',
+    'zope.component',
+    'zope.interface',
+    'zope.configuration',
+    'zope.testing',
     ]
 
 setup(name='repoze.bfg.workflow',
