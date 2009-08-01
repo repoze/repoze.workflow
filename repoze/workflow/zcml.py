@@ -1,8 +1,6 @@
 from zope.component import getSiteManager
 from zope.configuration.exceptions import ConfigurationError
 
-from zope.configuration import xmlconfig
-
 import zope.configuration.config
 
 from zope.configuration.fields import GlobalObject
