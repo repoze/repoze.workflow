@@ -3,8 +3,6 @@ from repoze.bfg.workflow.interfaces import IWorkflowFactory
 from repoze.bfg.workflow.interfaces import IWorkflowList
 from repoze.bfg.workflow.interfaces import IDefaultWorkflow
 
-from repoze.bfg.traversal import find_interface
-
 from zope.interface import implements
 from zope.interface import classImplements
 from zope.component import getSiteManager
@@ -247,7 +245,7 @@ def get_workflow(content_type, name, context=None,
                  process_wf_list=process_wf_list): # process_wf_list is for test
     """ Return a workflow based on a content_type, the workflow name,
     and (optionally) a context.  The context is used as an argument to
-    the elector for placeful workflows."""
+    electors for placeful workflows."""
     sm = getSiteManager()
     look = sm.adapters.lookup
 
@@ -260,9 +258,7 @@ def get_workflow(content_type, name, context=None,
 
     wf_list = look((IDefaultWorkflow,), IWorkflowList, name=name, default=None)
     if wf_list is not None:
-        wf = process_wf_list(wf_list, context)
-        if wf is not None:
-            return wf
+        return process_wf_list(wf_list, context)
 
 class DummyContext:
     pass

@@ -666,7 +666,6 @@ class TestGetWorkflow(unittest.TestCase):
         self.assertEqual(self._callFUT(IDefaultWorkflow, ''), None)
 
     def test_content_type_is_None_registered_workflow(self):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
         from repoze.bfg.workflow.interfaces import IDefaultWorkflow
         workflow = object()
         self._registerWorkflowList(IDefaultWorkflow)

@@ -1,12 +1,12 @@
 import unittest
-from repoze.bfg import testing
+from zope.testing.cleanup import cleanUp
 
 class TestWorkflowDirective(unittest.TestCase):
     def setUp(self):
-        testing.cleanUp()
+        cleanUp()
 
     def tearDown(self):
-        testing.cleanUp()
+        cleanUp()
 
     def _getTargetClass(self):
         from repoze.bfg.workflow.zcml import WorkflowDirective
@@ -119,10 +119,10 @@ class TestWorkflowDirective(unittest.TestCase):
 
 class TestTransitionDirective(unittest.TestCase):
     def setUp(self):
-        testing.cleanUp()
+        cleanUp()
 
     def tearDown(self):
-        testing.cleanUp()
+        cleanUp()
 
     def _getTargetClass(self):
         from repoze.bfg.workflow.zcml import TransitionDirective
@@ -152,10 +152,10 @@ class TestTransitionDirective(unittest.TestCase):
 
 class TestStateDirective(unittest.TestCase):
     def setUp(self):
-        testing.cleanUp()
+        cleanUp()
 
     def tearDown(self):
-        testing.cleanUp()
+        cleanUp()
 
     def _getTargetClass(self):
         from repoze.bfg.workflow.zcml import StateDirective
@@ -188,10 +188,10 @@ class TestKeyValuePair(unittest.TestCase):
 
 class TestFixtureApp(unittest.TestCase):
     def setUp(self):
-        testing.cleanUp()
+        cleanUp()
 
     def tearDown(self):
-        testing.cleanUp()
+        cleanUp()
 
     def test_execute_actions(self):
         from zope.configuration import xmlconfig

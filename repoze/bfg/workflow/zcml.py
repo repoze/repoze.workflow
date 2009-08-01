@@ -4,7 +4,6 @@ from zope.configuration.exceptions import ConfigurationError
 import zope.configuration.config
 
 from zope.configuration.fields import GlobalObject
-from zope.configuration.fields import GlobalInterface
 
 from zope.interface import Interface
 from zope.interface import implements
