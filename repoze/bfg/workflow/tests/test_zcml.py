@@ -233,11 +233,11 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(transitions['private_to_public'],
             {'from_state': u'private', 'callback': callback,
              'name': u'private_to_public', 'to_state': u'public',
-             'permission':None}),
+             'permission':'moderate'}),
         self.assertEqual(transitions['public_to_private'],
              {'from_state': u'public', 'callback': callback,
               'name': 'public_to_private', 'to_state': u'private',
-              'permission':None,}
+              'permission':'moderate',}
             )
 
 class DummyContext:
@@ -254,11 +254,12 @@ class DummyState:
         
 class DummyTransition:
     def __init__(self, name, from_state='private', to_state='public',
-                 callback=None, **extras):
+                 callback=None, permission=None, **extras):
         self.name = name
         self.from_state = from_state
         self.to_state = to_state
         self.callback = callback
+        self.permission = permission
         self.extras = extras
 
                   

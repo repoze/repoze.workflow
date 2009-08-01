@@ -83,6 +83,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                             transition.from_state,
                                             transition.to_state,
                                             transition.callback,
+                                            transition.permission,
                                             **transition.extras)
                 except WorkflowError, why:
                     raise ConfigurationError(str(why))
