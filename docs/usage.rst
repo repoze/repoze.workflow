@@ -39,8 +39,13 @@ context (see the ``elector`` attribute of the ``workflow`` tag in
    get_workflow(Content, 'security', context=someotherobject)
 
 If there is a more specific workflow matching the interface associated
-with ``someotherobject`` (or its traversal parents), that workflow
-will be chosen first.
+with ``someotherobject`` based on an ordered match against each
+workflow that matches this content type with an elector, that workflow
+will be chosen first.  Otherwise, a workflow that matches the content
+type without an elector will be chosen.
+
+If no workflow matches the content type, ``None`` is returned from
+``get_workflow``.
 
 Workflow Objects
 ----------------
