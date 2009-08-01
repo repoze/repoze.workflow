@@ -16,7 +16,7 @@ You can obtain a workflow object using the ``get_workflow`` API:
    class Content(object):
        pass
 
-   from repoze.bfg.workflow import get_workflow
+   from repoze.workflow import get_workflow
 
    get_workflow(Content, 'security')
 
@@ -34,7 +34,7 @@ in :ref:`configuration`):
    class Content(object):
        pass
 
-   from repoze.bfg.workflow import get_workflow
+   from repoze.workflow import get_workflow
 
    get_workflow(Content, 'security', context=someotherobject)
 
@@ -46,9 +46,10 @@ Workflow Objects
 ----------------
 
 Workflow objects can be used to initialize and transition content.
-Typically to use these APIs you need a :mod:`repoze.bfg` "request"
-object.  This object is available in BFG views as the "request"
-parameter to the view.
+Typically to use these APIs you need a "request" object.  This object
+is available in :mod:`repoze.bfg` views as the "request" parameter to
+the view.  Your web framework may have another kind of request object
+obtained from another place.
 
 Here is how you initialize a piece of content to the initial workflow
 state:

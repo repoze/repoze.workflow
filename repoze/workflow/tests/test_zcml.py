@@ -9,7 +9,7 @@ class TestWorkflowDirective(unittest.TestCase):
         cleanUp()
 
     def _getTargetClass(self):
-        from repoze.bfg.workflow.zcml import WorkflowDirective
+        from repoze.workflow.zcml import WorkflowDirective
         return WorkflowDirective
 
     def _makeOne(self, context=None, name=None, state_attr=None,
@@ -31,9 +31,9 @@ class TestWorkflowDirective(unittest.TestCase):
         import types
         from zope.interface import Interface
         from zope.component import getSiteManager
-        from repoze.bfg.workflow.interfaces import IWorkflow
-        from repoze.bfg.workflow.workflow import Workflow
-        from repoze.bfg.workflow.workflow import IWorkflowList
+        from repoze.workflow.interfaces import IWorkflow
+        from repoze.workflow.workflow import Workflow
+        from repoze.workflow.workflow import IWorkflowList
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
@@ -127,7 +127,7 @@ class TestTransitionDirective(unittest.TestCase):
         cleanUp()
 
     def _getTargetClass(self):
-        from repoze.bfg.workflow.zcml import TransitionDirective
+        from repoze.workflow.zcml import TransitionDirective
         return TransitionDirective
 
     def _makeOne(self, context=None, name=None, from_state=None,
@@ -160,7 +160,7 @@ class TestStateDirective(unittest.TestCase):
         cleanUp()
 
     def _getTargetClass(self):
-        from repoze.bfg.workflow.zcml import StateDirective
+        from repoze.workflow.zcml import StateDirective
         return StateDirective
 
     def _makeOne(self, context=None, name=None):
@@ -179,7 +179,7 @@ class TestStateDirective(unittest.TestCase):
 
 class TestKeyValuePair(unittest.TestCase):
     def _callFUT(self, context, key, value):
-        from repoze.bfg.workflow.zcml import key_value_pair
+        from repoze.workflow.zcml import key_value_pair
         key_value_pair(context, key, value)
 
     def test_it_no_extras(self):
@@ -198,13 +198,13 @@ class TestFixtureApp(unittest.TestCase):
     def test_execute_actions(self):
         from zope.configuration import xmlconfig
         from zope.component import getSiteManager
-        from repoze.bfg.workflow.interfaces import IWorkflowList
-        from repoze.bfg.workflow.workflow import Workflow
-        from repoze.bfg.workflow.tests.fixtures.dummy import callback
-        import repoze.bfg.workflow.tests.fixtures as package
-        from repoze.bfg.workflow.tests.fixtures.dummy import IContent
-        from repoze.bfg.workflow.tests.fixtures.dummy import elector
-        from repoze.bfg.workflow.tests.fixtures.dummy import has_permission
+        from repoze.workflow.interfaces import IWorkflowList
+        from repoze.workflow.workflow import Workflow
+        from repoze.workflow.tests.fixtures.dummy import callback
+        import repoze.workflow.tests.fixtures as package
+        from repoze.workflow.tests.fixtures.dummy import IContent
+        from repoze.workflow.tests.fixtures.dummy import elector
+        from repoze.workflow.tests.fixtures.dummy import has_permission
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),

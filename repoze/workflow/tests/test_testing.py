@@ -2,7 +2,7 @@ import unittest
 
 class TestRegisterDummyWorkflow(unittest.TestCase):
     def _callFUT(self, name, workflow=None):
-        from repoze.bfg.workflow.testing import registerDummyWorkflow
+        from repoze.workflow.testing import registerDummyWorkflow
         return registerDummyWorkflow(name, workflow)
 
     def test_it_default_workflow(self):
@@ -17,7 +17,7 @@ class TestRegisterDummyWorkflow(unittest.TestCase):
 
 class TestDummyWorkflow(unittest.TestCase):
     def _getTargetClass(self):
-        from repoze.bfg.workflow.testing import DummyWorkflow
+        from repoze.workflow.testing import DummyWorkflow
         return DummyWorkflow
 
     def _makeOne(self):
@@ -25,12 +25,12 @@ class TestDummyWorkflow(unittest.TestCase):
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
-        from repoze.bfg.workflow.interfaces import IWorkflow
+        from repoze.workflow.interfaces import IWorkflow
         verifyClass(IWorkflow, self._getTargetClass())
 
     def test_instance_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyObject
-        from repoze.bfg.workflow.interfaces import IWorkflow
+        from repoze.workflow.interfaces import IWorkflow
         verifyObject(IWorkflow, self._makeOne())
 
     def test_state_of(self):

@@ -3,10 +3,10 @@
 Configuration
 =============
 
-:mod:`repoze.bfg.workflow` workflows are configured using a
+:mod:`repoze.workflow` workflows are configured using a
 combination of :term:`ZCML` and Python.
 
-Here's an example of the ZCML portion of a :mod:`repoze.bfg.workflow`
+Here's an example of the ZCML portion of a :mod:`repoze.workflow`
 workflow.
 
 .. code-block:: xml
@@ -14,13 +14,14 @@ workflow.
 
    <configure xmlns="http://namespaces.repoze.org/bfg">
 
-   <include package="repoze.bfg.workflow" file="meta.zcml"/>
+   <include package="repoze.workflow" file="meta.zcml"/>
 
    <workflow
       name="theworkflow"
       state_attr="state"
       initial_state="private"
       content_type=".dummy.IContent"
+      permission_checker="repoze.bfg.security.has_permission"
       >
 
       <state name="private" 
@@ -102,17 +103,22 @@ attributes:
   This attribute is not required.  If it is not supplied, the workflow
   will be considered for all content types.
 
-``container_type``
+``elector``
 
-  A Python dotted-name referring to a Zope interface (it cannot be a
-  class).  When ``get_workflow`` is called with a ``context``
-  argument, if a workflow names a ``container_type`` the workflow will
-  be considered as a candidate workflow if the context itself or any
-  of its containment parents implement this interface.
-  ``container_type`` allows for "placeful workflows", in other words,
-  based on an interface type in the context's lineage.  This attribute
-  is not required.  If it is not supplied, the workflow will be
-  considered even if the context does not supply a particular type.
+  A Python dotted-name referring to a :term:`callback`.  When
+  ``get_workflow`` is called with a ``context`` argument, if a
+  workflow names an ``elector`` the workflow will be considered as a
+  candidate workflow if the elector is called and returns true.
+  ``elector`` allows an object to participate in one workflow or
+  another based on its context.
+
+``permission_checker``
+
+  A Python dotted-name referring to a permission checking function.
+  This function should accept three arguments: ``permission`` (a
+  string), ``context`` and ``reqeuest``.  It should return true if the
+  current user implied by the request has the permission in the
+  ``context``, false otherwise.
 
 A ``workflow`` tag may contain ``transition`` and ``state`` tags.  A
 workflow declared via ZCML is unique amongst all workflows defined if
@@ -182,10 +188,10 @@ The ``transition`` tag accepts the following attributes:
 
 ``permission``
 
-  The permission name (a :term:`repoze.bfg` permission name)
-  associated with this transition.  Before the workflow machinery
-  attempts to execute a transition, this permission is checked against
-  the current set of credentials and the content object.  If the
+  The permission name (a string) associated with this transition.
+  Before the workflow machinery attempts to execute a transition, this
+  permission is checked against the current set of credentials and the
+  content object using the workflow's ``permission_checker``.  If the
   transition cannot be executed because the user does not possess this
   permission in that set of circumstates, a ``WorkflowError`` is
   raised.  This attribute is optional.  If it is not supplied, no

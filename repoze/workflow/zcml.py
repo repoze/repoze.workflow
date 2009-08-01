@@ -10,12 +10,12 @@ from zope.interface import implements
 
 from zope.schema import TextLine
 
-from repoze.bfg.workflow.interfaces import IWorkflow
-from repoze.bfg.workflow.interfaces import IWorkflowList
-from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+from repoze.workflow.interfaces import IWorkflow
+from repoze.workflow.interfaces import IWorkflowList
+from repoze.workflow.interfaces import IDefaultWorkflow
 
-from repoze.bfg.workflow.workflow import Workflow
-from repoze.bfg.workflow.workflow import WorkflowError
+from repoze.workflow.workflow import Workflow
+from repoze.workflow.workflow import WorkflowError
 
 def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)

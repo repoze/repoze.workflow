@@ -1,0 +1,44 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:meta="http://namespaces.zope.org/meta">
+
+  <meta:groupingDirective
+      name="workflow"
+      namespace="http://namespaces.repoze.org/bfg"
+      schema="repoze.workflow.zcml.IWorkflowDirective"
+      handler="repoze.workflow.zcml.WorkflowDirective"
+      />
+
+  <meta:groupingDirective
+      name="transition"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.IWorkflowDirective"
+      schema="repoze.workflow.zcml.ITransitionDirective"
+      handler="repoze.workflow.zcml.TransitionDirective"
+      />
+
+  <meta:directive
+      name="key"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.ITransitionDirective"
+      schema="repoze.workflow.zcml.IKeyValueDirective"
+      handler="repoze.workflow.zcml.key_value_pair"
+      />
+
+  <meta:groupingDirective
+      name="state"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.IWorkflowDirective"
+      schema="repoze.workflow.zcml.IStateDirective"
+      handler="repoze.workflow.zcml.StateDirective"
+      />
+
+  <meta:directive
+      name="key"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.IStateDirective"
+      schema="repoze.workflow.zcml.IKeyValueDirective"
+      handler="repoze.workflow.zcml.key_value_pair"
+      />
+
+</configure>

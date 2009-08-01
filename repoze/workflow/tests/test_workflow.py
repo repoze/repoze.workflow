@@ -4,7 +4,7 @@ from zope.testing.cleanup import cleanUp
 class WorkflowTests(unittest.TestCase):
 
     def _getTargetClass(self):
-        from repoze.bfg.workflow import Workflow
+        from repoze.workflow import Workflow
         return Workflow
 
     def _makeOne(self, attr='state', initial_state='pending',
@@ -40,12 +40,12 @@ class WorkflowTests(unittest.TestCase):
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
-        from repoze.bfg.workflow.interfaces import IWorkflow
+        from repoze.workflow.interfaces import IWorkflow
         verifyClass(IWorkflow, self._getTargetClass())
 
     def test_instance_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyObject
-        from repoze.bfg.workflow.interfaces import IWorkflow
+        from repoze.workflow.interfaces import IWorkflow
         verifyObject(IWorkflow, self._makeOne())
 
     def test_call(self):
@@ -81,7 +81,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(sm.state_of(None), 'pending')
 
     def test_add_state_state_exists(self):
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         sm = self._makeOne()
         sm._state_order = ['foo']
         sm._state_data = {'foo':{'c':5}}
@@ -125,7 +125,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(sm._state_order), 2)
 
     def test_add_transition_transition_name_already_exists(self):
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         sm = self._makeOne()
         sm.add_state('public')
         sm.add_state('private')
@@ -134,21 +134,21 @@ class WorkflowTests(unittest.TestCase):
                           'private', 'public')
 
     def test_add_transition_from_state_doesnt_exist(self):
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         sm = self._makeOne()
         sm.add_state('public')
         self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
                           'private', 'public')
 
     def test_add_transition_to_state_doesnt_exist(self):
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         sm = self._makeOne()
         sm.add_state('private')
         self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
                           'private', 'public')
 
     def test_add_transition_with_permission_no_permission_checker(self):
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         sm = self._makeOne()
         sm.add_state('private')
         sm.add_state('public')
@@ -156,7 +156,7 @@ class WorkflowTests(unittest.TestCase):
                           'private', 'public', permission='permission')
 
     def test_check_fails(self):
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         sm = self._makeOne()
         self.assertRaises(WorkflowError, sm.check)
         
@@ -246,7 +246,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         ob = DummyContext()
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition, ob, 'nosuch')
 
     def test__transition_guard(self):
@@ -298,7 +298,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         ob = DummyContext()
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition_to_state, ob,
                           'nosuch')
 
@@ -306,7 +306,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         ob = DummyContext()
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         self.assertRaises(WorkflowError, sm._transition_to_state, ob,
                           'pending', (), False)
 
@@ -476,7 +476,7 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg):
             args.append(arg)
             return False
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
@@ -569,7 +569,7 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg):
             args.append(arg)
             return False
-        from repoze.bfg.workflow import WorkflowError
+        from repoze.workflow import WorkflowError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(context, name, guards=()):
@@ -707,11 +707,11 @@ class TestGetWorkflow(unittest.TestCase):
         def process_workflow_list(wf_list, context):
             if workflows:
                 return workflows.pop()
-        from repoze.bfg.workflow import get_workflow
+        from repoze.workflow import get_workflow
         return get_workflow(iface, name, context, process_workflow_list)
 
     def _registerWorkflowList(self, content_type, name=''):
-        from repoze.bfg.workflow.interfaces import IWorkflowList
+        from repoze.workflow.interfaces import IWorkflowList
         from zope.component import getSiteManager
         sm = getSiteManager()
         sm.registerAdapter([], (content_type,), IWorkflowList, name=name)
@@ -720,18 +720,18 @@ class TestGetWorkflow(unittest.TestCase):
         self.assertEqual(self._callFUT(None, ''), None)
 
     def test_content_type_is_IDefaultWorkflow_no_registered_workflows(self):
-        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        from repoze.workflow.interfaces import IDefaultWorkflow
         self.assertEqual(self._callFUT(IDefaultWorkflow, ''), None)
 
     def test_content_type_is_None_registered_workflow(self):
-        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        from repoze.workflow.interfaces import IDefaultWorkflow
         workflow = object()
         self._registerWorkflowList(IDefaultWorkflow)
         result = self._callFUT(None, '', [workflow])
         self.assertEqual(result, workflow)
         
     def test_content_type_is_IDefaultWorkflow_registered_workflow(self):
-        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        from repoze.workflow.interfaces import IDefaultWorkflow
         workflow = object()
         self._registerWorkflowList(IDefaultWorkflow)
         self.assertEqual(self._callFUT(IDefaultWorkflow, '', [workflow]),
@@ -743,7 +743,7 @@ class TestGetWorkflow(unittest.TestCase):
         
     def test_content_type_is_IContent_finds_default(self):
         IContent = self._getIContent()
-        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        from repoze.workflow.interfaces import IDefaultWorkflow
         workflow = object()
         self._registerWorkflowList(IDefaultWorkflow)
         self.assertEqual(self._callFUT(IContent, '', [workflow]), workflow)
@@ -755,7 +755,7 @@ class TestGetWorkflow(unittest.TestCase):
         self.assertEqual(self._callFUT(IContent, '', [workflow]), workflow)
 
     def test_content_type_is_IContent_finds_more_specific_first(self):
-        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        from repoze.workflow.interfaces import IDefaultWorkflow
         IContent = self._getIContent()
         default_workflow = object()
         specific_workflow = object()
@@ -769,7 +769,7 @@ class TestGetWorkflow(unittest.TestCase):
             default_workflow)
 
     def test_content_type_inherits_from_IContent(self):
-        from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+        from repoze.workflow.interfaces import IDefaultWorkflow
         IContent = self._getIContent()
         class IContent2(IContent):
             pass
@@ -783,7 +783,7 @@ class TestGetWorkflow(unittest.TestCase):
 
 class TestProcessWFList(unittest.TestCase):
     def _callFUT(self, wf_list, context):
-        from repoze.bfg.workflow.workflow import process_wf_list
+        from repoze.workflow.workflow import process_wf_list
         return process_wf_list(wf_list, context)
 
     def _getIContent(self):

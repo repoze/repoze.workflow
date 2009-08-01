@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# repoze.bfg.workflow documentation build configuration file
+# repoze.workflow documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its containing
 # dir.
@@ -36,7 +36,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'repoze.bfg.workflow'
+project = 'repoze.workflow'
 copyright = '2008, Repoze Developers <repoze-dev@lists.repoze.org>'
 
 # The default replacements for |version| and |release|, also used in various
@@ -163,7 +163,7 @@ htmlhelp_basename = 'workflowdoc'
 # (source start file, target name, title,
 #  author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'workflow.tex', 'repoze.bfg.workflow Documentation',
+  ('index', 'workflow.tex', 'repoze.workflow Documentation',
    'Repoze Developers', 'manual'),
 ]
 

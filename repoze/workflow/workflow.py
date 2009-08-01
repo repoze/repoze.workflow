@@ -1,7 +1,7 @@
-from repoze.bfg.workflow.interfaces import IWorkflow
-from repoze.bfg.workflow.interfaces import IWorkflowFactory
-from repoze.bfg.workflow.interfaces import IWorkflowList
-from repoze.bfg.workflow.interfaces import IDefaultWorkflow
+from repoze.workflow.interfaces import IWorkflow
+from repoze.workflow.interfaces import IWorkflowFactory
+from repoze.workflow.interfaces import IWorkflowList
+from repoze.workflow.interfaces import IDefaultWorkflow
 
 from zope.interface import implements
 from zope.interface import classImplements

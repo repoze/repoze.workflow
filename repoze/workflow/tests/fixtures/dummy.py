@@ -1,7 +1,7 @@
 from zope.interface import Interface
 from zope.interface import implements
 
-from repoze.bfg.workflow import Workflow # imported
+from repoze.workflow import Workflow # imported
 
 class IContent(Interface):
     pass

@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.0'
+__version__ = '0.5dev'
 
 import os
 
@@ -34,7 +34,7 @@ requires = [
     'zope.testing',
     ]
 
-setup(name='repoze.bfg.workflow',
+setup(name='repoze.workflow',
       version=__version__,
       description='Content workflow for repoze.bfg',
       long_description=README + '\n\n' +  CHANGES,
@@ -42,18 +42,18 @@ setup(name='repoze.bfg.workflow',
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         ],
-      keywords='web repoze bfg workflow',
+      keywords='web repoze workflow',
       author="Agendaless Consulting",
       author_email="repoze-dev@lists.repoze.org",
       url="http://www.repoze.org",
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
       packages=find_packages(),
       include_package_data=True,
-      namespace_packages=['repoze', 'repoze.bfg'],
+      namespace_packages=['repoze'],
       zip_safe=False,
       tests_require = requires,
       install_requires= requires,
-      test_suite="repoze.bfg.workflow",
+      test_suite="repoze.workflow",
       entry_points = """
       """
       )

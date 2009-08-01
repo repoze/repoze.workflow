@@ -1,8 +1,7 @@
 Documentation for repoze.workflow
 =================================
 
-:mod:`repoze.bfg.workflow` is a content workflow system for the
-:term:`repoze.bfg` web framework.
+:mod:`repoze.workflow` is a content workflow system.
 
 .. toctree::
    :maxdepth: 2

@@ -1,5 +1,5 @@
-API Documentation for repoze.bfg.workflow
-=========================================
+API Documentation for repoze.workflow
+=====================================
 
 Interfaces
 ----------
