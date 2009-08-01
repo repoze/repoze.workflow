@@ -215,6 +215,28 @@ representing the current transition.  The ``content`` argument will be
 the content object that is being transitioned.
 
 
+Executing a Configuration
+-------------------------
 
-  
+To execute a ZCML-configured set of workflows, do the following.
+
+If your ZCML file is in a package (and contains package-relative
+dotted names), use the following:
+
+.. code-block:: python
+   :linenos:
+
+   import mypackage
+
+   from zope.configuration import xmlconfig
+   xmlconfig.file('configure.zcml', mypackage, execute=True)
+
+If your ZCML file does not live in a package (and does not contain
+package-relative dotted names), use the following:
+
+.. code-block:: python
+   :linenos:
+
+   from zope.configuration import xmlconfig
+   xmlconfig.file('/path/to/configure.zcml', execute=True)
 

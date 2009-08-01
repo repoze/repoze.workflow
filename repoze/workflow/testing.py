@@ -48,7 +48,7 @@ class DummyWorkflow:
 
     def transition_to_state(self, context, request, to_state, guards=()):
         self.transitioned.append({'to_state':to_state, 'context':context,
-                                  'request':request})
+                                  'request':request, 'guards':guards})
 
     def get_transitions(self, context, request, from_state=None):
         return []

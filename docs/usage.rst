@@ -1,9 +1,9 @@
-Using a Configured Workflow
-===========================
+Using Configured Workflows
+==========================
 
-Once a workflow has been configured via :term:`ZCML`, and you've got
-that ZCML included in your application, you can begin to use it in
-your application's code.
+Once one or more workflows has been configured via :term:`ZCML`, and
+you've got that ZCML executed, you can begin to use it in your
+application's code.
 
 Getting a Workflow
 ------------------
@@ -25,8 +25,8 @@ class above with the workflow, a workflow object is returned.
 
 You can also pass a ``context`` argument into ``get_workflow`` for
 purposes of obtaining a more specific workflow for a particular
-context (see the ``container_type`` attribute of the ``workflow`` tag
-in :ref:`configuration`):
+context (see the ``elector`` attribute of the ``workflow`` tag in
+:ref:`configuration`):
 
 .. code-block:: python
    :linenos:

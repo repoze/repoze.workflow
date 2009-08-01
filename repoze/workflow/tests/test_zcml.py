@@ -196,8 +196,6 @@ class TestFixtureApp(unittest.TestCase):
         cleanUp()
 
     def test_execute_actions(self):
-        from zope.configuration import xmlconfig
-        from zope.component import getSiteManager
         from repoze.workflow.interfaces import IWorkflowList
         from repoze.workflow.workflow import Workflow
         from repoze.workflow.tests.fixtures.dummy import callback
@@ -205,6 +203,8 @@ class TestFixtureApp(unittest.TestCase):
         from repoze.workflow.tests.fixtures.dummy import IContent
         from repoze.workflow.tests.fixtures.dummy import elector
         from repoze.workflow.tests.fixtures.dummy import has_permission
+        from zope.configuration import xmlconfig
+        from zope.component import getSiteManager
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),

@@ -1,6 +1,8 @@
 from zope.component import getSiteManager
 from zope.configuration.exceptions import ConfigurationError
 
+from zope.configuration import xmlconfig
+
 import zope.configuration.config
 
 from zope.configuration.fields import GlobalObject
@@ -159,3 +161,4 @@ def register_workflow(workflow, name, content_type, elector, info=None):
                            IWorkflowList, name, info)
 
     wf_list.append({'workflow':workflow, 'elector':elector})
+

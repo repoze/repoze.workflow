@@ -270,5 +270,3 @@ def get_workflow(content_type, name, context=None,
     if wf_list is not None:
         return process_wf_list(wf_list, context)
 
-class DummyContext:
-    pass
