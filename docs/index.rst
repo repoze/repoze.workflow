@@ -9,7 +9,7 @@ Documentation for repoze.workflow
    configuration.rst
    usage.rst
    api.rst
-
+   glossary.rst
 
 Indices and tables
 ------------------
