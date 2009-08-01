@@ -1,6 +1,6 @@
 ##############################################################################
 #
-# Copyright (c) 2008-2009 Agendaless Consulting and Contributors.
+# Copyright (c) 2008 Agendaless Consulting and Contributors.
 # All Rights Reserved.
 #
 # This software is subject to the provisions of the BSD-like license at
@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.4'
+__version__ = '0.0'
 
 import os
 
@@ -27,35 +27,34 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'setuptools',
-    'zope.interface>=3.4'
+    'repoze.zcml',
+    'zope.component',
+    'zope.interface',
+    'zope.configuration',
+    'zope.testing',
     ]
 
-setup(name='repoze.workflow',
+setup(name='repoze.bfg.workflow',
       version=__version__,
-      description='Simple state machine useful for workflow-like apps',
+      description='Content workflow for repoze.bfg',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
-        "Programming Language :: Python",
-        "Topic :: Internet :: WWW/HTTP",
-        "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-        "Topic :: Internet :: WWW/HTTP :: WSGI",
-        "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
         ],
-      keywords='web wsgi zope',
+      keywords='web repoze bfg workflow',
       author="Agendaless Consulting",
       author_email="repoze-dev@lists.repoze.org",
       url="http://www.repoze.org",
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
       packages=find_packages(),
       include_package_data=True,
-      namespace_packages=['repoze'],
+      namespace_packages=['repoze', 'repoze.bfg'],
       zip_safe=False,
-      tests_require = requires + ['Sphinx', 'repoze.sphinx.autointerface'],
-      install_requires=requires,
-      test_suite="repoze.workflow",
-      entry_points = """\
+      tests_require = requires,
+      install_requires= requires,
+      test_suite="repoze.bfg.workflow",
+      entry_points = """
       """
       )
 

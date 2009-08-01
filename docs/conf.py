@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# repoze.workflow documentation build configuration file
+# repoze.bfg.workflow documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its containing
 # dir.
@@ -14,17 +14,6 @@
 
 import sys, os
 
-parent = os.path.dirname(os.path.dirname(__file__))
-sys.path.append(os.path.abspath(parent))
-wd = os.getcwd()
-os.chdir(parent)
-os.system('%s setup.py test -q' % sys.executable)
-os.chdir(wd)
-
-for item in os.listdir(parent):
-    if item.endswith('.egg'):
-        sys.path.append(os.path.join(parent, item))
-
 # If your extensions are in another directory, add it here. If the
 # directory is relative to the documentation root, use os.path.abspath to
 # make it absolute, like shown here.
@@ -35,7 +24,7 @@ for item in os.listdir(parent):
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'repoze.sphinx.autointerface']
+extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['.templates']
@@ -47,16 +36,16 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General substitutions.
-project = 'repoze.workflow'
+project = 'repoze.bfg.workflow'
 copyright = '2008, Repoze Developers <repoze-dev@lists.repoze.org>'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '0.4'
+version = '0.1'
 # The full version, including alpha/beta/rc tags.
-release = '0.4'
+release = '0.1'
 
 # There are two options for replacing |today|: either, you set today to
 # some non-false value, then it is used:
@@ -174,7 +163,7 @@ htmlhelp_basename = 'workflowdoc'
 # (source start file, target name, title,
 #  author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'workflow.tex', 'repoze.workflow Documentation',
+  ('index', 'workflow.tex', 'repoze.bfg.workflow Documentation',
    'Repoze Developers', 'manual'),
 ]
 

@@ -1,32 +1,7 @@
-0.4 (2009-06-24)
+repoze.bfg.workflow Changelog
+=============================
+
+0.1 (unreleased)
 ----------------
 
-- 100% test coverage.
-
-- Allow ``add`` method to accept arbitrary keyword arguments.  These
-  keyword arguments are now passed as ``**kw`` to transition functions
-  as well as ``before_transition`` and ``after_transition``.  This
-  allows arbitrary metadata (such as security and UI information) to
-  be associated with a transition.
-
-- The ``transitions`` method now returns all transitions, including
-  "catch-all" transitions (transitions with a transition_id of None).
-
-- Add ``transition_info`` method to state machine, which
-
-0.3 (2009-04-10)
-----------------
-
-- Removed mutable default arguments, to avoid polluting one state machine's
-  states when adding to another.
-
-0.2 (2009-02-20)
-----------------
-
-- Initial release. Updated README.txt and removed remnants from repoze
-  package template.
-
-0.1
----
-
-- Unreleased
+- Initial release.

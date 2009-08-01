@@ -1,14 +1,14 @@
-API Documentation for repoze.workflow
-======================================
+API Documentation for repoze.bfg.workflow
+=========================================
 
 Interfaces
 ----------
 
-.. autoclass:: repoze.workflow.statemachine.StateMachine
-
-.. autointerface:: repoze.workflow.interfaces.IStateMachine
+Document interfaces here.  You may want to use the ``.. autointerface::``
+directive provided by :mod:`repoze.sphinx.autointerface`, in which case
+you will need to add it to the extensions in `conf.py`.
 
 Exceptions
 ----------
 
-.. autoexception:: repoze.workflow.statemachine.StateMachineError
+Document any custom exceptions here.
