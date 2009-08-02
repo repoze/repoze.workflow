@@ -70,6 +70,9 @@ class TestDummyWorkflow(unittest.TestCase):
         workflow.reset(None)
         self.assertEqual(workflow.resetted, [None])
         
+    def test_has_state(self):
+        workflow = self._makeOne()
+        self.assertEqual(workflow.has_state(None), True)
         
         
         

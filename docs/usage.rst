@@ -115,3 +115,13 @@ You can reset the workflow state of an object using the ``reset`` API:
    :linenos:
 
    state = workflow.reset(context)
+
+You can test if an object is in any state at all using the
+``has_state`` API:
+
+.. code-block:: python
+   :linenos:
+
+   if workflow.has_state(context):
+      # do something
+

@@ -23,6 +23,9 @@ class IWorkflow(Interface):
         or None if the content object has not particpated yet in this
         workflow."""
 
+    def has_state(content):
+        """ Return true if the content has any state, false if not. """
+
     def initialize(content):
         """ Initialize the content object to the initial state of this
         workflow."""

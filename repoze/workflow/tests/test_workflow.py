@@ -52,6 +52,16 @@ class WorkflowTests(unittest.TestCase):
         workflow = self._makeOne()
         self.assertEqual(workflow(None), workflow)
 
+    def test_has_state_false(self):
+        sm = self._makeOne()
+        self.assertEqual(sm.has_state(None), False)
+
+    def test_has_state_true(self):
+        sm = self._makeOne()
+        ob = DummyContext()
+        ob.state = 'abc'
+        self.assertEqual(sm.has_state(ob), True)
+
     def test__state_of_uninitialized(self):
         sm = self._makeOne()
         ob = DummyContext()

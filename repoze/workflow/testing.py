@@ -21,6 +21,9 @@ class DummyWorkflow:
         self.states_added = []
         self.transitions_added = []
         self.resetted = []
+
+    def has_state(self, content):
+        return True
         
     def add_state(self, name, callback=None, **kw):
         self.states_added.append({'name':name,

@@ -132,6 +132,9 @@ class Workflow(object):
             state = self.initialize(context)
         return state
 
+    def has_state(self, context):
+        return self._state_of(context) is not None
+
     def _get_transitions(self, context, from_state=None):
         if from_state is None:
             from_state = self.state_of(context)
