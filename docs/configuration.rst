@@ -81,6 +81,11 @@ attributes:
 
   The workflow name.  This is attribute is required.
 
+``description``
+
+  A description of the workflow.  This attribute is not required; it
+  defaults to the empty string.
+
 ``initial_state``
 
   The initial state of content initialized into the workflow.  This

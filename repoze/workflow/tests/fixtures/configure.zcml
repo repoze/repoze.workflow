@@ -4,6 +4,7 @@
 
 <workflow
    name="theworkflow"
+   description="The workflow"
    state_attr="state"
    initial_state="private"
    content_type=".dummy.IContent"

@@ -18,7 +18,8 @@ class Workflow(object):
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
     
-    def __init__(self, state_attr, initial_state, permission_checker=None):
+    def __init__(self, state_attr, initial_state, permission_checker=None,
+                 description=''):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -33,6 +34,7 @@ class Workflow(object):
         self.state_attr = state_attr
         self.initial_state = initial_state
         self.permission_checker = permission_checker
+        self.description = description
 
     def __call__(self, context):
         return self # allow ourselves to act as an adapter

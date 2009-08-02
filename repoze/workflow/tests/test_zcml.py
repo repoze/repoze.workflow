@@ -225,6 +225,7 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(workflow_data['elector'], elector)
         workflow = workflow_data['workflow']
         self.assertEqual(workflow.__class__, Workflow)
+        self.assertEqual(workflow.description, 'The workflow')
         self.assertEqual(workflow.permission_checker, has_permission)
         self.assertEqual(
             workflow._state_order,
