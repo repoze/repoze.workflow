@@ -25,7 +25,7 @@ class DummyWorkflow:
         self.resetted = []
 
     def has_state(self, content):
-        return True
+        return hasattr(content, self.state_attr)
         
     def add_state(self, name, callback=None, **kw):
         self.states_added.append({'name':name,
@@ -43,7 +43,7 @@ class DummyWorkflow:
         return True
 
     def state_of(self, context):
-        return 'state'
+        return getattr(context, self.state_attr, None)
 
     def initialize(self, context):
         self.initialized.append(context)

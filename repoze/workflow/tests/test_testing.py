@@ -33,9 +33,15 @@ class TestDummyWorkflow(unittest.TestCase):
         from repoze.workflow.interfaces import IWorkflow
         verifyObject(IWorkflow, self._makeOne())
 
-    def test_state_of(self):
+    def test_state_of_None(self):
         workflow = self._makeOne()
-        self.assertEqual(workflow.state_of(None), 'state')
+        self.assertEqual(workflow.state_of(None), None)
+
+    def test_state_of_something(self):
+        workflow = self._makeOne()
+        class Dummy:
+            state = 'true'
+        self.assertEqual(workflow.state_of(Dummy), 'true')
 
     def test_initialize(self):
         workflow = self._makeOne()
@@ -72,9 +78,15 @@ class TestDummyWorkflow(unittest.TestCase):
         self.assertEqual(workflow.resetted, [None])
         self.assertEqual(state, 'initial')
         
-    def test_has_state(self):
+    def test_has_state_false(self):
         workflow = self._makeOne()
-        self.assertEqual(workflow.has_state(None), True)
+        self.assertEqual(workflow.has_state(None), False)
+        
+    def test_has_state_true(self):
+        workflow = self._makeOne()
+        class Dummy:
+            state = 'hello'
+        self.assertEqual(workflow.has_state(Dummy), True)
         
         
         
