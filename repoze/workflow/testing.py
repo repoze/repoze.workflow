@@ -20,6 +20,7 @@ class DummyWorkflow:
         self.initialized = []
         self.states_added = []
         self.transitions_added = []
+        self.resetted = []
         
     def add_state(self, name, callback=None, **kw):
         self.states_added.append({'name':name,
@@ -41,6 +42,9 @@ class DummyWorkflow:
 
     def initialize(self, context):
         self.initialized.append(context)
+
+    def reset(self, context):
+        self.resetted.append(context)
 
     def transition(self, context, request, transition_name, guards=()):
         self.executed.append({'context':context, 'name':transition_name,

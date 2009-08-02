@@ -64,6 +64,12 @@ class TestDummyWorkflow(unittest.TestCase):
         self.assertEqual(workflow.transitioned, [{'context':None,
                                                   'to_state':None,
                                                   'request':None}])
+
+    def test_reset(self):
+        workflow = self._makeOne()
+        workflow.reset(None)
+        self.assertEqual(workflow.resetted, [None])
+        
         
         
         

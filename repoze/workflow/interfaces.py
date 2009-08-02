@@ -18,26 +18,32 @@ class IWorkflow(Interface):
         """ Check the consistency of the workflow state machine. Raise
         an error if it's inconsistent."""
 
-    def state_of(context):
-        """ Return the current state of the content object ``context``
+    def state_of(content):
+        """ Return the current state of the content object ``content``
         or None if the content object has not particpated yet in this
         workflow."""
 
-    def initialize(context):
+    def initialize(content):
         """ Initialize the content object to the initial state of this
         workflow."""
 
-    def transition(context, request, transition_name, guards=()):
+    def reset(content):
+        """ Reset the object by calling the callback of it's current
+        state and setting its state attr.  If ``content`` has no
+        current state, it will be initialized into the initial state
+        for this workflow (see ``initialize``)."""
+
+    def transition(content, request, transition_name, guards=()):
         """ Execute a transition using a transition name.
         """
-    def transition_to_state(context, reuqest, to_state, guards=()):
+    def transition_to_state(content, reuqest, to_state, guards=()):
         """ Execute a transition to another state using a state name
         (``to_state``)"""
 
-    def get_transitions(context, request, from_state=None):
+    def get_transitions(content, request, from_state=None):
         """ Return a sequence of transition dictionaries """
 
-    def state_info(context, request, from_state=None):
+    def state_info(content, request, from_state=None):
         """ Return a sequence of state info dictionaries """
 
 class IWorkflowList(Interface):
@@ -57,24 +63,24 @@ class IStateMachine(Interface):
     def add(state, transition_id, newstate, transition_fn, **kw):
         """Add a transition to the FSM."""
 
-    def execute(context, transition_id):
+    def execute(content, transition_id):
         """Perform a transition and execute an action."""
 
-    def state_of(context):
+    def state_of(content):
         """ Return the current state of the given object """
 
-    def transitions(context, from_state=None):
+    def transitions(content, from_state=None):
         """ Return the available transition ids for the given object
         (from_state defaults to the object's current state)"""
 
-    def transition_info(context, from_state=None):
+    def transition_info(content, from_state=None):
         """ Return sequence of dictionaries representing the
-        transition information for context (from_state defaults to the
+        transition information for content (from_state defaults to the
         object's current state).  Each dictionary has the keys
         ``transition_id``, ``from_state``, ``to_state`` as well as any
         keywords passed in to the ``add`` method for this transition."""
     
-    def before_transition(state, newstate, transition_id, context, **kw):
+    def before_transition(state, newstate, transition_id, content, **kw):
         """
         Hook method to be overridden by subclasses (or injected
         directly onto an instance) to allow for before transition
@@ -83,7 +89,7 @@ class IStateMachine(Interface):
         Raise an exception here to abort the transition.
         """
 
-    def after_transition(state, newstate, transition_id, context, **kw):
+    def after_transition(state, newstate, transition_id, content, **kw):
         """
         Hook method to be overridden by subclasses (or injected
         directly onto an instance) to allow for after transition

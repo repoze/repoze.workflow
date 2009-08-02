@@ -447,6 +447,28 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.state, 'pending')
         self.assertEqual(ob.initialized, True)
 
+    def test_reset_content_has_no_state(self):
+        def callback(context, transition):
+            context.called_back = True        
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending', callback=callback)
+        ob = DummyContext()
+        sm.reset(ob)
+        self.assertEqual(ob.state, 'pending')
+        self.assertEqual(ob.called_back, True)
+
+    def test_reset_content_has_state(self):
+        def callback(context, transition):
+            context.called_back = True        
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
+        sm.add_state('private', callback=callback)
+        ob = DummyContext()
+        ob.state = 'private'
+        sm.reset(ob)
+        self.assertEqual(ob.state, 'private')
+        self.assertEqual(ob.called_back, True)
+        
     def test_transition_permissive(self):
         args = []
         def checker(*arg):

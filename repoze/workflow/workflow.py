@@ -195,7 +195,17 @@ class Workflow(object):
             callback(context, {})
         setattr(context, self.state_attr, self.initial_state)
         return self.initial_state
-            
+
+    def reset(self, context):
+        state = self._state_of(context)
+        if state is None:
+            self.initialize(context)
+            return self.initial_state
+        else:
+            callback = self._state_data[state]['callback']
+            callback(context, {})
+            return getattr(context, self.state_attr)
+
     def transition(self, context, request, transition_name, guards=()):
         if self.permission_checker:
             guards = list(guards)

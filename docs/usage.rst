@@ -108,3 +108,10 @@ You can obtain transition information for a piece of content using the
    :linenos:
 
    info = workflow.get_transitions(context, request)
+
+You can reset the workflow state of an object using the ``reset`` API:
+
+.. code-block:: python
+   :linenos:
+
+   state = workflow.reset(context)
