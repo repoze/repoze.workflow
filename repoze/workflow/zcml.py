@@ -26,6 +26,10 @@ class IKeyValueDirective(Interface):
     name = TextLine(title=u'key', required=True)
     value = TextLine(title=u'value', required=True)
 
+class IAliasDirective(Interface):
+    """ The interface for an alias subdirective """
+    name = TextLine(title=u'name', required=True)
+
 class ITransitionDirective(Interface):
     """ The interface for a transition directive """
     name = TextLine(title=u'name', required=True)
@@ -73,6 +77,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                 try:
                     workflow.add_state(state.name,
                                        state.callback,
+                                       aliases=state.aliases,
                                        **state.extras)
                 except WorkflowError, why:
                     raise ConfigurationError(str(why))
@@ -137,6 +142,7 @@ class StateDirective(zope.configuration.config.GroupingContextDecorator):
         self.name = name
         self.callback = callback
         self.extras = {'title':title} # mutated by subdirectives
+        self.aliases = []
 
     def after(self):
         self.context.states.append(self)
@@ -146,6 +152,12 @@ def key_value_pair(context, name, value):
     if not hasattr(ob, 'extras'):
         ob.extras = {}
     ob.extras[str(name)] = value
+
+def alias(context, name):
+    ob = context.context
+    if not hasattr(ob, 'aliases'):
+        ob.aliases = []
+    ob.aliases.append(name)
 
 def register_workflow(workflow, name, content_type, elector, info=None):
     if content_type is None:

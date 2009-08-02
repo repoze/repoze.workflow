@@ -188,6 +188,17 @@ class TestKeyValuePair(unittest.TestCase):
         self._callFUT(context, 'key', 'value')
         self.assertEqual(context.context.extras, {'key':'value'})
 
+class TestAlias(unittest.TestCase):
+    def _callFUT(self, context, name):
+        from repoze.workflow.zcml import alias
+        alias(context, name)
+
+    def test_it(self):
+        context = DummyContext()
+        context.context = DummyContext()
+        self._callFUT(context, 'thename')
+        self.assertEqual(context.context.aliases, ['thename'])
+
 class TestFixtureApp(unittest.TestCase):
     def setUp(self):
         cleanUp()
@@ -220,6 +231,10 @@ class TestFixtureApp(unittest.TestCase):
             ['private', 'public'],
             )
         self.assertEqual(
+            workflow._state_aliases,
+            {'supersecret':'private'},
+            )
+        self.assertEqual(
             workflow._state_data,
             {u'public': {'callback':callback,
                          'description': u'Everybody can see it',
@@ -247,10 +262,11 @@ class DummyContext:
         self.__dict__.update(kw)
 
 class DummyState:
-    def __init__(self, name, title=None, callback=None, **extras):
+    def __init__(self, name, title=None, callback=None, aliases=(), **extras):
         self.name = name
         self.callback = callback
         self.extras = extras
+        self.aliases = aliases
         
 class DummyTransition:
     def __init__(self, name, from_state='private', to_state='public',

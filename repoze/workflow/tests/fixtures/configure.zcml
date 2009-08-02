@@ -15,6 +15,7 @@
       callback=".dummy.callback">
         <key name="title" value="Private"/>
         <key name="description" value="Nobody can see it"/>
+        <alias name="supersecret"/>
    </state>
 
    <state name="public"

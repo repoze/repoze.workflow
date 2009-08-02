@@ -41,4 +41,12 @@
       handler="repoze.workflow.zcml.key_value_pair"
       />
 
+  <meta:directive
+      name="alias"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.IStateDirective"
+      schema="repoze.workflow.zcml.IAliasDirective"
+      handler="repoze.workflow.zcml.alias"
+      />
+
 </configure>

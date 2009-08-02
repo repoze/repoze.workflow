@@ -76,6 +76,13 @@ class WorkflowTests(unittest.TestCase):
         ob.state = 'pending'
         self.assertEqual(sm.state_of(ob), 'pending')
 
+    def test_state_of_uses_aliases(self):
+        sm = self._makeOne()
+        sm._state_aliases = {'supersecret':'private'}
+        ob = DummyContext()
+        ob.state = 'supersecret'
+        self.assertEqual(sm.state_of(ob), 'private')
+
     def test_state_of_None_is_initial_state(self):
         sm = self._makeOne()
         self.assertEqual(sm.state_of(None), 'pending')
@@ -86,6 +93,14 @@ class WorkflowTests(unittest.TestCase):
         sm._state_order = ['foo']
         sm._state_data = {'foo':{'c':5}}
         self.assertRaises(WorkflowError, sm.add_state, 'foo')
+
+    def test_add_state_alias_exists(self):
+        from repoze.workflow import WorkflowError
+        sm = self._makeOne()
+        sm._state_order = ['foo']
+        sm._state_data = {'foo':{'c':5}}
+        sm._state_aliases = {'bar':'foo'}
+        self.assertRaises(WorkflowError, sm.add_state, 'bar')
 
     def test_add_state_info_state_doesntexist(self):
         sm = self._makeOne()
@@ -100,6 +115,14 @@ class WorkflowTests(unittest.TestCase):
         callback = object()
         sm.add_state('foo')
         self.assertEqual(sm._state_order, ['foo'])
+        self.assertEqual(sm._state_data, {'foo':{'callback':None}})
+
+    def test_add_state_with_aliases(self):
+        sm = self._makeOne()
+        callback = object()
+        sm.add_state('foo', aliases=['abc', 'def'])
+        self.assertEqual(sm._state_order, ['foo'])
+        self.assertEqual(sm._state_aliases, {'abc':'foo', 'def':'foo'})
         self.assertEqual(sm._state_data, {'foo':{'callback':None}})
 
     def test_add_transition(self):
@@ -465,6 +488,18 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state('private', callback=callback)
         ob = DummyContext()
         ob.state = 'private'
+        sm.reset(ob)
+        self.assertEqual(ob.state, 'private')
+        self.assertEqual(ob.called_back, True)
+
+    def test_reset_content_state_aliased(self):
+        def callback(context, transition):
+            context.called_back = True        
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
+        sm.add_state('private', callback=callback, aliases=('supersecret',))
+        ob = DummyContext()
+        ob.state = 'supersecret'
         sm.reset(ob)
         self.assertEqual(ob.state, 'private')
         self.assertEqual(ob.called_back, True)

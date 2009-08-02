@@ -29,6 +29,7 @@ class Workflow(object):
         self._transition_order = []
         self._state_data = {}
         self._state_order = []
+        self._state_aliases = {}
         self.state_attr = state_attr
         self.initial_state = initial_state
         self.permission_checker = permission_checker
@@ -36,14 +37,18 @@ class Workflow(object):
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
 
-    def add_state(self, state_name, callback=None, **kw):
+    def add_state(self, state_name, callback=None, aliases=(), **kw):
         """ Add a state to the FSM.  ``**kw`` must not contain the key
         ``callback``.  This name is reserved for internal use."""
         if state_name in self._state_order:
             raise WorkflowError('State %s already defined' % state_name)
+        if state_name in self._state_aliases:
+            raise WorkflowError('State %s already aliased' % state_name)
         kw['callback'] = callback
         self._state_data[state_name] = kw
         self._state_order.append(state_name)
+        for alias in aliases:
+            self._state_aliases[alias] = state_name
 
     def add_transition(self, transition_name, from_state, to_state,
                        callback=None, permission=None, **kw):
@@ -113,7 +118,8 @@ class Workflow(object):
 
     def _state_of(self, context):
         state = getattr(context, self.state_attr, None)
-        return state
+        state_name = self._state_aliases.get(state, state)
+        return state_name
 
     def state_of(self, context):
         if context is None: # for add forms
@@ -204,6 +210,7 @@ class Workflow(object):
         else:
             callback = self._state_data[state]['callback']
             callback(context, {})
+            setattr(context, self.state_attr, state)
             return getattr(context, self.state_attr)
 
     def transition(self, context, request, transition_name, guards=()):

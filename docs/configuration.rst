@@ -203,6 +203,16 @@ The ``transition`` tag accepts the following attributes:
   A Python dotted name which points at a "callback".  See
   :ref:`callbacks`.
 
+The ``key`` Tag
+---------------
+
+XXX
+
+The ``alias`` Tag
+-----------------
+
+XXX: only for states
+
 .. _callbacks:
 
 Callbacks
