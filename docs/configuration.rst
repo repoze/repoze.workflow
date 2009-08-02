@@ -17,7 +17,8 @@ workflow.
    <include package="repoze.workflow" file="meta.zcml"/>
 
    <workflow
-      name="theworkflow"
+      type="security"
+      name="the workflow"
       state_attr="state"
       initial_state="private"
       content_type=".dummy.IContent"
@@ -77,18 +78,20 @@ The ``workflow`` Tag
 The ``workflow`` ZCML tag defines a workflow.  It has the following
 attributes:
 
+``type``
+
+  The workflow type.  This is attribute is required.  It should be a
+  string, indicating the context in which it's used (often
+  "security").
+
 ``name``
 
-  The workflow name.  This is attribute is required.
-
-``title``
-
-  A short title for the workflow.  This attribute is not required; it
-  defaults to the empty string.
+  A short name for the workflow.  This attribute is required; it should
+  be a short description of the purpose of the workflow.
 
 ``description``
 
-  A longer description (than the title) of the workflow.  This
+  A longer description (than the name) of the workflow.  This
   attribute is not required; it defaults to the empty string.
 
 ``initial_state``
@@ -132,7 +135,7 @@ attributes:
 
 A ``workflow`` tag may contain ``transition`` and ``state`` tags.  A
 workflow declared via ZCML is unique amongst all workflows defined if
-the combination of its ``name``, its ``content_type`` and its
+the combination of its ``type``, its ``content_type`` and its
 ``container_type`` are unique.  If the combination of these three
 attributes is the same for any two workflows defined in ZCML, a
 configuration conflict error will be raised at startup time.

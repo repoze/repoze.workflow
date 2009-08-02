@@ -20,6 +20,11 @@ You can obtain a workflow object using the ``get_workflow`` API:
 
    get_workflow(Content, 'security')
 
+The first argument is the content type (a class or Zope
+:term:`interface).  The second argument you pass to ``get_workflow``
+is a workflow "type" (the string attached to the ``type`` attribute of
+a workflow definition).
+
 If a registration has been made that would associate the ``Content``
 class above with the workflow, a workflow object is returned.
 

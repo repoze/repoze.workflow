@@ -12,12 +12,12 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.workflow.zcml import WorkflowDirective
         return WorkflowDirective
 
-    def _makeOne(self, context=None, name=None, state_attr=None,
+    def _makeOne(self, context=None, type=None, name=None, state_attr=None,
                  initial_state=None, content_type=None):
         if context is None:
             context = DummyContext()
-        return self._getTargetClass()(context, name, state_attr, initial_state,
-                                      content_type)
+        return self._getTargetClass()(context, type, name, state_attr,
+                                      initial_state, content_type)
 
     def test_ctor_with_state_attr(self):
         workflow = self._makeOne(name='public', state_attr='public2')
@@ -36,7 +36,7 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.workflow.workflow import IWorkflowList
         class IDummy(Interface):
             pass
-        directive = self._makeOne(initial_state='public',
+        directive = self._makeOne(initial_state='public', type='security',
                                   content_type=IDummy)
         directive.states = [ DummyState('private', a=1),
                              DummyState('public', b=2) ]
@@ -47,12 +47,12 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         self.assertEqual(len(actions), 1)
         action = actions[0]
-        self.assertEqual(action[0], (IWorkflow, IDummy, None, ''))
+        self.assertEqual(action[0], (IWorkflow, IDummy, None, 'security'))
         callback = action[1]
         self.assertEqual(type(callback), types.FunctionType)
         callback()
         sm = getSiteManager()
-        wflist = sm.adapters.lookup((IDummy,), IWorkflowList, name="")
+        wflist = sm.adapters.lookup((IDummy,), IWorkflowList, name='security')
         self.assertEqual(len(wflist), 1)
         wf_dict = wflist[0]
         self.assertEqual(wf_dict['elector'], None)
@@ -71,7 +71,6 @@ class TestWorkflowDirective(unittest.TestCase):
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
-        
 
     def test_after_raises_error_during_transition_add(self):
         from zope.interface import Interface
@@ -219,13 +218,13 @@ class TestFixtureApp(unittest.TestCase):
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),
-                                     IWorkflowList, name='workflow')
+                                     IWorkflowList, name='security')
         self.assertEqual(len(wf_list), 1)
         workflow_data = wf_list[0]
         self.assertEqual(workflow_data['elector'], elector)
         workflow = workflow_data['workflow']
         self.assertEqual(workflow.__class__, Workflow)
-        self.assertEqual(workflow.title, 'the workflow')
+        self.assertEqual(workflow.name, 'the workflow')
         self.assertEqual(workflow.description, 'The workflow which is of the '
                          'testing fixtures package')
         self.assertEqual(workflow.permission_checker, has_permission)

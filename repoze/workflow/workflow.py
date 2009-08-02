@@ -19,7 +19,7 @@ class Workflow(object):
     implements(IWorkflow)
     
     def __init__(self, state_attr, initial_state, permission_checker=None,
-                 title='', description=''):
+                 name='', description=''):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -34,7 +34,7 @@ class Workflow(object):
         self.state_attr = state_attr
         self.initial_state = initial_state
         self.permission_checker = permission_checker
-        self.title = title
+        self.name = name
         self.description = description
 
     def __call__(self, context):
@@ -274,22 +274,22 @@ def process_wf_list(wf_list, context):
                 return workflow
     return fallback
 
-def get_workflow(content_type, name, context=None,
+def get_workflow(content_type, type, context=None,
                  process_wf_list=process_wf_list): # process_wf_list is for test
-    """ Return a workflow based on a content_type, the workflow name,
+    """ Return a workflow based on a content_type, the workflow type,
     and (optionally) a context.  The context is used as an argument to
     electors for placeful workflows."""
     sm = getSiteManager()
     look = sm.adapters.lookup
 
     if content_type not in (None, IDefaultWorkflow):
-        wf_list = look((content_type,), IWorkflowList, name=name, default=None)
+        wf_list = look((content_type,), IWorkflowList, name=type, default=None)
         if wf_list is not None:
             wf = process_wf_list(wf_list, context)
             if wf is not None:
                 return wf
 
-    wf_list = look((IDefaultWorkflow,), IWorkflowList, name=name, default=None)
+    wf_list = look((IDefaultWorkflow,), IWorkflowList, name=type, default=None)
     if wf_list is not None:
         return process_wf_list(wf_list, context)
 
