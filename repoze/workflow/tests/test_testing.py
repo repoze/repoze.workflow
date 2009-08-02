@@ -39,8 +39,9 @@ class TestDummyWorkflow(unittest.TestCase):
 
     def test_initialize(self):
         workflow = self._makeOne()
-        workflow.initialize(None)
+        state = workflow.initialize(None)
         self.assertEqual(workflow.initialized, [None])
+        self.assertEqual(state, 'initial')
 
     def test_transition(self):
         workflow = self._makeOne()
@@ -67,8 +68,9 @@ class TestDummyWorkflow(unittest.TestCase):
 
     def test_reset(self):
         workflow = self._makeOne()
-        workflow.reset(None)
+        state = workflow.reset(None)
         self.assertEqual(workflow.resetted, [None])
+        self.assertEqual(state, 'initial')
         
     def test_has_state(self):
         workflow = self._makeOne()
