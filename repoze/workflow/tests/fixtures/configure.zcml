@@ -3,8 +3,9 @@
 <include package="repoze.workflow" file="meta.zcml"/>
 
 <workflow
-   name="theworkflow"
-   description="The workflow"
+   name="workflow"
+   title="the workflow"
+   description="The workflow which is of the testing fixtures package"
    state_attr="state"
    initial_state="private"
    content_type=".dummy.IContent"

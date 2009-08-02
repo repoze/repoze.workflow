@@ -219,13 +219,15 @@ class TestFixtureApp(unittest.TestCase):
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),
-                                     IWorkflowList, name='theworkflow')
+                                     IWorkflowList, name='workflow')
         self.assertEqual(len(wf_list), 1)
         workflow_data = wf_list[0]
         self.assertEqual(workflow_data['elector'], elector)
         workflow = workflow_data['workflow']
         self.assertEqual(workflow.__class__, Workflow)
-        self.assertEqual(workflow.description, 'The workflow')
+        self.assertEqual(workflow.title, 'the workflow')
+        self.assertEqual(workflow.description, 'The workflow which is of the '
+                         'testing fixtures package')
         self.assertEqual(workflow.permission_checker, has_permission)
         self.assertEqual(
             workflow._state_order,

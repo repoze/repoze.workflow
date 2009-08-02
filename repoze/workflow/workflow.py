@@ -19,7 +19,7 @@ class Workflow(object):
     implements(IWorkflow)
     
     def __init__(self, state_attr, initial_state, permission_checker=None,
-                 description=''):
+                 title='', description=''):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -34,6 +34,7 @@ class Workflow(object):
         self.state_attr = state_attr
         self.initial_state = initial_state
         self.permission_checker = permission_checker
+        self.title = title
         self.description = description
 
     def __call__(self, context):
