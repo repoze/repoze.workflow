@@ -85,9 +85,9 @@ class Workflow(object):
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self.initial_state)
 
-    def _transition(self, context, transition_name, guards=()):
+    def _transition(self, content, transition_name, guards=()):
         """ Execute a transition via a transition name """
-        state = self.state_of(context)
+        state = self.state_of(content)
 
         si = (state, transition_name)
 
@@ -106,40 +106,40 @@ class Workflow(object):
 
         if guards:
             for guard in guards:
-                guard(context, transition)
+                guard(content, transition)
 
         from_state = transition['from_state']
         to_state = transition['to_state']
 
         transition_callback = transition['callback']
         if transition_callback is not None:
-            transition_callback(context, transition)
+            transition_callback(content, transition)
 
         state_callback = self._state_data[to_state]['callback']
         if state_callback is not None:
-            state_callback(context, transition)
+            state_callback(content, transition)
 
-        setattr(context, self.state_attr, to_state)
+        setattr(content, self.state_attr, to_state)
 
-    def _state_of(self, context):
-        state = getattr(context, self.state_attr, None)
+    def _state_of(self, content):
+        state = getattr(content, self.state_attr, None)
         state_name = self._state_aliases.get(state, state)
         return state_name
 
-    def state_of(self, context):
-        if context is None: # for add forms
+    def state_of(self, content):
+        if content is None: # for add forms
             return self.initial_state
-        state = self._state_of(context)
+        state = self._state_of(content)
         if state is None:
-            state = self.initialize(context)
+            state = self.initialize(content)
         return state
 
-    def has_state(self, context):
-        return self._state_of(context) is not None
+    def has_state(self, content):
+        return self._state_of(content) is not None
 
-    def _get_transitions(self, context, from_state=None):
+    def _get_transitions(self, content, from_state=None):
         if from_state is None:
-            from_state = self.state_of(context)
+            from_state = self.state_of(content)
 
         transitions = []
         for tname in self._transition_order:
@@ -149,26 +149,26 @@ class Workflow(object):
         
         return transitions
 
-    def _transition_to_state(self, context, to_state, guards=(),
+    def _transition_to_state(self, content, to_state, guards=(),
                              skip_same=True):
-        from_state = self.state_of(context)
+        from_state = self.state_of(content)
         if (from_state == to_state) and skip_same:
             return
-        state_info = self._state_info(context)
+        state_info = self._state_info(content)
         for info in state_info:
             if info['name'] == to_state:
                 transitions = info['transitions']
                 if transitions:
                     transition = transitions[0]
-                    self._transition(context, transition['name'], guards)
+                    self._transition(content, transition['name'], guards)
                     return
         raise WorkflowError('No transition from state %r to state %r'
                 % (from_state, to_state))
 
-    def _state_info(self, context, from_state=None):
-        context_state = self.state_of(context)
+    def _state_info(self, content, from_state=None):
+        content_state = self.state_of(content)
         if from_state is None:
-            from_state = context_state
+            from_state = content_state
 
         L = []
 
@@ -177,7 +177,7 @@ class Workflow(object):
             state_data = self._state_data[state_name]
             D['data'] = state_data
             D['initial'] = state_name == self.initial_state
-            D['current'] = state_name == context_state
+            D['current'] = state_name == content_state
             title = state_data.get('title', state_name)
             D['title'] = title
             for tname in self._transition_order:
@@ -190,61 +190,61 @@ class Workflow(object):
 
         return L
 
-    def state_info(self, context, request, from_state=None):
-        states = self._state_info(context, from_state)
+    def state_info(self, content, request, from_state=None):
+        states = self._state_info(content, from_state)
         for state in states:
             L = []
             for transition in state['transitions']:
                 permission = transition.get('permission')
                 if permission is not None:
-                    if not self.permission_checker(permission, context,request):
+                    if not self.permission_checker(permission, content,request):
                         continue
                 L.append(transition)
             state['transitions'] = L
         return states
 
-    def initialize(self, context):
+    def initialize(self, content):
         callback = self._state_data[self.initial_state]['callback']
         if callback is not None:
-            callback(context, {})
-        setattr(context, self.state_attr, self.initial_state)
+            callback(content, {})
+        setattr(content, self.state_attr, self.initial_state)
         return self.initial_state
 
-    def reset(self, context):
-        state = self._state_of(context)
+    def reset(self, content):
+        state = self._state_of(content)
         if state is None:
-            self.initialize(context)
+            self.initialize(content)
             return self.initial_state
         else:
             callback = self._state_data[state]['callback']
-            callback(context, {})
-            setattr(context, self.state_attr, state)
-            return getattr(context, self.state_attr)
+            callback(content, {})
+            setattr(content, self.state_attr, state)
+            return getattr(content, self.state_attr)
 
-    def transition(self, context, request, transition_name, guards=()):
+    def transition(self, content, request, transition_name, guards=()):
         if self.permission_checker:
             guards = list(guards)
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
-        self._transition(context, transition_name, guards=guards)
+        self._transition(content, transition_name, guards=guards)
 
-    def transition_to_state(self, context, request, to_state, guards=()):
+    def transition_to_state(self, content, request, to_state, guards=()):
         if self.permission_checker:
             guards = list(guards)
             permission_guard = PermissionGuard(request, to_state,
                                                self.permission_checker)
             guards.append(permission_guard)
-        self._transition_to_state(context, to_state, guards=guards)
+        self._transition_to_state(content, to_state, guards=guards)
 
-    def get_transitions(self, context, request, from_state=None):
-        transitions = self._get_transitions(context, from_state)
+    def get_transitions(self, content, request, from_state=None):
+        transitions = self._get_transitions(content, from_state)
         L = []
         for transition in transitions:
             permission = transition.get('permission')
             if permission is not None:
                 if self.permission_checker:
-                    if not self.permission_checker(permission, context,request):
+                    if not self.permission_checker(permission, content,request):
                         continue
             L.append(transition)
         return L
