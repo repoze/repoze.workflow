@@ -245,12 +245,44 @@ The ``transition`` tag accepts the following attributes:
 The ``key`` Tag
 ---------------
 
-XXX
+The ``key`` tag can be used within a ``state`` or ``transition`` tag.
+It allows you to associate arbitrary textual key/value pairs with the
+state or the transition in which it is contained.  For example:
+
+.. code-block:: python
+   :linenos:
+
+   <state name="foo">
+      <key name="favorite_color" value="blue"/>
+   </state>
+
+It can also be used within a transition tag:
+
+.. code-block:: python
+   :linenos:
+
+   <transition name="foo"
+               from_state="from"
+               to_state="to">
+      <key name="favorite_color" value="blue"/>
+   </transition>
+
+When the ``key`` tag is used within a ``state`` tag, the key/value
+pairs are accessible within the ``data`` element of each dictionary
+returned by the ``workflow.state_info`` method.  When the ``key`` tag
+is used within a ``transition`` tag, the key/value pair it represents
+is accessible within the transition dictionary passed to a
+:term:`callback`, or within data obtained via
+``workflow.get_transitions``.
 
 The ``alias`` Tag
 -----------------
 
-XXX: only for states
+The ``alias`` tag may only be used within a ``state`` tag.  The
+``alias`` tag creates a state name alias.  If a content object has a
+``state_attr`` attribute that matches the state's name *or any of its
+aliases*, it will be considered to be in that state, according to
+e.g. ``workflow.state_of``, etc.
 
 .. _callbacks:
 
