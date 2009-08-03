@@ -143,10 +143,13 @@ content object) using ``state_info``:
 .. code-block:: python
    :linenos:
 
-   state_info = workflow.state_info(None, request)
+   state_info = workflow.state_info(None, request, context=someotherobject)
 
 This will return the same list of dictionaries, except the ``current``
-flag will always be false.
+flag will always be false.  Permissions used to compute the allowed
+transitions will be computed against the ``context`` (the ``context``
+will be passed to the permission checker instead of any content
+object).
 
 You can obtain transition information for a piece of content using the
 ``get_transitions`` API:
