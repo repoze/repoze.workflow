@@ -160,9 +160,10 @@ class Workflow(object):
                 raise WorkflowError('No such state %s for workflow %s' %
                                     (state, self.name))
             callback = stateinfo['callback']
-            callback(content, {})
+            if callback is not None:
+                callback(content, {})
             setattr(content, self.state_attr, state)
-            return getattr(content, self.state_attr)
+            return state
 
     def _transition(self, content, transition_name, context=None, guards=()):
         """ Execute a transition via a transition name """
