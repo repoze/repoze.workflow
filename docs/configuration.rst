@@ -10,15 +10,15 @@ A workflow's *type* is a string, such as "security".  You use this
 identifier to look up the workflow later.  A workflow's *content type*
 is a Python class or :term:`interface`.  You also use this value to
 look up a workflow later.  An *elector* is a function which returns
-true or false; it operates on a "context" which you pass to the
-function which looks up the workflow.  The *state_attr* of a workflow
-is the attribute of content objects which will be managed by the
-workflow.  The state of the content object (a string) will be kept on
-this attribute.
+true or false; it operates on a "context" which you pass to a function
+named ``get_workflow`` which looks up the workflow.  The *state_attr*
+of a workflow is the attribute of content objects which will be
+managed by the workflow.  The state of the content object (a string)
+will be kept on this attribute.
 
 A workflow contains *states* and *transitions*.  The main job of a
 workflow is to transition objects into states.  It can also check that
-a user possesses a permission before using a transition.
+a user possesses a permission before executing a transition.
 
 A *state* is a workflow "end point" associated with a piece of
 content.  A state can be associated with a :term:`callback`.  A
@@ -30,7 +30,7 @@ information about the transition currently being undergone.
 A *transition* is the step from one state to another.  A transition
 may also be associated with a callback.  The callback associated with
 a transition is called as the transition is executed.  The execution
-of a transition callback happens before the execution the state
+of a transition callback happens *before* the execution the state
 callback of the target state.  A transition may also be associated
 with a *permission* (an arbitrary string such as "administer" or
 "moderate").
@@ -44,7 +44,8 @@ configured in any other workflow.
 :mod:`repoze.workflow` workflows are configured using a
 combination of :term:`ZCML` and Python.
 
-We use ZCML to define states and transition.
+You may use ZCML to define states and transitions, instead of
+composing them imperatively.
 
 Here's an example of the ZCML portion of a :mod:`repoze.workflow`
 workflow.
@@ -136,11 +137,12 @@ attributes:
 ``content_type``
 
   A Python dotted-name referring to a class or a Zope interface.  This
-  workflow will be considered when looked up via ``get_workflow`` if
-  the ``content_type`` argument to ``get_workflow`` is an instance of
-  this class or implements this interface (directly or indirectly).
-  This attribute is not required.  If it is not supplied, the workflow
-  will be considered for all content types.
+  workflow will be considered as a return candidate when looked up via
+  the ``get_workflow`` function if the ``content_type`` argument to
+  ``get_workflow`` is an instance of this class or implements this
+  interface (directly or indirectly).  This attribute is not required.
+  If it is not supplied, the workflow will be considered for all
+  content types.
 
 ``elector``
 
@@ -149,15 +151,15 @@ attributes:
   workflow names an ``elector`` the workflow will be considered as a
   candidate workflow if the elector is called and returns true.
   ``elector`` allows an object to participate in one workflow or
-  another based on its context.
+  another based on the ``context`` passed to ``get_workflow``.
 
 ``permission_checker``
 
   A Python dotted-name referring to a permission checking function.
   This function should accept three arguments: ``permission`` (a
-  string), ``context`` and ``reqeuest``.  It should return true if the
-  current user implied by the request has the permission in the
-  ``context``, false otherwise.
+  string), ``context`` and ``request``.  It should return ``True`` if
+  the current user implied by the request has the permission in the
+  ``context``, ``False`` otherwise.
 
 A ``workflow`` tag may contain ``transition`` and ``state`` tags.  A
 workflow declared via ZCML is unique amongst all workflows defined if
@@ -295,6 +297,17 @@ should accept two positional arguments: ``content`` and
 representing the current transition.  The ``content`` argument will be
 the content object that is being transitioned.
 
+Here's an example of a callback:
+
+.. code-block:: python
+   :linenos:
+
+    def to_inherits(content, transition):
+        if hasattr(content, '__acl__'):
+           del content.__acl__
+
+This callback deletes an ``__acl__`` attribute from the content object
+(if it exists) when it is called.
 
 Executing a Configuration
 -------------------------
