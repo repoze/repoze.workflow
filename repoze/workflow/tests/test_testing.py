@@ -52,7 +52,8 @@ class TestDummyWorkflow(unittest.TestCase):
     def test_transition(self):
         workflow = self._makeOne()
         workflow.transition(None, None, None)
-        self.assertEqual(workflow.executed, [{'context':None,
+        self.assertEqual(workflow.executed, [{'content':None,
+                                              'context':None,
                                               'request':None,
                                               'name':None,
                                               'guards':()}])

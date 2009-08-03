@@ -85,42 +85,6 @@ class Workflow(object):
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self.initial_state)
 
-    def _transition(self, content, transition_name, guards=()):
-        """ Execute a transition via a transition name """
-        state = self.state_of(content)
-
-        si = (state, transition_name)
-
-        transition = None
-        for tname in self._transition_order:
-            t = self._transition_data[tname]
-            match = (t['from_state'], t['name'])
-            if si == match:
-                transition = t
-                break
-
-        if transition is None:
-            raise WorkflowError(
-                'No transition from %r using transition name %r'
-                % (state, transition_name))
-
-        if guards:
-            for guard in guards:
-                guard(content, transition)
-
-        from_state = transition['from_state']
-        to_state = transition['to_state']
-
-        transition_callback = transition['callback']
-        if transition_callback is not None:
-            transition_callback(content, transition)
-
-        state_callback = self._state_data[to_state]['callback']
-        if state_callback is not None:
-            state_callback(content, transition)
-
-        setattr(content, self.state_attr, to_state)
-
     def _state_of(self, content):
         state = getattr(content, self.state_attr, None)
         state_name = self._state_aliases.get(state, state)
@@ -136,34 +100,6 @@ class Workflow(object):
 
     def has_state(self, content):
         return self._state_of(content) is not None
-
-    def _get_transitions(self, content, from_state=None):
-        if from_state is None:
-            from_state = self.state_of(content)
-
-        transitions = []
-        for tname in self._transition_order:
-            transition = self._transition_data[tname]
-            if from_state == transition['from_state']:
-                transitions.append(transition)
-        
-        return transitions
-
-    def _transition_to_state(self, content, to_state, guards=(),
-                             skip_same=True):
-        from_state = self.state_of(content)
-        if (from_state == to_state) and skip_same:
-            return
-        state_info = self._state_info(content)
-        for info in state_info:
-            if info['name'] == to_state:
-                transitions = info['transitions']
-                if transitions:
-                    transition = transitions[0]
-                    self._transition(content, transition['name'], guards)
-                    return
-        raise WorkflowError('No transition from state %r to state %r'
-                % (from_state, to_state))
 
     def _state_info(self, content, from_state=None):
         content_state = self.state_of(content)
@@ -190,14 +126,16 @@ class Workflow(object):
 
         return L
 
-    def state_info(self, content, request, from_state=None):
+    def state_info(self, content, request, context=None, from_state=None):
+        if context is None:
+            context = content
         states = self._state_info(content, from_state)
         for state in states:
             L = []
             for transition in state['transitions']:
                 permission = transition.get('permission')
                 if permission is not None:
-                    if not self.permission_checker(permission, content,request):
+                    if not self.permission_checker(permission,context,request):
                         continue
                 L.append(transition)
             state['transitions'] = L
@@ -221,30 +159,103 @@ class Workflow(object):
             setattr(content, self.state_attr, state)
             return getattr(content, self.state_attr)
 
-    def transition(self, content, request, transition_name, guards=()):
+    def _transition(self, content, transition_name, context=None, guards=()):
+        """ Execute a transition via a transition name """
+        if context is None:
+            context = content
+
+        state = self.state_of(content)
+
+        si = (state, transition_name)
+
+        transition = None
+        for tname in self._transition_order:
+            t = self._transition_data[tname]
+            match = (t['from_state'], t['name'])
+            if si == match:
+                transition = t
+                break
+
+        if transition is None:
+            raise WorkflowError(
+                'No transition from %r using transition name %r'
+                % (state, transition_name))
+
+        if guards:
+            for guard in guards:
+                guard(context, transition)
+
+        from_state = transition['from_state']
+        to_state = transition['to_state']
+
+        transition_callback = transition['callback']
+        if transition_callback is not None:
+            transition_callback(content, transition)
+
+        state_callback = self._state_data[to_state]['callback']
+        if state_callback is not None:
+            state_callback(content, transition)
+
+        setattr(content, self.state_attr, to_state)
+
+    def transition(self, content, request, transition_name, context=None,
+                   guards=()):
         if self.permission_checker:
             guards = list(guards)
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
-        self._transition(content, transition_name, guards=guards)
+        self._transition(content, transition_name, context=context,
+                         guards=guards)
 
-    def transition_to_state(self, content, request, to_state, guards=()):
+    def _transition_to_state(self, content, to_state, context=None, guards=(), 
+                             skip_same=True):
+        from_state = self.state_of(content)
+        if (from_state == to_state) and skip_same:
+            return
+        state_info = self._state_info(content)
+        for info in state_info:
+            if info['name'] == to_state:
+                transitions = info['transitions']
+                if transitions:
+                    transition = transitions[0]
+                    self._transition(content, transition['name'],context,guards)
+                    return
+        raise WorkflowError('No transition from state %r to state %r'
+                % (from_state, to_state))
+
+    def transition_to_state(self, content, request, to_state, context=None,
+                            guards=(), skip_same=True):
         if self.permission_checker:
             guards = list(guards)
             permission_guard = PermissionGuard(request, to_state,
                                                self.permission_checker)
             guards.append(permission_guard)
-        self._transition_to_state(content, to_state, guards=guards)
+        self._transition_to_state(content, to_state, context, guards=guards,
+                                  skip_same=skip_same)
 
-    def get_transitions(self, content, request, from_state=None):
+    def _get_transitions(self, content, from_state=None):
+        if from_state is None:
+            from_state = self.state_of(content)
+
+        transitions = []
+        for tname in self._transition_order:
+            transition = self._transition_data[tname]
+            if from_state == transition['from_state']:
+                transitions.append(transition)
+        
+        return transitions
+
+    def get_transitions(self, content, request, context=None, from_state=None):
+        if context is None:
+            context = content
         transitions = self._get_transitions(content, from_state)
         L = []
         for transition in transitions:
             permission = transition.get('permission')
             if permission is not None:
                 if self.permission_checker:
-                    if not self.permission_checker(permission, content,request):
+                    if not self.permission_checker(permission, context,request):
                         continue
             L.append(transition)
         return L

@@ -26,6 +26,9 @@ class IWorkflow(Interface):
     def has_state(content):
         """ Return true if the content has any state, false if not. """
 
+    def state_info(content, request, context=None, from_state=None):
+        """ Return a sequence of state info dictionaries """
+
     def initialize(content):
         """ Initialize the content object to the initial state of this
         workflow."""
@@ -36,18 +39,17 @@ class IWorkflow(Interface):
         current state, it will be initialized into the initial state
         for this workflow (see ``initialize``)."""
 
-    def transition(content, request, transition_name, guards=()):
+    def transition(content, request, transition_name, context=None, guards=()):
         """ Execute a transition using a transition name.
         """
-    def transition_to_state(content, reuqest, to_state, guards=()):
+    def transition_to_state(content, request, to_state, context=None,
+                            guards=(), skip_same=True):
         """ Execute a transition to another state using a state name
-        (``to_state``)"""
+        (``to_state``).  If ``skip_same`` is True, and the
+        ``to_state`` is the same as the content state, do nothing."""
 
-    def get_transitions(content, request, from_state=None):
+    def get_transitions(content, request, context=None, from_state=None):
         """ Return a sequence of transition dictionaries """
-
-    def state_info(content, request, from_state=None):
-        """ Return a sequence of state info dictionaries """
 
 class IWorkflowList(Interface):
     """ Marker interface used internally by get_workflow and the ZCML

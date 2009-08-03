@@ -20,13 +20,14 @@ You can obtain a workflow object using the ``get_workflow`` API:
 
    get_workflow(Content, 'security')
 
-The first argument is the content type (a class or Zope
-:term:`interface).  The second argument you pass to ``get_workflow``
-is a workflow "type" (the string attached to the ``type`` attribute of
-a workflow definition).
+The first argument is the content type (a class or :term:`interface`).
+The second argument you pass to ``get_workflow`` is a workflow "type"
+(the string attached to the ``type`` attribute of a workflow
+definition).
 
-If a registration has been made that would associate the ``Content``
-class above with the workflow, a workflow object is returned.
+If a workflow has been created in ZCML that would associate the
+``Content`` class above with the workflow, a workflow object is
+returned.
 
 You can also pass a ``context`` argument into ``get_workflow`` for
 purposes of obtaining a more specific workflow for a particular
@@ -43,11 +44,12 @@ context (see the ``elector`` attribute of the ``workflow`` tag in
 
    get_workflow(Content, 'security', context=someotherobject)
 
-If there is a more specific workflow matching the interface associated
-with ``someotherobject`` based on an ordered match against each
-workflow that matches this content type with an elector, that workflow
-will be chosen first.  Otherwise, a workflow that matches the content
-type without an elector will be chosen.
+When a context is passed, if there is a more specific workflow
+matching the interface associated with ``someotherobject`` based on an
+ordered match against each workflow that matches this content type
+with an elector, that workflow will be chosen first.  Otherwise, a
+workflow that matches the content type without an elector will be
+chosen.
 
 If no workflow matches the content type, ``None`` is returned from
 ``get_workflow``.
@@ -55,11 +57,12 @@ If no workflow matches the content type, ``None`` is returned from
 Workflow Objects
 ----------------
 
-Workflow objects can be used to initialize and transition content.
-Typically to use these APIs you need a "request" object.  This object
-is available in :mod:`repoze.bfg` views as the "request" parameter to
-the view.  Your web framework may have another kind of request object
-obtained from another place.
+Workflow objects can be used to initialize and transition content.  To
+use some of these APIs you need a "request" object.  This object is
+available in :mod:`repoze.bfg` views as the "request" parameter to the
+view.  Your web framework may have another kind of request object
+obtained from another place.  If none of your workflows use a
+``permission_checker``, you can pass ``None`` as the request object.
 
 Here is how you initialize a piece of content to the initial workflow
 state:
@@ -89,6 +92,11 @@ state):
 
    workflow.transition_to_state(content, request, 'public')
 
+.. note::
+
+  ``workflow.transition_to_state`` calls ``workflow.initialize`` if
+  the content has not already been initialized.
+
 You can obtain available state information from a content object using
 the ``state_info`` method:
 
@@ -96,6 +104,37 @@ the ``state_info`` method:
    :linenos:
 
    state_info = workflow.state_info(content, request)
+
+``state_info`` above will be a list of dictonaries.  Each dictionary
+will have the following keys:
+
+name
+
+  The state's name.
+
+title
+
+  The state's title (or the state name if this state has no title).
+
+data
+
+  State data, containing ``callback``, and any arbitrary key value
+  pairs associated with the state through use of the ``key`` tag in
+  ZCML.
+
+initial
+
+  True if this state is the initial state for this workflow.
+
+current
+
+  True if the content object supplied is in this state.
+
+transitions
+
+  A sequence of transition dictionaries; if any of the transitions is
+  not allowed due to a permission violation, it will not show up in
+  this list.
 
 You can also obtain state information about a nonexistent object
 (essentially about the workflow itself rather than any particular
@@ -105,6 +144,9 @@ content object) using ``state_info``:
    :linenos:
 
    state_info = workflow.state_info(None, request)
+
+This will return the same list of dictionaries, except the ``current``
+flag will always be false.
 
 You can obtain transition information for a piece of content using the
 ``get_transitions`` API:
@@ -119,7 +161,7 @@ You can reset the workflow state of an object using the ``reset`` API:
 .. code-block:: python
    :linenos:
 
-   state = workflow.reset(context)
+   newstate = workflow.reset(context)
 
 You can test if an object is in any state at all using the
 ``has_state`` API:
@@ -130,3 +172,84 @@ You can test if an object is in any state at all using the
    if workflow.has_state(context):
       # do something
 
+You can find the workflow state of an existing object using the using
+the ``state_of`` API:
+
+.. code-block:: python
+   :linenos:
+
+   state = workflow.state_of(content)
+
+.. note::
+
+  Calling the ``state_of`` API will initialize the object if it hasn't
+  already been initialized.
+
+Here's usage of the API in context on a :term:`repoze.bfg`
+self-posting "add content" view.  It's assumed that the
+``add_content.pt`` form rendered uses the state information returned
+from ``state_info`` to render available state names to a set of radio
+buttons or a dropdown single-select list; the form post will return
+this value in the ``security_state`` request parameter.
+
+.. code-block:: python
+   :linenos:
+
+    from repoze.workflow import get_workflow
+    from repoze.bfg.chameleon_zpt import render_template_to_response
+
+    from webob.exc import HTTPFound
+
+    class Content:
+        pass
+
+    def add_content_view(context, request):
+
+        workflow = get_workflow(Content, 'security', context)
+        security_states = workflow.state_info(None, request)
+
+        if 'form.submitted' in request.POST:
+            content = Content(request['title'])
+            # if this were real, we'd persist content
+            workflow.transition_to_state(content, request,
+                                         request['security_state'])
+            return HTTPFound(location='/')
+
+        return render_template_to_response(
+            'add_content.pt',
+            security_states = security_states,
+            )
+
+Here's usage of the API in context on a :term:`repoze.bfg`
+self-posting "edit content" view.  It's assumed that the
+``edit_content.pt`` form rendered uses the state information returned
+from ``state_info`` to render available state names to a set of radio
+buttons or a dropdown single-select list; the form post will return
+this value in the ``security_state`` request parameter.  It's also
+assumed that the "context" object is a ``Content`` instance.
+
+.. code-block:: python
+   :linenos:
+
+    from repoze.workflow import get_workflow
+    from repoze.bfg.chameleon_zpt import render_template_to_response
+
+    from webob.exc import HTTPFound
+
+    class Content:
+        pass
+
+    def edit_content_view(context, request):
+        workflow = get_workflow(Content, 'security', context)
+        security_states = workflow.state_info(None, request)
+
+        if 'form.submitted' in request.POST:
+            # if this were real, we'd persist content
+            workflow.transition_to_state(context, request,
+                                         request['security_state'])
+            return HTTPFound(location='/')
+
+        return render_template_to_response(
+            'edit_content.pt',
+            security_states = security_states,
+            )

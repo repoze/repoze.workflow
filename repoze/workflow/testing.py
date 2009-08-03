@@ -24,9 +24,7 @@ class DummyWorkflow:
         self.transitions_added = []
         self.resetted = []
 
-    def has_state(self, content):
-        return hasattr(content, self.state_attr)
-        
+
     def add_state(self, name, callback=None, **kw):
         self.states_added.append({'name':name,
                                   'callback':callback,
@@ -42,30 +40,36 @@ class DummyWorkflow:
     def check(self):
         return True
 
-    def state_of(self, context):
-        return getattr(context, self.state_attr, None)
+    def state_of(self, content):
+        return getattr(content, self.state_attr, None)
 
-    def initialize(self, context):
-        self.initialized.append(context)
-        return self.initial_state
+    def has_state(self, content):
+        return hasattr(content, self.state_attr)
 
-    def reset(self, context):
-        self.resetted.append(context)
-        return self.initial_state
-
-    def transition(self, context, request, transition_name, guards=()):
-        self.executed.append({'context':context, 'name':transition_name,
-                              'guards':guards, 'request':request})
-
-    def transition_to_state(self, context, request, to_state, guards=()):
-        self.transitioned.append({'to_state':to_state, 'context':context,
-                                  'request':request, 'guards':guards})
-
-    def get_transitions(self, context, request, from_state=None):
+    def state_info(self, content, request, context=None, from_state=None):
         return []
 
-    def state_info(self, context, request, from_state=None):
-        return []
+    def initialize(self, content):
+        self.initialized.append(content)
+        return self.initial_state
 
+    def reset(self, content):
+        self.resetted.append(content)
+        return self.initial_state
+
+    def transition(self, content, request, transition_name, context=None,
+                   guards=()):
+        self.executed.append({'content':content, 'name':transition_name,
+                              'guards':guards, 'request':request,
+                              'context':context})
+
+    def transition_to_state(self, content, request, to_state, context=None,
+                            guards=(), skip_same=True):
+        self.transitioned.append({'to_state':to_state, 'content':content,
+                                  'request':request, 'guards':guards,
+                                  'context':context, 'skip_same':skip_same})
+
+    def get_transitions(self, content, request, context=None, from_state=None):
+        return []
 
     

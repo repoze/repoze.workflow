@@ -8,12 +8,13 @@ understanding of its terminology.
 
 A workflow's *type* is a string, such as "security".  You use this
 identifier to look up the workflow later.  A workflow's *content type*
-is a class or :term:`interface`.  You also use this value to look up a
-workflow later.  An *elector* is a function which returns true or
-false; it operates on a "context" which you pass to a function to look
-up the worlkflow.  The *state_attr* of a workflow is the attribute of
-content objects which will be managed by the workflow.  The state of
-the content object (a string) will be kept on this attribute.
+is a Python class or :term:`interface`.  You also use this value to
+look up a workflow later.  An *elector* is a function which returns
+true or false; it operates on a "context" which you pass to the
+function which looks up the workflow.  The *state_attr* of a workflow
+is the attribute of content objects which will be managed by the
+workflow.  The state of the content object (a string) will be kept on
+this attribute.
 
 A workflow contains *states* and *transitions*.  The main job of a
 workflow is to transition objects into states.  It can also check that
@@ -105,8 +106,9 @@ attributes:
 ``type``
 
   The workflow type.  This is attribute is required.  It should be a
-  string, indicating the context in which it's used (often
-  "security").
+  string, indicating the situation in which it's used (e.g.
+  "security").  Multiple workflows configured in a system may share
+  the same type.
 
 ``name``
 
