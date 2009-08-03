@@ -4,7 +4,9 @@ from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
 
 from zope.interface import implements
+from zope.interface import providedBy
 from zope.interface import classImplements
+from zope.interface.interfaces import IInterface
 from zope.component import getSiteManager
 
 _marker = object()
@@ -281,6 +283,9 @@ def get_workflow(content_type, type, context=None,
     electors for placeful workflows."""
     sm = getSiteManager()
     look = sm.adapters.lookup
+
+    if not IInterface.providedBy(content_type):
+        content_type = providedBy(content_type)
 
     if content_type not in (None, IDefaultWorkflow):
         wf_list = look((content_type,), IWorkflowList, name=type, default=None)

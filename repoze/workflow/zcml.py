@@ -7,6 +7,8 @@ from zope.configuration.fields import GlobalObject
 
 from zope.interface import Interface
 from zope.interface import implements
+from zope.interface import providedBy
+from zope.interface.interfaces import IInterface
 
 from zope.schema import TextLine
 
@@ -114,7 +116,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                               
         self.action(
             discriminator = (IWorkflow, self.content_type, elector_id,
-                             self.type),
+                             self.type, self.state_attr),
             callable = register,
             args = (),
             )
@@ -168,13 +170,18 @@ def alias(context, name):
 def register_workflow(workflow, type, content_type, elector, info=None):
     if content_type is None:
         content_type = IDefaultWorkflow
+
+    if not IInterface.providedBy(content_type):
+        content_type = providedBy(content_type)
+
     sm = getSiteManager()
-    wf_list = sm.adapters.lookup((content_type,), IWorkflowList,
-                                 name=type, default=None)
+
+    wf_list = sm.adapters.lookup((content_type,), IWorkflowList, name=type,
+                                 default=None)
+
     if wf_list is None:
         wf_list = []
-        sm.registerAdapter(wf_list, (content_type,),
-                           IWorkflowList, type, info)
+        sm.registerAdapter(wf_list, (content_type,), IWorkflowList, type, info)
 
     wf_list.append({'workflow':workflow, 'elector':elector})
 

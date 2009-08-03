@@ -47,7 +47,7 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         self.assertEqual(len(actions), 1)
         action = actions[0]
-        self.assertEqual(action[0], (IWorkflow, IDummy, None, 'security'))
+        self.assertEqual(action[0], (IWorkflow, IDummy, None, 'security', None))
         callback = action[1]
         self.assertEqual(type(callback), types.FunctionType)
         callback()
@@ -256,6 +256,62 @@ class TestFixtureApp(unittest.TestCase):
               'name': 'public_to_private', 'to_state': u'private',
               'permission':'moderate',}
             )
+
+class TestRegisterWorkflow(unittest.TestCase):
+    def setUp(self):
+        cleanUp()
+
+    def tearDown(self):
+        cleanUp()
+
+    def _callFUT(self, workflow, type, content_type, elector=None, info=None):
+        from repoze.workflow.zcml import register_workflow
+        return register_workflow(workflow, type, content_type, elector, info)
+
+    def test_register_None_as_content_type(self):
+        from repoze.workflow.interfaces import IWorkflowList
+        from repoze.workflow.interfaces import IDefaultWorkflow
+        from zope.component import getSiteManager
+
+        workflow = object()
+        self._callFUT(workflow, 'security', None)
+        sm = getSiteManager()
+        
+        wf_list = sm.adapters.lookup((IDefaultWorkflow,), IWorkflowList,
+                                     name='security')
+        self.assertEqual(wf_list, [{'elector':None, 'workflow':workflow}])
+        
+    def test_register_iface_as_content_type(self):
+        from repoze.workflow.interfaces import IWorkflowList
+        from zope.component import getSiteManager
+        from zope.interface import Interface
+        class IFoo(Interface):
+            pass
+        workflow = object()
+        self._callFUT(workflow, 'security', IFoo)
+        sm = getSiteManager()
+        
+        wf_list = sm.adapters.lookup((IFoo,), IWorkflowList,
+                                     name='security')
+        self.assertEqual(wf_list, [{'elector':None, 'workflow':workflow}])
+        
+    def test_register_class_as_content_type(self):
+        from repoze.workflow.interfaces import IWorkflowList
+        from zope.component import getSiteManager
+        from zope.interface import providedBy
+        from zope.interface import Interface
+        class Foo:
+            pass
+        class IBar(Interface):
+            pass
+        workflow = object()
+        self._callFUT(workflow, 'security', Foo)
+        sm = getSiteManager()
+        pb = providedBy(Foo)
+        wf_list = sm.adapters.lookup((pb,), IWorkflowList, name='security')
+        self.assertEqual(wf_list, [{'elector':None, 'workflow':workflow}])
+        other = sm.adapters.lookup((IBar,), IWorkflowList, name='security')
+        self.assertEqual(other, None)
 
 class DummyContext:
     info = None

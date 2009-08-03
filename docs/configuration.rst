@@ -3,8 +3,47 @@
 Configuration
 =============
 
+Configuring a :mod:`repoze.workflow` workflow requires an
+understanding of its terminology.
+
+A workflow's *type* is a string, such as "security".  You use this
+identifier to look up the workflow later.  A workflow's *content type*
+is a class or :term:`interface`.  You also use this value to look up a
+workflow later.  An *elector* is a function which returns true or
+false; it operates on a "context" which you pass to a function to look
+up the worlkflow.  The *state_attr* of a workflow is the attribute of
+content objects which will be managed by the workflow.  The state of
+the content object (a string) will be kept on this attribute.
+
+A workflow contains *states* and *transitions*.  The main job of a
+workflow is to transition objects into states.  It can also check that
+a user possesses a permission before using a transition.
+
+A *state* is a workflow "end point" associated with a piece of
+content.  A state can be associated with a :term:`callback`.  A
+callback is a Python callable that accepts two arguments: a
+``content`` and a ``transition``.  The content object is the object
+being workflowed.  The transition is a dictionary containing
+information about the transition currently being undergone.
+
+A *transition* is the step from one state to another.  A transition
+may also be associated with a callback.  The callback associated with
+a transition is called as the transition is executed.  The execution
+of a transition callback happens before the execution the state
+callback of the target state.  A transition may also be associated
+with a *permission* (an arbitrary string such as "administer" or
+"moderate").
+
+More than one workflow can be used simultaneously in the same system.
+A workflow is unique in a system using multiple workflows if the
+combination of its *type*, its *content type*, its *elector*, and its
+*state_attr* are different than the combination of those attributes
+configured in any other workflow.
+
 :mod:`repoze.workflow` workflows are configured using a
 combination of :term:`ZCML` and Python.
+
+We use ZCML to define states and transition.
 
 Here's an example of the ZCML portion of a :mod:`repoze.workflow`
 workflow.
@@ -56,21 +95,6 @@ workflow.
    </workflow>
          
    </configure>
-
-This configuration defines *states* and *transitions*.  A state is an
-"end point" associated with a piece of content.  A transition is a
-path from one state to another state (unidirectional).
-
-A state can be associated with a :term:`callback`.  A callback is a
-Python callable that accepts two arguments: a ``content`` and a
-``transition``.  The content object is the object being workflowed.
-The transition is a dictionary containing information about the
-transition currently being undergone.
-
-A transition may also be associated with a callback.  The callback
-associated with a transition is called as the transition is executed.
-The execution of a transition callback happens *before* the execution
-the state callback of the target state.
 
 The ``workflow`` Tag
 ---------------------

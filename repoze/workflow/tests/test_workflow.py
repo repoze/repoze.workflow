@@ -796,6 +796,15 @@ class TestGetWorkflow(unittest.TestCase):
         self._registerWorkflowList(IDefaultWorkflow)
         result = self._callFUT(None, '', [workflow])
         self.assertEqual(result, workflow)
+
+    def test_content_type_is_class_registered_workflow(self):
+        from repoze.workflow.interfaces import IDefaultWorkflow
+        class Content:
+            pass
+        workflow = object()
+        self._registerWorkflowList(IDefaultWorkflow)
+        result = self._callFUT(Content, '', [workflow])
+        self.assertEqual(result, workflow)
         
     def test_content_type_is_IDefaultWorkflow_registered_workflow(self):
         from repoze.workflow.interfaces import IDefaultWorkflow
