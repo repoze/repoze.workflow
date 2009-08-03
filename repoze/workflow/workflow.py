@@ -154,7 +154,12 @@ class Workflow(object):
             self.initialize(content)
             return self.initial_state
         else:
-            callback = self._state_data[state]['callback']
+            try:
+                stateinfo = self._state_data[state]
+            except KeyError:
+                raise WorkflowError('No such state %s for workflow %s' %
+                                    (state, self.name))
+            callback = stateinfo['callback']
             callback(content, {})
             setattr(content, self.state_attr, state)
             return getattr(content, self.state_attr)

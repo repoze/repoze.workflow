@@ -514,6 +514,14 @@ class WorkflowTests(unittest.TestCase):
         sm.reset(ob)
         self.assertEqual(ob.state, 'private')
         self.assertEqual(ob.called_back, True)
+
+    def test_reset_content_has_state_not_in_workflow(self):
+        from repoze.workflow import WorkflowError
+        sm = self._makeOne(initial_state='pending')
+        sm.add_state('pending')
+        ob = DummyContent()
+        ob.state = 'supersecret'
+        self.assertRaises(WorkflowError, sm.reset, ob)
         
     def test_transition_permissive(self):
         args = []
