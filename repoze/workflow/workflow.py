@@ -12,10 +12,10 @@ from zope.component import getSiteManager
 _marker = object()
 
 class WorkflowError(Exception):
-    """ Invalid input to finite state machine"""
+    pass
 
 class Workflow(object):
-    """ Finite state machine featuring transition actions.
+    """ Finite state machine.
     """
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
