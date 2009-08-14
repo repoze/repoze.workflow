@@ -1,4 +1,5 @@
 from zope.interface import Interface
+from zope.interface import Attribute
 
 class IWorkflowFactory(Interface):
     def __call__(self, context, machine):
@@ -21,7 +22,7 @@ class IWorkflow(Interface):
     def state_of(content):
         """ Return the current state of the content object ``content``
         or None if the content object has not particpated yet in this
-        workflow."""
+        workflow.  """
 
     def has_state(content):
         """ Return true if the content has any state, false if not. """
@@ -31,16 +32,16 @@ class IWorkflow(Interface):
 
     def initialize(content):
         """ Initialize the content object to the initial state of this
-        workflow."""
+        workflow. """
 
     def reset(content):
         """ Reset the object by calling the callback of it's current
         state and setting its state attr.  If ``content`` has no
         current state, it will be initialized into the initial state
-        for this workflow (see ``initialize``)."""
+        for this workflow (see ``initialize``).  """
 
     def transition(content, request, transition_name, context=None, guards=()):
-        """ Execute a transition using a transition name.
+        """ Execute a transition using a transition name.  
         """
     def transition_to_state(content, request, to_state, context=None,
                             guards=(), skip_same=True):
@@ -101,3 +102,12 @@ class IStateMachine(Interface):
         actions (such as firing an event).
         """
         
+class ICallbackInfo(Interface):
+    """ Interface used internally to represent 'callback info' objects
+    (the 2nd argument passed to callbacks) """
+
+    transition = Attribute('A dictionary representing the transition underway')
+
+    workflow = Attribute('The workflow object that invoked the callback')
+
+    

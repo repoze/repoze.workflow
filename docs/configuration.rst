@@ -23,9 +23,10 @@ a user possesses a permission before executing a transition.
 A *state* is a workflow "end point" associated with a piece of
 content.  A state can be associated with a :term:`callback`.  A
 callback is a Python callable that accepts two arguments: a
-``content`` and a ``transition``.  The content object is the object
-being workflowed.  The transition is a dictionary containing
-information about the transition currently being undergone.
+``content`` and a ``info`` object.  The content object is the object
+being workflowed.  The ``info`` object is an object which has access
+to information about the transition currently being undergone, the
+workflow, and other attributes.
 
 A *transition* is the step from one state to another.  A transition
 may also be associated with a callback.  The callback associated with
@@ -273,8 +274,8 @@ When the ``key`` tag is used within a ``state`` tag, the key/value
 pairs are accessible within the ``data`` element of each dictionary
 returned by the ``workflow.state_info`` method.  When the ``key`` tag
 is used within a ``transition`` tag, the key/value pair it represents
-is accessible within the transition dictionary passed to a
-:term:`callback`, or within data obtained via
+is accessible within the ``transition`` dictionary of the ``info``
+object passed to a :term:`callback`, or within data obtained via
 ``workflow.get_transitions``.
 
 The ``alias`` Tag
@@ -292,22 +293,28 @@ Callbacks
 ---------
 
 Callback objects (both transition callbacks and state callbacks)
-should accept two positional arguments: ``content`` and
-``transition``.  The ``transition`` argument will be a dictionary
-representing the current transition.  The ``content`` argument will be
-the content object that is being transitioned.
+should accept two positional arguments: ``content`` and ``info``.  The
+``info`` argument will be an object which has (at least) two
+attributes:
+
+  - ``transition``: a dictionary representing the current transition.
+
+  - ``workflow``: the workflow object which initiated this callback
+
+The ``content`` argument will be the content object that is being
+transitioned.
 
 Here's an example of a callback:
 
 .. code-block:: python
    :linenos:
 
-    def to_inherits(content, transition):
+    def to_inherits(content, info):
         if hasattr(content, '__acl__'):
-           del content.__acl__
+            del content.__acl__
 
 This callback deletes an ``__acl__`` attribute from the content object
-(if it exists) when it is called.
+(if it exists) when it is called. 
 
 Executing a Configuration
 -------------------------

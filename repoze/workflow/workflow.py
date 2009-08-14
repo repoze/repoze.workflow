@@ -2,6 +2,7 @@ from repoze.workflow.interfaces import IWorkflow
 from repoze.workflow.interfaces import IWorkflowFactory
 from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
+from repoze.workflow.interfaces import ICallbackInfo
 
 from zope.interface import implements
 from zope.interface import providedBy
@@ -144,7 +145,8 @@ class Workflow(object):
     def initialize(self, content):
         callback = self._state_data[self.initial_state]['callback']
         if callback is not None:
-            callback(content, {})
+            info = CallbackInfo(self, {})
+            callback(content, info)
         setattr(content, self.state_attr, self.initial_state)
         return self.initial_state
 
@@ -152,18 +154,19 @@ class Workflow(object):
         state = self._state_of(content)
         if state is None:
             self.initialize(content)
-            return self.initial_state
-        else:
-            try:
-                stateinfo = self._state_data[state]
-            except KeyError:
-                raise WorkflowError('No such state %s for workflow %s' %
-                                    (state, self.name))
-            callback = stateinfo['callback']
-            if callback is not None:
-                callback(content, {})
-            setattr(content, self.state_attr, state)
-            return state
+            return self.initial_state, None
+        try:
+            stateinfo = self._state_data[state]
+        except KeyError:
+            raise WorkflowError('No such state %s for workflow %s' %
+                                (state, self.name))
+        callback = stateinfo['callback']
+        msg = None
+        if callback is not None:
+            info = CallbackInfo(self, {})
+            msg = callback(content, info)
+        setattr(content, self.state_attr, state)
+        return state, msg
 
     def _transition(self, content, transition_name, context=None, guards=()):
         """ Execute a transition via a transition name """
@@ -187,20 +190,22 @@ class Workflow(object):
                 'No transition from %r using transition name %r'
                 % (state, transition_name))
 
+        info = CallbackInfo(self, transition)
+
         if guards:
             for guard in guards:
-                guard(context, transition)
+                guard(context, info)
 
         from_state = transition['from_state']
         to_state = transition['to_state']
 
         transition_callback = transition['callback']
         if transition_callback is not None:
-            transition_callback(content, transition)
+            transition_callback(content, info)
 
         state_callback = self._state_data[to_state]['callback']
         if state_callback is not None:
-            state_callback(content, transition)
+            state_callback(content, info)
 
         setattr(content, self.state_attr, to_state)
 
@@ -225,7 +230,8 @@ class Workflow(object):
                 transitions = info['transitions']
                 if transitions:
                     transition = transitions[0]
-                    self._transition(content, transition['name'],context,guards)
+                    self._transition(content, transition['name'],context,
+                                     guards)
                     return
         raise WorkflowError('No transition from state %r to state %r'
                 % (from_state, to_state))
@@ -266,14 +272,21 @@ class Workflow(object):
             L.append(transition)
         return L
 
+class CallbackInfo(object):
+    implements(ICallbackInfo)
+
+    def __init__(self, workflow, transition):
+        self.workflow = workflow
+        self.transition = transition
+
 class PermissionGuard:
     def __init__(self, request, name, checker):
         self.request = request
         self.name = name
         self.checker = checker
 
-    def __call__(self, context, transition):
-        permission = transition.get('permission')
+    def __call__(self, context, info):
+        permission = info.transition.get('permission')
         if self.request is not None and permission is not None:
             if not self.checker(permission, context, self.request):
                 raise WorkflowError(

@@ -224,8 +224,8 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition(self):
         args = []
-        def dummy(content, transition):
-            args.append((content, transition))
+        def dummy(content, info):
+            args.append((content, info))
         sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
@@ -240,40 +240,49 @@ class WorkflowTests(unittest.TestCase):
 
         self.assertEqual(len(args), 4)
         self.assertEqual(args[0][0], ob)
-        self.assertEqual(args[0][1], {'from_state': 'pending',
-                                      'callback': dummy,
-                                      'to_state': 'published',
-                                      'name': 'publish'})
+        info = args[0][1]
+        self.assertEqual(info.transition, {'from_state': 'pending',
+                                           'callback': dummy,
+                                           'to_state': 'published',
+                                           'name': 'publish'})
+        self.assertEqual(info.workflow, sm)
         self.assertEqual(args[1][0], ob)
-        self.assertEqual(args[1][1], {'from_state': 'published',
-                                      'callback': dummy,
-                                      'to_state': 'pending',
-                                      'name': 'retract'})
+        info = args[1][1]
+        self.assertEqual(info.transition, {'from_state': 'published',
+                                           'callback': dummy,
+                                           'to_state': 'pending',
+                                           'name': 'retract'})
+        self.assertEqual(args[1][0], ob)
         self.assertEqual(args[2][0], ob)
-        self.assertEqual(args[2][1], {'from_state': 'pending',
-                                      'callback': dummy,
-                                      'to_state': 'private',
-                                      'name': 'reject'})
+        info = args[2][1]
+        self.assertEqual(info.transition, {'from_state': 'pending',
+                                           'callback': dummy,
+                                           'to_state': 'private',
+                                           'name': 'reject'})
+        self.assertEqual(info.workflow, sm)
         self.assertEqual(args[3][0], ob)
-        self.assertEqual(args[3][1], {'from_state': 'private',
-                                      'callback': dummy,
-                                      'to_state': 'pending',
-                                      'name': 'submit'})
+        info = args[3][1]
+        self.assertEqual(info.transition, {'from_state': 'private',
+                                           'callback': dummy,
+                                           'to_state': 'pending',
+                                           'name': 'submit'})
+        self.assertEqual(info.workflow, sm)
 
 
     def test__transition_with_state_callback(self):
-        def dummy(content, transition):
-            content.transition = transition
+        def dummy(content, info):
+            content.info = info
         sm = self._makePopulated(state_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
         sm._transition(ob, 'publish')
-        self.assertEqual(ob.transition,
+        self.assertEqual(ob.info.transition,
                          {'from_state': 'pending',
                           'callback': None,
                           'to_state':
                           'published',
                           'name': 'publish'})
+        self.assertEqual(ob.info.workflow, sm)
 
     def test__transition_error(self):
         sm = self._makeOne(initial_state='pending')
@@ -283,7 +292,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertRaises(WorkflowError, sm._transition, ob, 'nosuch')
 
     def test__transition_guard(self):
-        def guard(content, transition):
+        def guard(content, info):
             raise ValueError
         sm = self._makePopulated()
         ob = DummyContent()
@@ -293,8 +302,8 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition_to_state(self):
         args = []
-        def dummy(content, transition):
-            args.append((content, transition))
+        def dummy(content, info):
+            args.append((content, info))
         sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
@@ -308,25 +317,33 @@ class WorkflowTests(unittest.TestCase):
 
         self.assertEqual(len(args), 4)
         self.assertEqual(args[0][0], ob)
-        self.assertEqual(args[0][1], {'from_state': 'pending',
-                                      'callback': dummy,
-                                      'to_state': 'published',
-                                      'name': 'publish'})
+        info = args[0][1]
+        self.assertEqual(info.transition, {'from_state': 'pending',
+                                           'callback': dummy,
+                                           'to_state': 'published',
+                                           'name': 'publish'})
+        self.assertEqual(info.workflow, sm)
         self.assertEqual(args[1][0], ob)
-        self.assertEqual(args[1][1], {'from_state': 'published',
-                                      'callback': dummy,
-                                      'to_state': 'pending',
-                                      'name': 'retract'})
+        info = args[1][1]
+        self.assertEqual(info.transition, {'from_state': 'published',
+                                           'callback': dummy,
+                                           'to_state': 'pending',
+                                           'name': 'retract'})
+        self.assertEqual(info.workflow, sm)
         self.assertEqual(args[2][0], ob)
-        self.assertEqual(args[2][1], {'from_state': 'pending',
-                                      'callback': dummy,
-                                      'to_state': 'private',
-                                      'name': 'reject'})
+        info = args[2][1]
+        self.assertEqual(info.transition, {'from_state': 'pending',
+                                           'callback': dummy,
+                                           'to_state': 'private',
+                                           'name': 'reject'})
+        self.assertEqual(info.workflow, sm)
         self.assertEqual(args[3][0], ob)
-        self.assertEqual(args[3][1], {'from_state': 'private',
-                                      'callback': dummy,
-                                      'to_state': 'pending',
-                                      'name': 'submit'})
+        info = args[3][1]
+        self.assertEqual(info.transition, {'from_state': 'private',
+                                           'callback': dummy,
+                                           'to_state': 'pending',
+                                           'name': 'submit'})
+        self.assertEqual(info.workflow, sm)
 
     def test__transition_to_state_error(self):
         sm = self._makeOne(initial_state='pending')
@@ -472,7 +489,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.state, 'pending')
         
     def test_initialize_with_initializer(self):
-        def initializer(content, transition):
+        def initializer(content, info):
             content.initialized = True
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending', initializer)
@@ -482,7 +499,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.initialized, True)
 
     def test_reset_content_has_no_state(self):
-        def callback(content, transition):
+        def callback(content, info):
             content.called_back = True        
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending', callback=callback)
@@ -499,7 +516,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.state, 'pending')
 
     def test_reset_content_has_state(self):
-        def callback(content, transition):
+        def callback(content, info):
             content.called_back = True        
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
@@ -511,7 +528,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.called_back, True)
 
     def test_reset_content_state_aliased(self):
-        def callback(content, transition):
+        def callback(content, info):
             content.called_back = True        
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
@@ -552,7 +569,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'publish')
         self.assertEqual(transitioned['context'], None)
         permitted = transitioned['guards'][0]
-        result = permitted(None, {'permission':'view'})
+        info = DummyCallbackInfo(transition = {'permission':'view'})
+        result = permitted(None, info)
         self.assertEqual(result, None)
         self.assertEqual(args, [('view', None, request)])
 
@@ -566,7 +584,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = []
         def append(content, name, context=None, guards=()):
             D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context}
+                 'context':context }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         request = object()
@@ -579,8 +597,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'publish')
         self.assertEqual(transitioned['context'], None)
         permitted = transitioned['guards'][0]
-        self.assertRaises(WorkflowError, permitted, None,
-                          {'permission':'view'})
+        info = DummyCallbackInfo(transition = {'permission':'view'})
+        self.assertRaises(WorkflowError, permitted, None, info)
         self.assertEqual(args, [('view', None, request)])
 
     def test_transition_request_is_None(self):
@@ -592,7 +610,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = []
         def append(content, name, context=None, guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same}
+                 'context':context, 'skip_same':skip_same }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -605,7 +623,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
-        self.assertEqual(None, permitted(None, {'permission':'view'}))
+        info = DummyCallbackInfo(transition = {'permission':'view'})
+        self.assertEqual(None, permitted(None, info))
         self.assertEqual(args, []) # not called
 
     def test_transition_permission_is_None(self):
@@ -617,7 +636,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = []
         def append(content, name, context=None, guards=()):
             D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context}
+                 'context':context }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -630,7 +649,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['name'], 'publish')
         self.assertEqual(transitioned['context'], None)
         permitted = transitioned['guards'][0]
-        self.assertEqual(None, permitted(None, {}))
+        info = DummyCallbackInfo(transition = {})
+        self.assertEqual(None, permitted(None, info))
         self.assertEqual(args, []) # not called
 
     def test_transition_to_state_permissive(self):
@@ -642,7 +662,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = []
         def append(content, name, context=None, guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same}
+                 'context':context, 'skip_same':skip_same }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -656,7 +676,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
-        self.assertEqual(None, permitted(None, {'permission':'view'}))
+        info = DummyCallbackInfo(transition = {'permission':'view'})
+        self.assertEqual(None, permitted(None, info))
         self.assertEqual(args, [('view', None, request)])
 
     def test_transition_to_state_not_permissive(self):
@@ -669,7 +690,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = []
         def append(content, name, context=None, guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same}
+                 'context':context, 'skip_same':skip_same }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         request = object()
@@ -683,8 +704,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
-        self.assertRaises(WorkflowError,
-                          permitted, None, {'permission':'view'})
+        info = DummyCallbackInfo(transition = {'permission':'view'})
+        self.assertRaises(WorkflowError, permitted, None, info)
         self.assertEqual(args, [('view', None, request)])
 
     def test_transition_to_state_request_is_None(self):
@@ -709,7 +730,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
-        self.assertEqual(None, permitted(None, {'permission':'view'}))
+        info = DummyCallbackInfo(transition = {'permission':'view'})
+        self.assertEqual(None, permitted(None, info))
         self.assertEqual(args, []) # not called
 
     def test_transition_to_state_permission_is_None(self):
@@ -735,7 +757,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
-        self.assertEqual(None, permitted(None, {}))
+        info = DummyCallbackInfo(transition = {})
+        self.assertEqual(None, permitted(None, info))
         self.assertEqual(args, []) # not called
 
     def test_get_transitions_permissive(self):
@@ -791,6 +814,31 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
         self.assertEqual(args, [('view', request, 'whatever'),
                                 ('view', request, 'whatever')])
+
+class CallbackInfoTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from repoze.workflow.workflow import CallbackInfo
+        return CallbackInfo
+
+    def _makeOne(self, workflow, transition):
+        klass = self._getTargetClass()
+        return klass(workflow, transition)
+
+    def test_class_conforms_to_ICallbackInfo(self):
+        from zope.interface.verify import verifyClass
+        from repoze.workflow.interfaces import ICallbackInfo
+        verifyClass(ICallbackInfo, self._getTargetClass())
+
+    def test_instance_conforms_to_ICallbackInfo(self):
+        from zope.interface.verify import verifyObject
+        from repoze.workflow.interfaces import ICallbackInfo
+        verifyObject(ICallbackInfo, self._makeOne('workflow', 'transition'))
+
+    def test_it(self):
+        info = self._makeOne('workflow', 'transition')
+        self.assertEqual(info.workflow, 'workflow')
+        self.assertEqual(info.transition, 'transition')
 
 class TestGetWorkflow(unittest.TestCase):
     def setUp(self):
@@ -967,3 +1015,9 @@ class TestProcessWFList(unittest.TestCase):
 class DummyContent:
     pass
 
+class DummyCallbackInfo:
+    def __init__(self, workflow=None, transition=None):
+        self.workflow = workflow
+        self.transition = transition or {}
+        
+        
