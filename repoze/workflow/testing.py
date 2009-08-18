@@ -55,7 +55,7 @@ class DummyWorkflow:
 
     def reset(self, content):
         self.resetted.append(content)
-        return self.initial_state
+        return self.initial_state, None
 
     def transition(self, content, request, transition_name, context=None,
                    guards=()):
