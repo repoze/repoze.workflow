@@ -32,13 +32,14 @@ class IWorkflow(Interface):
 
     def initialize(content):
         """ Initialize the content object to the initial state of this
-        workflow. """
+        workflow. Return a tuple of (state, msg) """
 
     def reset(content):
         """ Reset the object by calling the callback of it's current
         state and setting its state attr.  If ``content`` has no
         current state, it will be initialized into the initial state
-        for this workflow (see ``initialize``).  """
+        for this workflow (see ``initialize``). Return a tuple of
+        (state, msg)"""
 
     def transition(content, request, transition_name, context=None, guards=()):
         """ Execute a transition using a transition name.  

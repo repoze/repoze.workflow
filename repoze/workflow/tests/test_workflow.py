@@ -485,59 +485,75 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         ob = DummyContent()
-        sm.initialize(ob)
+        state, msg = sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
+        self.assertEqual(msg, None)
+        self.assertEqual(state, 'pending')
         
     def test_initialize_with_initializer(self):
         def initializer(content, info):
             content.initialized = True
+            return 'abc'
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending', initializer)
         ob = DummyContent()
-        sm.initialize(ob)
+        state, msg = sm.initialize(ob)
         self.assertEqual(ob.state, 'pending')
         self.assertEqual(ob.initialized, True)
+        self.assertEqual(msg, 'abc')
+        self.assertEqual(state, 'pending')
 
     def test_reset_content_has_no_state(self):
         def callback(content, info):
-            content.called_back = True        
+            content.called_back = True
+            return '123'
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending', callback=callback)
         ob = DummyContent()
-        sm.reset(ob)
+        state, msg = sm.reset(ob)
         self.assertEqual(ob.state, 'pending')
         self.assertEqual(ob.called_back, True)
+        self.assertEqual(state, 'pending')
+        self.assertEqual(msg, '123')
 
     def test_reset_content_no_callback(self):
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending',)
         ob = DummyContent()
-        sm.reset(ob)
+        state, msg = sm.reset(ob)
         self.assertEqual(ob.state, 'pending')
+        self.assertEqual(state, 'pending')
+        self.assertEqual(msg, None)
 
     def test_reset_content_has_state(self):
         def callback(content, info):
-            content.called_back = True        
+            content.called_back = True
+            return '123'
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         sm.add_state('private', callback=callback)
         ob = DummyContent()
         ob.state = 'private'
-        sm.reset(ob)
+        state, msg = sm.reset(ob)
         self.assertEqual(ob.state, 'private')
         self.assertEqual(ob.called_back, True)
+        self.assertEqual(state, 'private')
+        self.assertEqual(msg, '123')
 
     def test_reset_content_state_aliased(self):
         def callback(content, info):
-            content.called_back = True        
+            content.called_back = True
+            return '123'
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         sm.add_state('private', callback=callback, aliases=('supersecret',))
         ob = DummyContent()
         ob.state = 'supersecret'
-        sm.reset(ob)
+        state, msg = sm.reset(ob)
         self.assertEqual(ob.state, 'private')
         self.assertEqual(ob.called_back, True)
+        self.assertEqual(state, 'private')
+        self.assertEqual(msg, '123')
 
     def test_reset_content_has_state_not_in_workflow(self):
         from repoze.workflow import WorkflowError

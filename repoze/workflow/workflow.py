@@ -96,7 +96,7 @@ class Workflow(object):
             return self.initial_state
         state = self._state_of(content)
         if state is None:
-            state = self.initialize(content)
+            state, msg = self.initialize(content)
         return state
 
     def has_state(self, content):
@@ -144,17 +144,18 @@ class Workflow(object):
 
     def initialize(self, content):
         callback = self._state_data[self.initial_state]['callback']
+        msg = None
         if callback is not None:
             info = CallbackInfo(self, {})
-            callback(content, info)
+            msg = callback(content, info)
         setattr(content, self.state_attr, self.initial_state)
-        return self.initial_state
+        return self.initial_state, msg
 
     def reset(self, content):
         state = self._state_of(content)
         if state is None:
-            self.initialize(content)
-            return self.initial_state, None
+            state, msg = self.initialize(content)
+            return self.initial_state, msg
         try:
             stateinfo = self._state_data[state]
         except KeyError:
@@ -230,7 +231,7 @@ class Workflow(object):
                 transitions = info['transitions']
                 if transitions:
                     transition = transitions[0]
-                    self._transition(content, transition['name'],context,
+                    self._transition(content, transition['name'], context,
                                      guards)
                     return
         raise WorkflowError('No transition from state %r to state %r'
