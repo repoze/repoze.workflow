@@ -6,6 +6,9 @@ from repoze.workflow import Workflow # imported
 class IContent(Interface):
     pass
 
+class IContent2(Interface):
+    pass
+
 class Content(object):
     implements(IContent)
 

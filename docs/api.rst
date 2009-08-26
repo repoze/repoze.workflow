@@ -1,14 +1,16 @@
 API Documentation for repoze.workflow
 =====================================
 
-Interfaces
-----------
+.. _workflow_module:
 
-Document interfaces here.  You may want to use the ``.. autointerface::``
-directive provided by :mod:`repoze.sphinx.autointerface`, in which case
-you will need to add it to the extensions in `conf.py`.
+:mod:`repoze.workflow`
+----------------------
 
-Exceptions
-----------
+.. automodule:: repoze.workflow
 
-Document any custom exceptions here.
+  .. autofunction:: get_workflow
+
+  .. autoclass:: Workflow
+
+  .. autoclass:: WorkflowError
+

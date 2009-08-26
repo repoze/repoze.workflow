@@ -4,6 +4,7 @@ from zope.configuration.exceptions import ConfigurationError
 import zope.configuration.config
 
 from zope.configuration.fields import GlobalObject
+from zope.configuration.fields import Tokens
 
 from zope.interface import Interface
 from zope.interface import implements
@@ -51,7 +52,8 @@ class IWorkflowDirective(Interface):
     name = TextLine(title=u'title', required=True)
     initial_state = TextLine(title=u'initial_state', required=True)
     state_attr = TextLine(title=u'state_attr', required=True)
-    content_type = GlobalObject(title=u'content_type', required=False)
+    content_types = Tokens(title=u'content_types', required=False,
+                           value_type=GlobalObject())
     elector = GlobalObject(title=u'elector', required=False)
     permission_checker = GlobalObject(title=u'checker', required=False)
     description = TextLine(title=u'description', required=False)
@@ -60,7 +62,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, type, name, state_attr, initial_state,
-                 content_type=None, elector=None, permission_checker=None,
+                 content_types=(), elector=None, permission_checker=None,
                  description=''):
         self.context = context
         self.type = type
@@ -69,7 +71,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
             state_attr = name
         self.state_attr = state_attr
         self.initial_state = initial_state
-        self.content_type = content_type
+        self.content_types = content_types
         self.elector = elector
         self.permission_checker = permission_checker
         self.description = description
@@ -77,7 +79,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         self.states = [] # mutated by subdirectives
 
     def after(self):
-        def register():
+        def register(content_type):
             workflow = Workflow(self.state_attr, self.initial_state,
                                 self.permission_checker, self.name,
                                 self.description)
@@ -106,20 +108,21 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
             except WorkflowError, why:
                 raise ConfigurationError(str(why))
 
-            register_workflow(workflow, self.type, self.content_type,
+            register_workflow(workflow, self.type, content_type,
                               self.elector, self.info)
 
         if self.elector is not None:
             elector_id = id(self.elector)
         else:
             elector_id = None
-                              
-        self.action(
-            discriminator = (IWorkflow, self.content_type, elector_id,
-                             self.type, self.state_attr),
-            callable = register,
-            args = (),
-            )
+
+        for content_type in self.content_types:
+            self.action(
+                discriminator = (IWorkflow, content_type, elector_id,
+                                 self.type, self.state_attr),
+                callable = register,
+                args = (content_type,),
+                )
 
 class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
     """ Handle ``transition`` ZCML directives

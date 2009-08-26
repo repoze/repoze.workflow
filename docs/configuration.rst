@@ -63,7 +63,7 @@ workflow.
       name="the workflow"
       state_attr="state"
       initial_state="private"
-      content_type=".dummy.IContent"
+      content_types=".dummy.IContent"
       permission_checker="repoze.bfg.security.has_permission"
       >
 
@@ -135,15 +135,17 @@ attributes:
   The name of the attribute of the content object that will be used to
   retain the workflow state name.  This attribute is required.
 
-``content_type``
+``content_types``
 
-  A Python dotted-name referring to a class or a Zope interface.  This
+  A sequence of Python dotted-names separated with space characters.
+  Each dotted name refers to a class or a Zope interface.  This
   workflow will be considered as a return candidate when looked up via
-  the ``get_workflow`` function if the ``content_type`` argument to
-  ``get_workflow`` is an instance of this class or implements this
-  interface (directly or indirectly).  This attribute is not required.
-  If it is not supplied, the workflow will be considered for all
-  content types.
+  the ``get_workflow`` function if the one of the classes or
+  interfaces passed as the ``content_type`` argument to
+  ``get_workflow`` is an instance of one of these classes or
+  implements one of these interfaces (directly or indirectly).  This
+  attribute is not required.  If it is not supplied, the workflow will
+  be considered for all content types.
 
 ``elector``
 
@@ -164,7 +166,7 @@ attributes:
 
 A ``workflow`` tag may contain ``transition`` and ``state`` tags.  A
 workflow declared via ZCML is unique amongst all workflows defined if
-the combination of its ``type``, its ``content_type`` and its
+the combination of its ``type``, its ``content_types`` and its
 ``container_type`` are unique.  If the combination of these three
 attributes is the same for any two workflows defined in ZCML, a
 configuration conflict error will be raised at startup time.

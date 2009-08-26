@@ -13,11 +13,11 @@ class TestWorkflowDirective(unittest.TestCase):
         return WorkflowDirective
 
     def _makeOne(self, context=None, type=None, name=None, state_attr=None,
-                 initial_state=None, content_type=None):
+                 initial_state=None, content_types=()):
         if context is None:
             context = DummyContext()
         return self._getTargetClass()(context, type, name, state_attr,
-                                      initial_state, content_type)
+                                      initial_state, content_types)
 
     def test_ctor_with_state_attr(self):
         workflow = self._makeOne(name='public', state_attr='public2')
@@ -36,8 +36,10 @@ class TestWorkflowDirective(unittest.TestCase):
         from repoze.workflow.workflow import IWorkflowList
         class IDummy(Interface):
             pass
+        class IDummy2(Interface):
+            pass
         directive = self._makeOne(initial_state='public', type='security',
-                                  content_type=IDummy)
+                                  content_types=(IDummy, IDummy2))
         directive.states = [ DummyState('private', a=1),
                              DummyState('public', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
@@ -45,14 +47,42 @@ class TestWorkflowDirective(unittest.TestCase):
                                   ]
         directive.after()
         actions = directive.context.actions
-        self.assertEqual(len(actions), 1)
+        self.assertEqual(len(actions), 2)
+
         action = actions[0]
         self.assertEqual(action[0], (IWorkflow, IDummy, None, 'security', None))
         callback = action[1]
         self.assertEqual(type(callback), types.FunctionType)
-        callback()
+        callback(IDummy)
         sm = getSiteManager()
         wflist = sm.adapters.lookup((IDummy,), IWorkflowList, name='security')
+        self.assertEqual(len(wflist), 1)
+        wf_dict = wflist[0]
+        self.assertEqual(wf_dict['elector'], None)
+        self.assertEqual(wf_dict['workflow'].__class__, Workflow)
+        workflow = wf_dict['workflow']
+        self.assertEqual(
+            workflow._transition_data,
+            {'make_public':
+             {'from_state': 'private', 'callback': None,
+              'name': 'make_public', 'to_state': 'public',
+              'permission':None},
+             'make_private':
+             {'from_state': 'private', 'callback': None,
+              'name': 'make_private', 'to_state': 'public',
+              'permission':None},
+             }
+            )
+        self.assertEqual(workflow.initial_state, 'public')
+
+        action = actions[1]
+        self.assertEqual(action[0], (IWorkflow, IDummy2, None, 'security',
+                                     None))
+        callback = action[1]
+        self.assertEqual(type(callback), types.FunctionType)
+        callback(IDummy2)
+        sm = getSiteManager()
+        wflist = sm.adapters.lookup((IDummy2,), IWorkflowList, name='security')
         self.assertEqual(len(wflist), 1)
         wf_dict = wflist[0]
         self.assertEqual(wf_dict['elector'], None)
@@ -78,7 +108,7 @@ class TestWorkflowDirective(unittest.TestCase):
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
-                                  content_type=IDummy)
+                                  content_types=(IDummy,))
         directive.states = [ DummyState('s1', a=1), DummyState('s2', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
                                   DummyTransition('make_public'),
@@ -87,7 +117,7 @@ class TestWorkflowDirective(unittest.TestCase):
         actions = directive.context.actions
         action = actions[0]
         callback = action[1]
-        self.assertRaises(ConfigurationError, callback)
+        self.assertRaises(ConfigurationError, callback, IDummy)
 
     def test_after_raises_error_during_state_add(self):
         from zope.interface import Interface
@@ -95,14 +125,14 @@ class TestWorkflowDirective(unittest.TestCase):
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
-                                  content_type=IDummy)
+                                  content_types=(IDummy,))
         directive.states = [ DummyState('public', a=1),
                              DummyState('public', b=2) ]
         directive.after()
         actions = directive.context.actions
         action = actions[0]
         callback = action[1]
-        self.assertRaises(ConfigurationError, callback)
+        self.assertRaises(ConfigurationError, callback, IDummy)
 
     def test_after_raises_error_during_check(self):
         from zope.interface import Interface
@@ -110,13 +140,13 @@ class TestWorkflowDirective(unittest.TestCase):
         class IDummy(Interface):
             pass
         directive = self._makeOne(initial_state='public',
-                                  content_type=IDummy)
+                                  content_types=(IDummy,))
         directive.states = [ DummyState('only', a=1)]
         directive.after()
         actions = directive.context.actions
         action = actions[0]
         callback = action[1]
-        self.assertRaises(ConfigurationError, callback)
+        self.assertRaises(ConfigurationError, callback, IDummy)
 
 class TestTransitionDirective(unittest.TestCase):
     def setUp(self):

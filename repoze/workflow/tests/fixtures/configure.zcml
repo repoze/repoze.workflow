@@ -8,7 +8,7 @@
    description="The workflow which is of the testing fixtures package"
    state_attr="state"
    initial_state="private"
-   content_type=".dummy.IContent"
+   content_types=".dummy.IContent .dummy.IContent2"
    elector=".dummy.elector"
    permission_checker=".dummy.has_permission"
    >
