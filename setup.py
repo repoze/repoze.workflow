@@ -32,6 +32,7 @@ requires = [
     'zope.interface',
     'zope.configuration',
     'zope.testing',
+    'repoze.sphinx.autointerface',
     ]
 
 setup(name='repoze.workflow',

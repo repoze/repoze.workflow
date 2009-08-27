@@ -8,9 +8,16 @@ API Documentation for repoze.workflow
 
 .. automodule:: repoze.workflow
 
-  .. autofunction:: get_workflow
+  The get_workflow API is the primary API:
 
-  .. autoclass:: Workflow
+  .. autofunction:: get_workflow(content_type, type, context=None)
+
+  Workflow objects returned by get_workflow implement the following
+  interface:
+
+  .. autointerface:: repoze.workflow.interfaces.IWorkflow
+
+  The single exception defined as an API by :mod:`repoze.workflow` is:
 
   .. autoclass:: WorkflowError
 
