@@ -296,6 +296,11 @@ class PermissionGuard:
                     )
                     
 def process_wf_list(wf_list, context):
+    # Try all workflows that have an elector first in ZCML order; if
+    # any of those return true, return the workflow associated with
+    # that elector.  If no workflow with an elector has an elector
+    # that returns true, or no workflows have any electors, return the
+    # first workflow without an elector in the ZCML ordering.
     fallback = None
     for wf_def in wf_list:
         elector = wf_def['elector']
