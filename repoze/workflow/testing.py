@@ -16,14 +16,15 @@ class DummyWorkflow:
     name = 'the workflow'
     description = ''
     implements(IWorkflow)
-    def __init__(self):
+    def __init__(self, state_info=(), transitions=()):
         self.executed = []
         self.transitioned = []
         self.initialized = []
         self.states_added = []
         self.transitions_added = []
         self.resetted = []
-
+        self._state_info = state_info
+        self._transitions = transitions
 
     def add_state(self, name, callback=None, **kw):
         self.states_added.append({'name':name,
@@ -47,7 +48,7 @@ class DummyWorkflow:
         return hasattr(content, self.state_attr)
 
     def state_info(self, content, request, context=None, from_state=None):
-        return []
+        return self._state_info
 
     def initialize(self, content):
         self.initialized.append(content)
@@ -70,6 +71,7 @@ class DummyWorkflow:
                                   'context':context, 'skip_same':skip_same})
 
     def get_transitions(self, content, request, context=None, from_state=None):
-        return []
+        return self._transitions
+        
 
     

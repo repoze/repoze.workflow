@@ -20,8 +20,8 @@ class TestDummyWorkflow(unittest.TestCase):
         from repoze.workflow.testing import DummyWorkflow
         return DummyWorkflow
 
-    def _makeOne(self):
-        return self._getTargetClass()()
+    def _makeOne(self, *arg):
+        return self._getTargetClass()(*arg)
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
@@ -59,19 +59,23 @@ class TestDummyWorkflow(unittest.TestCase):
                                               'guards':()}])
 
     def test_get_transitions(self):
-        workflow = self._makeOne()
-        self.assertEqual(workflow.get_transitions(None, None), [])
+        workflow = self._makeOne((), 'a')
+        self.assertEqual(workflow.get_transitions(None, None), 'a')
         
-    def state_info(self):
-        workflow = self._makeOne()
-        self.assertEqual(workflow.state_info(None, None), [])
+    def test_state_info(self):
+        workflow = self._makeOne('a')
+        self.assertEqual(workflow.state_info(None, None), 'a')
         
-    def transition_to_state(self):
+    def test_transition_to_state(self):
         workflow = self._makeOne()
         workflow.transition_to_state(None, None, None)
-        self.assertEqual(workflow.transitioned, [{'context':None,
-                                                  'to_state':None,
-                                                  'request':None}])
+        self.assertEqual(workflow.transitioned,
+                         [{'guards': (),
+                           'to_state': None,
+                           'request': None,
+                           'content': None,
+                           'context': None,
+                           'skip_same': True}])
 
     def test_reset(self):
         workflow = self._makeOne()
