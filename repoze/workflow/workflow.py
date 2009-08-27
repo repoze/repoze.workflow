@@ -300,8 +300,8 @@ def process_wf_list(wf_list, context):
     # one of those electors returns true, return the workflow
     # associated with the elector.  If no workflow with an elector has
     # an elector that returns true, or no workflows have any electors,
-    # return the first workflow *without* an elector in the ZCML
-    # ordering.
+    # or there is no context provided, return the first workflow
+    # *without* an elector in the ZCML ordering.
     fallback = None
     for wf_def in wf_list:
         elector = wf_def['elector']
