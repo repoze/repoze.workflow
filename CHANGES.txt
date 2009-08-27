@@ -1,11 +1,12 @@
 repoze.workflow Changelog
 =========================
 
-Next release
-------------
+0.5 (2009-08-27)
+----------------
 
-- Completely backwards incompatible.  Workflow declarations are now
-  performed via ZCML.
+- Major overhaul.  Older "statemachine" workflows still work, but are
+  deprecated.  Workflow declarations may now be performed via ZCML.
+  Documentation overhauled to reflect this fact.
 
 0.4 (2009-06-24)
 ----------------
