@@ -54,6 +54,49 @@ chosen.
 If no workflow matches the content type, ``None`` is returned from
 ``get_workflow``.
 
+Understanding Workflow Precedence
+---------------------------------
+
+In general, the "first, most-specific" workflow for a given set of
+arguments is returned from the ``get_workflow`` API.  This section
+describes how "first, most-specific" is computed.
+
+Since more than one workflow can be defined for a given content type /
+workflow type pair, it's important to be able to understand how "the
+workflow" for a given call to ``get_workflow`` is found. The workflow
+found for a call to ``get_workflow`` will depend on these things:
+
+- The content type.
+
+- The workflow type.
+
+- The context.
+
+- The relative ordering of workflows within the ZCML configuration
+  file.
+
+When multiple workflows are found for a particular content type /
+workflow type pair:
+
+If no ``context`` is passed or ``context`` is None:
+
+- All workflows with an elector are ignored.
+
+- The first workflow (as defined in ZCML order) without an elector
+  within the configuration is returned as "the workflow".
+
+If a ``context`` is passed:
+
+- all workflows *with an elector* are consulted first in the order in
+  which they are defined in ZCML.  During this processing, if any
+  elector returns ``True``, this workflow as returned as ``the
+  workflow``.
+
+- If no workflow with an elector exists in the configuration or no
+  elector-having-workflow elector returns ``True`` during the above
+  step, the *first* workflow defined in ZCML order that does not
+  possess an elector is returned as "the workflow".
+
 Workflow Objects
 ----------------
 
