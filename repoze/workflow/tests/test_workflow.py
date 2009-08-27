@@ -1028,6 +1028,21 @@ class TestProcessWFList(unittest.TestCase):
         result = self._callFUT(wflist, context)
         self.assertEqual(result, workflow)
 
+    def test_uses_first_fallback(self):
+        workflow = object()
+        default1 = object()
+        default2 = object()
+        context = object()
+        def elector(context):
+            return False
+        wflist = [
+            {'elector':None, 'workflow':default1},
+            {'elector':None, 'workflow':default2},
+            {'elector':elector, 'workflow':workflow},
+            ]
+        result = self._callFUT(wflist, context)
+        self.assertEqual(result, default1)
+
 class DummyContent:
     pass
 

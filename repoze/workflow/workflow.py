@@ -301,7 +301,8 @@ def process_wf_list(wf_list, context):
         elector = wf_def['elector']
         workflow = wf_def['workflow']
         if elector is None:
-            fallback = workflow
+            if fallback is None:
+                fallback = workflow
         elif context is not None:
             if elector(context):
                 return workflow
