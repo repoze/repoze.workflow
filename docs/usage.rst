@@ -97,6 +97,10 @@ If a ``context`` is passed:
   step, the *first* workflow defined in ZCML order that does not
   possess an elector is returned as "the workflow".
 
+In general, you should define any overlapping workflows within ZCML in
+most-specific to least-specific order in order for ``get_workflow`` to
+behave as most people might expect.
+
 Workflow Objects
 ----------------
 
