@@ -31,6 +31,9 @@ requires = [
     'zope.component',
     'zope.interface',
     'zope.configuration',
+    ]
+
+tests_requires = requires + [
     'zope.testing',
     'repoze.sphinx.autointerface',
     ]
@@ -52,7 +55,7 @@ setup(name='repoze.workflow',
       include_package_data=True,
       namespace_packages=['repoze'],
       zip_safe=False,
-      tests_require = requires,
+      tests_require = tests_requires,
       install_requires= requires,
       test_suite="repoze.workflow",
       entry_points = """
