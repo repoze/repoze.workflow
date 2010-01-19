@@ -1,6 +1,11 @@
 repoze.workflow Changelog
 =========================
 
+development
+-----------
+- repoze.sphinx.autointerface and zope.testing are only required for
+  testing and will no longer be downloaded for `python setup.py install`.
+
 0.5 (2009-08-27)
 ----------------
 
