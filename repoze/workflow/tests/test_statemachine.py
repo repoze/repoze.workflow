@@ -161,7 +161,7 @@ class StateMachineTests(unittest.TestCase):
                 raise StateMachineError
 
         def dummy(state, newstate, transition_id, context):
-            pass
+            """ """
 
         states = {('from', 'do_it'):('to', dummy, {})}
         sm = FailBeforeTransition('state', states, initial_state='from')

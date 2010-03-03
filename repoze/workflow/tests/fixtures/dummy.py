@@ -13,10 +13,9 @@ class Content(object):
     implements(IContent)
 
 def callback(context, transition):
-    pass
+    """ """
 
-def elector(context):
-    return True
+def elector(context): return True
 
 def has_permission(permission, context, request):
-    pass
+    """ """

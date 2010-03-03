@@ -618,10 +618,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(args, [('view', None, request)])
 
     def test_transition_request_is_None(self):
-        args = []
-        def checker(*arg):
-            args.append(arg)
-            return False
+        def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, guards=(), skip_same=True):
@@ -641,13 +638,9 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {'permission':'view'})
         self.assertEqual(None, permitted(None, info))
-        self.assertEqual(args, []) # not called
 
     def test_transition_permission_is_None(self):
-        args = []
-        def checker(*arg):
-            args.append(arg)
-            return False
+        def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, guards=()):
@@ -667,7 +660,6 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {})
         self.assertEqual(None, permitted(None, info))
-        self.assertEqual(args, []) # not called
 
     def test_transition_to_state_permissive(self):
         args = []
@@ -725,10 +717,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(args, [('view', None, request)])
 
     def test_transition_to_state_request_is_None(self):
-        args = []
-        def checker(*arg):
-            args.append(arg)
-            return False
+        def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, guards=(), skip_same=True):
@@ -748,13 +737,9 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {'permission':'view'})
         self.assertEqual(None, permitted(None, info))
-        self.assertEqual(args, []) # not called
 
     def test_transition_to_state_permission_is_None(self):
-        args = []
-        def checker(*arg):
-            args.append(arg)
-            return False
+        def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, guards=(), skip_same=True):
@@ -775,7 +760,6 @@ class WorkflowTests(unittest.TestCase):
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {})
         self.assertEqual(None, permitted(None, info))
-        self.assertEqual(args, []) # not called
 
     def test_get_transitions_permissive(self):
         args = []
@@ -963,12 +947,6 @@ class TestProcessWFList(unittest.TestCase):
         from repoze.workflow.workflow import process_wf_list
         return process_wf_list(wf_list, context)
 
-    def _getIContent(self):
-        from zope.interface import Interface
-        class IContent(Interface):
-            pass
-        return IContent
-
     def test_nothing_in_wf_list_returns_None(self):
         result = self._callFUT([], None)
         self.assertEqual(result, None)
@@ -981,8 +959,7 @@ class TestProcessWFList(unittest.TestCase):
 
     def test_context_is_None_elector_not_None_no_fallback(self):
         workflow = object()
-        def elector(context):
-            return False
+        def elector(context): return False
         wflist = [{'elector':elector, 'workflow':workflow}]
         result = self._callFUT(wflist, None)
         self.assertEqual(result, None)
@@ -990,8 +967,7 @@ class TestProcessWFList(unittest.TestCase):
     def test_context_is_None_elector_not_None_with_fallback(self):
         workflow = object()
         default = object()
-        def elector(context):
-            return False
+        def elector(context): return False
         wflist = [{'elector':elector, 'workflow':workflow},
                   {'elector':None, 'workflow':default}]
         result = self._callFUT(wflist, None)
@@ -1002,7 +978,6 @@ class TestProcessWFList(unittest.TestCase):
         def elector(context):
             return False
         wflist = [{'elector':elector, 'workflow':workflow}]
-        context = object()
         result = self._callFUT(wflist, object)
         self.assertEqual(result, None)
 

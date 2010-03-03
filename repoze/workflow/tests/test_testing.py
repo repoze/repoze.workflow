@@ -93,6 +93,26 @@ class TestDummyWorkflow(unittest.TestCase):
         class Dummy:
             state = 'hello'
         self.assertEqual(workflow.has_state(Dummy), True)
+
+    def test_check(self):
+        workflow = self._makeOne()
+        self.assertEqual(workflow.check(), True)
+
+    def test_add_transition(self):
+        workflow = self._makeOne()
+        workflow.add_transition('name', 'from_state', 'to_state')
+        self.assertEqual(len(workflow.transitions_added), 1)
+        added = workflow.transitions_added[0]
+        self.assertEqual(added['name'], 'name')
+        
+    def test_add_state(self):
+        workflow = self._makeOne()
+        workflow.add_state('name')
+        self.assertEqual(len(workflow.states_added), 1)
+        added = workflow.states_added[0]
+        self.assertEqual(added['name'], 'name')
+        
+        
         
         
         
