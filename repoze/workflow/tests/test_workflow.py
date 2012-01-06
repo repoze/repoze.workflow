@@ -38,6 +38,71 @@ class WorkflowTests(unittest.TestCase):
         sm._transition_order = ['publish', 'reject', 'retract', 'submit']
         return sm
 
+    def _makePopulatedOverlappingTransitions(
+        self, state_callback=None, transition_callback=None,
+        permission_checker=None):
+        sm = self._makePopulated(state_callback, transition_callback)
+        sm.permission_checker = permission_checker
+
+        sm._transition_data['submit2'] = dict(
+            name='submit2',
+            from_state='private',
+            to_state='pending',
+            callback=transition_callback,
+            )
+        sm._transition_order.append('submit2')
+        return sm
+
+    def test_transition_to_state_two_transitions_second_works(self):
+        args = []
+        def dummy(content, info):
+            args.append((content, info))
+
+        def checker(permission, context, request):
+            return permission == 'allowed'
+
+        sm = self._makePopulatedOverlappingTransitions(
+            transition_callback=dummy,
+            permission_checker=checker,
+            )
+
+        sm._transition_data['submit']['permission'] = 'forbidden'
+        sm._transition_data['submit2']['permission'] = 'allowed'
+
+        ob = DummyContent()
+        ob.state = 'private'
+        sm.transition_to_state(ob, object(), 'pending')
+        self.assertEqual(len(args), 1)
+        self.assertEqual(args[0][1].transition['name'], 'submit2')
+
+    def test_transition_to_state_two_transitions_none_works(self):
+        callback_args = []
+        def dummy(content, info):
+            callback_args.append((content, info))
+
+        checker_args = []
+        def checker(permission, context, request):
+            checker_args.append((permission, context, request))
+            return permission == 'allowed'
+
+        sm = self._makePopulatedOverlappingTransitions(
+            transition_callback=dummy,
+            permission_checker=checker,
+            )
+
+        sm._transition_data['submit']['permission'] = 'forbidden1'
+        sm._transition_data['submit2']['permission'] = 'forbidden2'
+
+        ob = DummyContent()
+        ob.state = 'private'
+        from repoze.workflow import WorkflowError
+        self.assertRaises(WorkflowError, sm.transition_to_state,
+                          ob, object(), 'pending')
+        self.assertEqual(len(callback_args), 0)
+        self.assertEqual(len(checker_args), 2)
+        self.assertEqual([a[0] for a in checker_args],
+                         ['forbidden1', 'forbidden2'])
+
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
         from repoze.workflow.interfaces import IWorkflow

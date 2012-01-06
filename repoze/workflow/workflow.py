@@ -230,10 +230,13 @@ class Workflow(object):
             if info['name'] == to_state:
                 transitions = info['transitions']
                 if transitions:
-                    transition = transitions[0]
-                    self._transition(content, transition['name'], context,
-                                     guards)
-                    return
+                    for transition in transitions:
+                        try:
+                            return self._transition(
+                                content, transition['name'], context, guards)
+                        except WorkflowError, e:
+                            exc = e
+                    raise exc
         raise WorkflowError('No transition from state %r to state %r'
                 % (from_state, to_state))
 
