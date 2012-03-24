@@ -7,6 +7,10 @@ Next release
 - When multiple transitions exist between two states, try each transition
   until one succeeds, instead of aborting if the first fails.
 
+- Bumped ``zope.configuration`` dependency to require >= 3.8.0:  the internal
+  format of configuration actions changed to dictionaries, rather than tuples,
+  and our tests make assertions which rely on the format.
+
 - ``repoze.sphinx.autointerface`` and ``zope.testing`` are only required for
   testing and will no longer be downloaded for ``python setup.py install``;
   use ``python setup.py dev`` to get them installed (along with ``nose`` and
