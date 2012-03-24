@@ -4,13 +4,13 @@ repoze.workflow Changelog
 Next release
 -----------
 
+- When multiple transitions exist between two states, try each transition
+  until one succeeds, instead of aborting if the first fails.
+
 - repoze.sphinx.autointerface and zope.testing are only required for
   testing and will no longer be downloaded for `python setup.py install`.
 
 - 100% test coverage
-
-- With multiple transitions between two states, try all transitions
-  instead of only the first.
 
 0.5 (2009-08-27)
 ----------------
