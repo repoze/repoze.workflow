@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-__version__ = '0.5'
+__version__ = '0.6dev'
 
 import os
 
@@ -30,7 +30,7 @@ requires = [
     'repoze.zcml',
     'zope.component',
     'zope.interface',
-    'zope.configuration',
+    'zope.configuration>=3.8.0',
     ]
 
 tests_requires = requires + [

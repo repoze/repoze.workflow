@@ -50,8 +50,14 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(len(actions), 2)
 
         action = actions[0]
-        self.assertEqual(action[0], (IWorkflow, IDummy, None, 'security', None))
-        callback = action[1]
+        self.assertEqual(action['info'], None)
+        self.assertEqual(action['kw'], {})
+        self.assertEqual(action['args'], (IDummy,))
+        self.assertEqual(action['includepath'], ())
+        self.assertEqual(action['order'], 0)
+        self.assertEqual(action['discriminator'],
+                         (IWorkflow, IDummy, None, 'security', None))
+        callback = action['callable']
         self.assertEqual(type(callback), types.FunctionType)
         callback(IDummy)
         sm = getSiteManager()
@@ -76,9 +82,14 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(workflow.initial_state, 'public')
 
         action = actions[1]
-        self.assertEqual(action[0], (IWorkflow, IDummy2, None, 'security',
-                                     None))
-        callback = action[1]
+        self.assertEqual(action['info'], None)
+        self.assertEqual(action['kw'], {})
+        self.assertEqual(action['args'], (IDummy2,))
+        self.assertEqual(action['includepath'], ())
+        self.assertEqual(action['order'], 0)
+        self.assertEqual(action['discriminator'],
+                                (IWorkflow, IDummy2, None, 'security', None))
+        callback = action['callable']
         self.assertEqual(type(callback), types.FunctionType)
         callback(IDummy2)
         sm = getSiteManager()
@@ -116,7 +127,7 @@ class TestWorkflowDirective(unittest.TestCase):
         directive.after()
         actions = directive.context.actions
         action = actions[0]
-        callback = action[1]
+        callback = action['callable']
         self.assertRaises(ConfigurationError, callback, IDummy)
 
     def test_after_raises_error_during_state_add(self):
@@ -131,7 +142,7 @@ class TestWorkflowDirective(unittest.TestCase):
         directive.after()
         actions = directive.context.actions
         action = actions[0]
-        callback = action[1]
+        callback = action['callable']
         self.assertRaises(ConfigurationError, callback, IDummy)
 
     def test_after_raises_error_during_check(self):
@@ -145,7 +156,7 @@ class TestWorkflowDirective(unittest.TestCase):
         directive.after()
         actions = directive.context.actions
         action = actions[0]
-        callback = action[1]
+        callback = action['callable']
         self.assertRaises(ConfigurationError, callback, IDummy)
 
 class TestTransitionDirective(unittest.TestCase):
