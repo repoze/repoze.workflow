@@ -30,11 +30,11 @@ class IWorkflow(Interface):
     def state_info(content, request, context=None, from_state=None):
         """ Return a sequence of state info dictionaries """
 
-    def initialize(content):
+    def initialize(content, request=None):
         """ Initialize the content object to the initial state of this
         workflow. Return a tuple of (state, msg) """
 
-    def reset(content):
+    def reset(content, request=None):
         """ Reset the object by calling the callback of it's current
         state and setting its state attr.  If ``content`` has no
         current state, it will be initialized into the initial state

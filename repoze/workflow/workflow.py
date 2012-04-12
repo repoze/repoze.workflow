@@ -142,16 +142,16 @@ class Workflow(object):
             state['transitions'] = L
         return states
 
-    def initialize(self, content):
+    def initialize(self, content, request=None):
         callback = self._state_data[self.initial_state]['callback']
         msg = None
         if callback is not None:
-            info = CallbackInfo(self, {})
+            info = CallbackInfo(self, {}, request)
             msg = callback(content, info)
         setattr(content, self.state_attr, self.initial_state)
         return self.initial_state, msg
 
-    def reset(self, content):
+    def reset(self, content, request=None):
         state = self._state_of(content)
         if state is None:
             state, msg = self.initialize(content)
@@ -164,7 +164,7 @@ class Workflow(object):
         callback = stateinfo['callback']
         msg = None
         if callback is not None:
-            info = CallbackInfo(self, {})
+            info = CallbackInfo(self, {}, request)
             msg = callback(content, info)
         setattr(content, self.state_attr, state)
         return state, msg
