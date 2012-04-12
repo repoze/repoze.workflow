@@ -257,7 +257,7 @@ class WorkflowTests(unittest.TestCase):
         from repoze.workflow import WorkflowError
         sm = self._makeOne()
         self.assertRaises(WorkflowError, sm.check)
-        
+
     def test_check_succeeds(self):
         sm = self._makeOne()
         sm.add_state('pending')
@@ -363,7 +363,7 @@ class WorkflowTests(unittest.TestCase):
         ob = DummyContent()
         ob.state = 'pending'
         self.assertRaises(ValueError, sm._transition, ob,
-                          'publish', None, (guard,))
+                          'publish', None, None, (guard,))
 
     def test__transition_to_state(self):
         args = []
@@ -438,7 +438,7 @@ class WorkflowTests(unittest.TestCase):
         ob = DummyContent()
         ob.state = 'pending'
         result = sm._state_info(ob)
-        
+
         state = result[0]
         self.assertEqual(state['initial'], True)
         self.assertEqual(state['current'], True)
@@ -554,7 +554,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(ob.state, 'pending')
         self.assertEqual(msg, None)
         self.assertEqual(state, 'pending')
-        
+
     def test_initialize_with_initializer(self):
         def initializer(content, info):
             content.initialized = True
@@ -635,7 +635,7 @@ class WorkflowTests(unittest.TestCase):
             return True
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=()):
+        def append(content, name, context=None, request=None, guards=()):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context }
             transitioned.append(D)
@@ -663,7 +663,7 @@ class WorkflowTests(unittest.TestCase):
         from repoze.workflow import WorkflowError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=()):
+        def append(content, name, context=None, request=None, guards=()):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context }
             transitioned.append(D)
@@ -686,7 +686,7 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=(), skip_same=True):
+        def append(content, name, context=None, request=None, guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context, 'skip_same':skip_same }
             transitioned.append(D)
@@ -708,7 +708,7 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=()):
+        def append(content, name, context=None, request=None, guards=()):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context }
             transitioned.append(D)
@@ -955,7 +955,7 @@ class TestGetWorkflow(unittest.TestCase):
         self._registerWorkflowList(IDefaultWorkflow)
         result = self._callFUT(Content, '', [workflow])
         self.assertEqual(result, workflow)
-        
+
     def test_content_type_is_IDefaultWorkflow_registered_workflow(self):
         from repoze.workflow.interfaces import IDefaultWorkflow
         workflow = object()
@@ -966,7 +966,7 @@ class TestGetWorkflow(unittest.TestCase):
     def test_content_type_is_IContent_no_registered_workflows(self):
         IContent = self._getIContent()
         self.assertEqual(self._callFUT(IContent, ''), None)
-        
+
     def test_content_type_is_IContent_finds_default(self):
         IContent = self._getIContent()
         from repoze.workflow.interfaces import IDefaultWorkflow
@@ -1090,5 +1090,5 @@ class DummyCallbackInfo:
     def __init__(self, workflow=None, transition=None):
         self.workflow = workflow
         self.transition = transition or {}
-        
-        
+
+

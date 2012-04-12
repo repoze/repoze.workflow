@@ -20,14 +20,14 @@ class Workflow(object):
     """
     classImplements(IWorkflowFactory)
     implements(IWorkflow)
-    
+
     def __init__(self, state_attr, initial_state, permission_checker=None,
                  name='', description=''):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
                        persisting)
-                       
+
         """
         self._transition_data = {}
         self._transition_order = []
@@ -169,7 +169,8 @@ class Workflow(object):
         setattr(content, self.state_attr, state)
         return state, msg
 
-    def _transition(self, content, transition_name, context=None, guards=()):
+    def _transition(self, content, transition_name, context=None,
+            request=None, guards=()):
         """ Execute a transition via a transition name """
         if context is None:
             context = content
@@ -191,7 +192,7 @@ class Workflow(object):
                 'No transition from %r using transition name %r'
                 % (state, transition_name))
 
-        info = CallbackInfo(self, transition)
+        info = CallbackInfo(self, transition, request=request)
 
         if guards:
             for guard in guards:
@@ -210,18 +211,17 @@ class Workflow(object):
 
         setattr(content, self.state_attr, to_state)
 
-    def transition(self, content, request, transition_name, context=None,
-                   guards=()):
+    def transition(self, content, request, transition_name, context=None, guards=()):
         if self.permission_checker:
             guards = list(guards)
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
         self._transition(content, transition_name, context=context,
-                         guards=guards)
+                         request=request, guards=guards)
 
-    def _transition_to_state(self, content, to_state, context=None, guards=(), 
-                             skip_same=True):
+    def _transition_to_state(self, content, to_state, context=None,
+            request=None, guards=(), skip_same=True):
         from_state = self.state_of(content)
         if (from_state == to_state) and skip_same:
             return
@@ -233,7 +233,8 @@ class Workflow(object):
                     for transition in transitions:
                         try:
                             return self._transition(
-                                content, transition['name'], context, guards)
+                                content, transition['name'], context,
+                                    request, guards)
                         except WorkflowError, e:
                             exc = e
                     raise exc
@@ -259,7 +260,7 @@ class Workflow(object):
             transition = self._transition_data[tname]
             if from_state == transition['from_state']:
                 transitions.append(transition)
-        
+
         return transitions
 
     def get_transitions(self, content, request, context=None, from_state=None):
@@ -279,9 +280,10 @@ class Workflow(object):
 class CallbackInfo(object):
     implements(ICallbackInfo)
 
-    def __init__(self, workflow, transition):
+    def __init__(self, workflow, transition, request=None):
         self.workflow = workflow
         self.transition = transition
+        self.request = request
 
 class PermissionGuard:
     def __init__(self, request, name, checker):
@@ -297,7 +299,7 @@ class PermissionGuard:
                     '%s permission required for transition using %r' % (
                     permission, self.name)
                     )
-                    
+
 def process_wf_list(wf_list, context):
     # Try all workflows that have an elector first in ZCML order; if
     # one of those electors returns true, return the workflow
