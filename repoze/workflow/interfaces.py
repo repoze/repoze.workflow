@@ -111,6 +111,7 @@ class ICallbackInfo(Interface):
 
     workflow = Attribute('The workflow object that invoked the callback')
 
-    request = Attribute('The request object')
+    request = Attribute('The request object. Be aware of the fact that'
+            ' the request object can be None')
 
 
