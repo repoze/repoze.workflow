@@ -733,7 +733,8 @@ class WorkflowTests(unittest.TestCase):
             return True
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=(), skip_same=True):
+        def append(content, name, context=None, request=None,
+                guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context, 'skip_same':skip_same }
             transitioned.append(D)
@@ -761,7 +762,8 @@ class WorkflowTests(unittest.TestCase):
         from repoze.workflow import WorkflowError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=(), skip_same=True):
+        def append(content, name, context=None, request=None,
+                guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context, 'skip_same':skip_same }
             transitioned.append(D)
@@ -785,7 +787,8 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=(), skip_same=True):
+        def append(content, name, context=None, request=None,
+                guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context, 'skip_same':skip_same }
             transitioned.append(D)
@@ -807,7 +810,8 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, guards=(), skip_same=True):
+        def append(content, name, context=None, request=None,
+                guards=(), skip_same=True):
             D = {'content':content, 'name': name, 'guards':guards,
                  'context':context, 'skip_same':skip_same }
             transitioned.append(D)
@@ -879,6 +883,21 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
         self.assertEqual(args, [('view', request, 'whatever'),
                                 ('view', request, 'whatever')])
+
+    def test_callbackinfo_has_request(self):
+        def transition_cb(content, info):
+            self.assertEqual(info.request, request)
+        def state_cb(content, info):
+            self.assertEqual(info.request, request)
+        wf = self._makeOne('workflow', 'initial')
+        wf.add_state('initial', callback=state_cb)
+        wf.add_state('new')
+        wf.add_transition('tonew', 'initial', 'new',
+                callback=transition_cb)
+        request = object()
+        content = DummyContent()
+        wf.initialize(content, request=request)
+        wf.transition_to_state(content, request, 'new')
 
 class CallbackInfoTests(unittest.TestCase):
 

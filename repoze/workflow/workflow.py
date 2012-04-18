@@ -249,7 +249,7 @@ class Workflow(object):
                                                self.permission_checker)
             guards.append(permission_guard)
         self._transition_to_state(content, to_state, context, guards=guards,
-                                  skip_same=skip_same)
+                                  request=request, skip_same=skip_same)
 
     def _get_transitions(self, content, from_state=None):
         if from_state is None:
