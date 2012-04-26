@@ -35,7 +35,6 @@ requires = [
 
 tests_require = [
     'zope.testing',
-    'repoze.sphinx.autointerface',
     ]
 
 testing_extras = tests_require + ['nose', 'coverage']
