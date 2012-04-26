@@ -33,12 +33,12 @@ requires = [
     'zope.configuration>=3.8.0',
     ]
 
-tests_requires = requires + [
+tests_require = [
     'zope.testing',
     'repoze.sphinx.autointerface',
     ]
 
-testing_extras = tests_requires + ['nose', 'coverage']
+testing_extras = tests_require + ['nose', 'coverage']
 
 setup(
     name='repoze.workflow',
@@ -58,12 +58,13 @@ setup(
     include_package_data=True,
     namespace_packages=['repoze'],
     zip_safe=False,
-    tests_require = tests_requires,
+    tests_require = tests_require,
     install_requires= requires,
     test_suite="repoze.workflow",
     entry_points = """
     """,
     extras_require={
+        'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
         'testing': testing_extras,
     },
 )

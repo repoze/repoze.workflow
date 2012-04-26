@@ -1,6 +1,14 @@
 repoze.workflow Changelog
 =========================
 
+After 0.6.1 (unreleased)
+------------------------
+
+- Added ``setup.py docs`` alias (installs Sphinx and related dependencies).
+
+- Added ``setup.py dev`` alias (installs nose, coverage, and testing
+  dependencies).
+
 0.6.1 (2012-03-24)
 ------------------
 
