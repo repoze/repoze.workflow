@@ -50,11 +50,11 @@ class DummyWorkflow:
     def state_info(self, content, request, context=None, from_state=None):
         return self._state_info
 
-    def initialize(self, content):
+    def initialize(self, content, request=None):
         self.initialized.append(content)
         return self.initial_state
 
-    def reset(self, content):
+    def reset(self, content, request=None):
         self.resetted.append(content)
         return self.initial_state, None
 
@@ -72,6 +72,6 @@ class DummyWorkflow:
 
     def get_transitions(self, content, request, context=None, from_state=None):
         return self._transitions
-        
 
-    
+
+

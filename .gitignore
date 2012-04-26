@@ -1,7 +1,9 @@
 *.pyc
 *.egg-info
+*.egg
 docs/.build
 .coverage
 .tox
 nosetests.xml
 coverage.xml
+dist

@@ -30,11 +30,11 @@ class IWorkflow(Interface):
     def state_info(content, request, context=None, from_state=None):
         """ Return a sequence of state info dictionaries """
 
-    def initialize(content):
+    def initialize(content, request=None):
         """ Initialize the content object to the initial state of this
         workflow. Return a tuple of (state, msg) """
 
-    def reset(content):
+    def reset(content, request=None):
         """ Reset the object by calling the callback of it's current
         state and setting its state attr.  If ``content`` has no
         current state, it will be initialized into the initial state
@@ -42,7 +42,7 @@ class IWorkflow(Interface):
         (state, msg)"""
 
     def transition(content, request, transition_name, context=None, guards=()):
-        """ Execute a transition using a transition name.  
+        """ Execute a transition using a transition name.
         """
     def transition_to_state(content, request, to_state, context=None,
                             guards=(), skip_same=True):
@@ -58,12 +58,12 @@ class IWorkflowList(Interface):
     machinery.  An item registered as an IWorkflowList utility in
     the component registry is a dictionary that contains lists of
     workflow info dictionaries keyed by content type. """
-    
-    
+
+
 class IDefaultWorkflow(Interface):
     """ Marker interface used internally for workflows that aren't
     associated with a particular content type"""
-    
+
 class IStateMachine(Interface):
     # NB: this is a backwards compatibility interface only!  See the
     # comment at the top of statemachine.py for more info.
@@ -86,7 +86,7 @@ class IStateMachine(Interface):
         object's current state).  Each dictionary has the keys
         ``transition_id``, ``from_state``, ``to_state`` as well as any
         keywords passed in to the ``add`` method for this transition."""
-    
+
     def before_transition(state, newstate, transition_id, content, **kw):
         """
         Hook method to be overridden by subclasses (or injected
@@ -102,7 +102,7 @@ class IStateMachine(Interface):
         directly onto an instance) to allow for after transition
         actions (such as firing an event).
         """
-        
+
 class ICallbackInfo(Interface):
     """ Interface used internally to represent 'callback info' objects
     (the 2nd argument passed to callbacks) """
@@ -111,4 +111,7 @@ class ICallbackInfo(Interface):
 
     workflow = Attribute('The workflow object that invoked the callback')
 
-    
+    request = Attribute('The request object. Be aware of the fact that'
+            ' the request object can be None')
+
+
