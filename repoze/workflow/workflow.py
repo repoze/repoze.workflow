@@ -136,7 +136,8 @@ class Workflow(object):
             for transition in state['transitions']:
                 permission = transition.get('permission')
                 if permission is not None:
-                    if not self.permission_checker(permission,context,request):
+                    if not self.permission_checker(permission, context,
+                                                   request):
                         continue
                 L.append(transition)
             state['transitions'] = L
@@ -170,7 +171,7 @@ class Workflow(object):
         return state, msg
 
     def _transition(self, content, transition_name, context=None,
-            request=None, guards=()):
+                    request=None, guards=()):
         """ Execute a transition via a transition name """
         if context is None:
             context = content
@@ -211,7 +212,8 @@ class Workflow(object):
 
         setattr(content, self.state_attr, to_state)
 
-    def transition(self, content, request, transition_name, context=None, guards=()):
+    def transition(self, content, request, transition_name, context=None,
+                   guards=()):
         if self.permission_checker:
             guards = list(guards)
             permission_guard = PermissionGuard(request, transition_name,
@@ -221,7 +223,7 @@ class Workflow(object):
                          request=request, guards=guards)
 
     def _transition_to_state(self, content, to_state, context=None,
-            request=None, guards=(), skip_same=True):
+                             request=None, guards=(), skip_same=True):
         from_state = self.state_of(content)
         if (from_state == to_state) and skip_same:
             return
@@ -272,7 +274,8 @@ class Workflow(object):
             permission = transition.get('permission')
             if permission is not None:
                 if self.permission_checker:
-                    if not self.permission_checker(permission, context,request):
+                    if not self.permission_checker(permission, context, 
+                                                   request):
                         continue
             L.append(transition)
         return L
