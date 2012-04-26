@@ -77,7 +77,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test_transition_to_state_two_transitions_none_works(self):
         callback_args = []
-        def dummy(content, info):
+        def dummy(content, info): #pragma NO COVER
             callback_args.append((content, info))
 
         checker_args = []
@@ -636,8 +636,8 @@ class WorkflowTests(unittest.TestCase):
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, request=None, guards=()):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context }
+            D = {'content':content, 'name': name, 'request': request,
+                 'guards':guards, 'context':context }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -648,6 +648,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {'permission':'view'})
@@ -664,8 +665,8 @@ class WorkflowTests(unittest.TestCase):
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, request=None, guards=()):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context }
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         request = object()
@@ -676,6 +677,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {'permission':'view'})
@@ -686,9 +688,10 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, request=None, guards=(), skip_same=True):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same }
+        def append(content, name, context=None, request=None, guards=(),
+                   skip_same=True):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context, 'skip_same': skip_same }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -698,6 +701,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], None)
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
@@ -709,8 +713,8 @@ class WorkflowTests(unittest.TestCase):
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
         def append(content, name, context=None, request=None, guards=()):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context }
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context }
             transitioned.append(D)
         workflow._transition = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -721,6 +725,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
         permitted = transitioned['guards'][0]
         info = DummyCallbackInfo(transition = {})
@@ -733,10 +738,10 @@ class WorkflowTests(unittest.TestCase):
             return True
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, request=None,
-                guards=(), skip_same=True):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same }
+        def append(content, name, context=None, request=None, guards=(),
+                   skip_same=True):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context, 'skip_same': skip_same }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -747,6 +752,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'published')
+        self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
@@ -762,10 +768,10 @@ class WorkflowTests(unittest.TestCase):
         from repoze.workflow import WorkflowError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, request=None,
-                guards=(), skip_same=True):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same }
+        def append(content, name, context=None, request=None, guards=(),
+                   skip_same=True):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context, 'skip_same': skip_same }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         request = object()
@@ -776,6 +782,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'published')
+        self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
@@ -787,10 +794,10 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, request=None,
-                guards=(), skip_same=True):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same }
+        def append(content, name, context=None, request=None, guards=(),
+                   skip_same=True):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context, 'skip_same': skip_same }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -800,6 +807,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'published')
+        self.assertEqual(transitioned['request'], None)
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
@@ -810,10 +818,10 @@ class WorkflowTests(unittest.TestCase):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
         transitioned = []
-        def append(content, name, context=None, request=None,
-                guards=(), skip_same=True):
-            D = {'content':content, 'name': name, 'guards':guards,
-                 'context':context, 'skip_same':skip_same }
+        def append(content, name, context=None, request=None, guards=(),
+                   skip_same=True):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context, 'skip_same': skip_same }
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
         content = DummyContent()
@@ -824,6 +832,7 @@ class WorkflowTests(unittest.TestCase):
         transitioned = transitioned[0]
         self.assertEqual(transitioned['content'], content)
         self.assertEqual(transitioned['name'], 'published')
+        self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
         permitted = transitioned['guards'][0]
