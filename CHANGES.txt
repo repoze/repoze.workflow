@@ -4,10 +4,16 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+- Added support for PyPy.
+
+- Added support for continuous integration using ``tox`` and ``jenkins``.
+
 - Added ``setup.py docs`` alias (installs Sphinx and related dependencies).
 
 - Added ``setup.py dev`` alias (installs nose, coverage, and testing
   dependencies).
+
+- Dropped support for Python 2.4 / 2.5.
 
 0.6.1 (2012-03-24)
 ------------------
