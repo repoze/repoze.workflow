@@ -51,11 +51,11 @@ class DummyWorkflow:
         return self._state_info
 
     def initialize(self, content, request=None):
-        self.initialized.append(content)
+        self.initialized.append((content, request))
         return self.initial_state
 
     def reset(self, content, request=None):
-        self.resetted.append(content)
+        self.resetted.append((content, request))
         return self.initial_state, None
 
     def transition(self, content, request, transition_name, context=None,
