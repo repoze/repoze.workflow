@@ -30,9 +30,7 @@ class Workflow(object):
 
         """
         self._transition_data = {}
-        self._transition_order = []
         self._state_data = {}
-        self._state_order = []
         self._state_aliases = {}
         self.state_attr = state_attr
         self.initial_state = initial_state
@@ -46,13 +44,12 @@ class Workflow(object):
     def add_state(self, state_name, callback=None, aliases=(), **kw):
         """ Add a state to the FSM.  ``**kw`` must not contain the key
         ``callback``.  This name is reserved for internal use."""
-        if state_name in self._state_order:
+        if state_name in self._state_data:
             raise WorkflowError('State %s already defined' % state_name)
         if state_name in self._state_aliases:
             raise WorkflowError('State %s already aliased' % state_name)
         kw['callback'] = callback
         self._state_data[state_name] = kw
-        self._state_order.append(state_name)
         for alias in aliases:
             self._state_aliases[alias] = state_name
 
@@ -61,12 +58,12 @@ class Workflow(object):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
-        if transition_name in self._transition_order:
+        if transition_name in self._transition_data:
             raise WorkflowError('Duplicate transition name %s' %
                                     transition_name)
-        if not from_state in self._state_order:
+        if from_state not in self._state_data:
             raise WorkflowError('No such state %r' % from_state)
-        if not to_state in self._state_order:
+        if to_state not in self._state_data:
             raise WorkflowError('No such state %r' % to_state)
         if permission is not None and self.permission_checker is None:
             raise WorkflowError(
@@ -79,10 +76,9 @@ class Workflow(object):
         transition['callback'] = callback
         transition['permission'] = permission
         self._transition_data[transition_name] = transition
-        self._transition_order.append(transition_name)
 
     def check(self):
-        if not self.initial_state in self._state_order:
+        if self.initial_state not in self._state_data:
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self.initial_state)
 
@@ -109,16 +105,14 @@ class Workflow(object):
 
         L = []
 
-        for state_name in self._state_order:
-            D = {'name':state_name, 'transitions':[]}
-            state_data = self._state_data[state_name]
-            D['data'] = state_data
+        for state_name, state in self._state_data.items():
+            state = self._state_data[state_name]
+            D = {'name': state_name, 'transitions': []}
+            D['data'] = state
             D['initial'] = state_name == self.initial_state
             D['current'] = state_name == content_state
-            title = state_data.get('title', state_name)
-            D['title'] = title
-            for tname in self._transition_order:
-                transition = self._transition_data[tname]
+            D['title'] = state.get('title', state_name)
+            for tname, transition in self._transition_data.items():
                 if (transition['from_state'] == from_state and
                     transition['to_state'] == state_name):
                     transitions = D['transitions']
@@ -181,11 +175,10 @@ class Workflow(object):
         si = (state, transition_name)
 
         transition = None
-        for tname in self._transition_order:
-            t = self._transition_data[tname]
-            match = (t['from_state'], t['name'])
+        for tname, candidate in self._transition_data.items():
+            match = (candidate['from_state'], candidate['name'])
             if si == match:
-                transition = t
+                transition = candidate
                 break
 
         if transition is None:
@@ -258,8 +251,7 @@ class Workflow(object):
             from_state = self.state_of(content)
 
         transitions = []
-        for tname in self._transition_order:
-            transition = self._transition_data[tname]
+        for tname, transition in self._transition_data.items():
             if from_state == transition['from_state']:
                 transitions.append(transition)
 

@@ -270,10 +270,6 @@ class TestFixtureApp(unittest.TestCase):
                          'testing fixtures package')
         self.assertEqual(workflow.permission_checker, has_permission)
         self.assertEqual(
-            workflow._state_order,
-            ['private', 'public'],
-            )
-        self.assertEqual(
             workflow._state_aliases,
             {'supersecret':'private'},
             )

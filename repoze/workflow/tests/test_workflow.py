@@ -14,10 +14,9 @@ class WorkflowTests(unittest.TestCase):
 
     def _makePopulated(self, state_callback=None, transition_callback=None):
         sm = self._makeOne()
-        sm._state_order = ['pending', 'published', 'private']
-        sm._state_data.setdefault('pending', {'callback':state_callback})
-        sm._state_data.setdefault('published', {'callback':state_callback})
-        sm._state_data.setdefault('private', {'callback':state_callback})
+        sm._state_data['pending'] = {'callback':state_callback}
+        sm._state_data['published'] = {'callback':state_callback}
+        sm._state_data['private'] = {'callback':state_callback}
         tdata = sm._transition_data
         tdata['publish'] =  dict(name='publish',
                                  from_state='pending',
@@ -35,7 +34,6 @@ class WorkflowTests(unittest.TestCase):
                                from_state='private',
                                to_state='pending',
                                callback=transition_callback)
-        sm._transition_order = ['publish', 'reject', 'retract', 'submit']
         return sm
 
     def _makePopulatedOverlappingTransitions(
@@ -50,7 +48,6 @@ class WorkflowTests(unittest.TestCase):
             to_state='pending',
             callback=transition_callback,
             )
-        sm._transition_order.append('submit2')
         return sm
 
     def test_transition_to_state_two_transitions_second_works(self):
@@ -100,7 +97,7 @@ class WorkflowTests(unittest.TestCase):
                           ob, object(), 'pending')
         self.assertEqual(len(callback_args), 0)
         self.assertEqual(len(checker_args), 2)
-        self.assertEqual([a[0] for a in checker_args],
+        self.assertEqual([a[0] for a in sorted(checker_args)],
                          ['forbidden1', 'forbidden2'])
 
     def test_class_conforms_to_IWorkflow(self):
@@ -165,40 +162,35 @@ class WorkflowTests(unittest.TestCase):
     def test_add_state_state_exists(self):
         from repoze.workflow import WorkflowError
         sm = self._makeOne()
-        sm._state_order = ['foo']
-        sm._state_data = {'foo':{'c':5}}
+        sm._state_data['foo'] = {'c': 5}
         self.assertRaises(WorkflowError, sm.add_state, 'foo')
 
     def test_add_state_alias_exists(self):
         from repoze.workflow import WorkflowError
         sm = self._makeOne()
-        sm._state_order = ['foo']
-        sm._state_data = {'foo':{'c':5}}
-        sm._state_aliases = {'bar':'foo'}
+        sm._state_data['foo'] = {'c': 5}
+        sm._state_aliases['bar'] = 'foo'
         self.assertRaises(WorkflowError, sm.add_state, 'bar')
 
     def test_add_state_info_state_doesntexist(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo', callback, a=1, b=2)
-        self.assertEqual(sm._state_order, ['foo'])
-        self.assertEqual(sm._state_data, {'foo':{'callback':callback,
-                                                 'a':1, 'b':2}})
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': callback, 'a': 1, 'b': 2}})
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo')
-        self.assertEqual(sm._state_order, ['foo'])
-        self.assertEqual(sm._state_data, {'foo':{'callback':None}})
+        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
 
     def test_add_state_with_aliases(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo', aliases=['abc', 'def'])
-        self.assertEqual(sm._state_order, ['foo'])
-        self.assertEqual(sm._state_aliases, {'abc':'foo', 'def':'foo'})
-        self.assertEqual(sm._state_data, {'foo':{'callback':None}})
+        self.assertEqual(sm._state_aliases, {'abc': 'foo', 'def': 'foo'})
+        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
 
     def test_add_transition(self):
         sm = self._makeOne()
@@ -207,7 +199,6 @@ class WorkflowTests(unittest.TestCase):
         sm.add_transition('make_public', 'private', 'public', None, a=1)
         sm.add_transition('make_private', 'public', 'private', None, b=2)
         self.assertEqual(len(sm._transition_data), 2)
-        self.assertEqual(sm._transition_order, ['make_public', 'make_private'])
         make_public = sm._transition_data['make_public']
         self.assertEqual(make_public['name'], 'make_public')
         self.assertEqual(make_public['from_state'], 'private')
@@ -220,7 +211,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(make_private['to_state'], 'private')
         self.assertEqual(make_private['callback'], None)
         self.assertEqual(make_private['b'], 2)
-        self.assertEqual(len(sm._state_order), 2)
+        self.assertEqual(len(sm._state_data), 2)
 
     def test_add_transition_transition_name_already_exists(self):
         from repoze.workflow import WorkflowError
@@ -439,6 +430,7 @@ class WorkflowTests(unittest.TestCase):
         ob.state = 'pending'
         result = sm._state_info(ob)
 
+        self.assertEqual(len(result), 1)
         state = result[0]
         self.assertEqual(state['initial'], True)
         self.assertEqual(state['current'], True)
@@ -449,10 +441,11 @@ class WorkflowTests(unittest.TestCase):
 
 
     def test__state_info_pending(self):
+        from operator import itemgetter
         sm = self._makePopulated()
         ob = DummyContent()
         ob.state = 'pending'
-        result = sm._state_info(ob)
+        result = sorted(sm._state_info(ob), key=itemgetter('name'))
         self.assertEqual(len(result), 3)
 
         state = result[0]
@@ -466,27 +459,28 @@ class WorkflowTests(unittest.TestCase):
         state = result[1]
         self.assertEqual(state['initial'], False)
         self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'published')
-        self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'callback':None})
-        self.assertEqual(len(state['transitions']), 1)
-        self.assertEquals(state['transitions'][0]['name'], 'publish')
-
-        state = result[2]
-        self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'private')
         self.assertEqual(state['title'], 'private')
         self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEqual(state['transitions'][0]['name'], 'reject')
 
+        state = result[2]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['title'], 'published')
+        self.assertEqual(state['data'], {'callback':None})
+        self.assertEqual(len(state['transitions']), 1)
+        self.assertEquals(state['transitions'][0]['name'], 'publish')
+
 
     def test__state_info_published(self):
+        from operator import itemgetter
         sm = self._makePopulated()
         ob = DummyContent()
         ob.state = 'published'
-        result = sm._state_info(ob)
+        result = sorted(sm._state_info(ob), key=itemgetter('name'))
         self.assertEqual(len(result), 3)
 
         state = result[0]
@@ -500,25 +494,26 @@ class WorkflowTests(unittest.TestCase):
 
         state = result[1]
         self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], True)
-        self.assertEqual(state['name'], 'published')
-        self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'callback':None})
-        self.assertEqual(len(state['transitions']), 0)
-
-        state = result[2]
-        self.assertEqual(state['initial'], False)
         self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'private')
         self.assertEqual(state['title'], 'private')
         self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
+        state = result[2]
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['title'], 'published')
+        self.assertEqual(state['data'], {'callback':None})
+        self.assertEqual(len(state['transitions']), 0)
+
     def test__state_info_private(self):
+        from operator import itemgetter
         sm = self._makePopulated()
         ob = DummyContent()
         ob.state = 'private'
-        result = sm._state_info(ob)
+        result = sorted(sm._state_info(ob), key=itemgetter('name'))
         self.assertEqual(len(result), 3)
 
         state = result[0]
@@ -532,17 +527,17 @@ class WorkflowTests(unittest.TestCase):
 
         state = result[1]
         self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'published')
-        self.assertEqual(state['title'], 'published')
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['name'], 'private')
+        self.assertEqual(state['title'], 'private')
         self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 
         state = result[2]
         self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], True)
-        self.assertEqual(state['name'], 'private')
-        self.assertEqual(state['title'], 'private')
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['title'], 'published')
         self.assertEqual(state['data'], {'callback':None})
         self.assertEqual(len(state['transitions']), 0)
 

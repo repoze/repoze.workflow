@@ -4,6 +4,8 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+- Dropped preservation of insertion order when listing states / transitions.
+
 - Added support for PyPy.
 
 - Added support for continuous integration using ``tox`` and ``jenkins``.
