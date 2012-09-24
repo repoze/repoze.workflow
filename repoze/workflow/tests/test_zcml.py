@@ -275,22 +275,22 @@ class TestFixtureApp(unittest.TestCase):
             )
         self.assertEqual(
             workflow._state_data,
-            {u'public': {'callback':callback,
-                         'description': u'Everybody can see it',
-                         'title': u'Public'},
-             u'private': {'callback':callback,
-                          'description': u'Nobody can see it',
-                          'title': u'Private'}},
+            {'public': {'callback':callback,
+                         'description': 'Everybody can see it',
+                         'title': 'Public'},
+             'private': {'callback':callback,
+                          'description': 'Nobody can see it',
+                          'title': 'Private'}},
             )
         transitions = workflow._transition_data
         self.assertEqual(len(transitions), 2)
         self.assertEqual(transitions['private_to_public'],
-            {'from_state': u'private', 'callback': callback,
-             'name': u'private_to_public', 'to_state': u'public',
+            {'from_state': 'private', 'callback': callback,
+             'name': 'private_to_public', 'to_state': 'public',
              'permission':'moderate'}),
         self.assertEqual(transitions['public_to_private'],
-             {'from_state': u'public', 'callback': callback,
-              'name': 'public_to_private', 'to_state': u'private',
+             {'from_state': 'public', 'callback': callback,
+              'name': 'public_to_private', 'to_state': 'private',
               'permission':'moderate',}
             )
 

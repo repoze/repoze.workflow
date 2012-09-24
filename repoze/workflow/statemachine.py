@@ -79,7 +79,7 @@ class StateMachine(object):
     def transitions(self, context, from_state=None):
         if from_state is None:
             from_state = self.state_of(context)
-        transitions = [t_id for (state, t_id) in self.states.keys()
+        transitions = [t_id for (state, t_id) in list(self.states.keys())
                        if state == from_state]
         return transitions
 
@@ -87,7 +87,7 @@ class StateMachine(object):
         if from_state is None:
             from_state = self.state_of(context)
         L = []
-        for (state,t_id), (newstate,transition_fn,kw) in self.states.items():
+        for (state,t_id), (newstate,transition_fn,kw) in list(self.states.items()):
             if state == from_state:
                 newkw = {}
                 newkw.update(kw)

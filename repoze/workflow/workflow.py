@@ -105,14 +105,14 @@ class Workflow(object):
 
         L = []
 
-        for state_name, state in self._state_data.items():
+        for state_name, state in list(self._state_data.items()):
             state = self._state_data[state_name]
             D = {'name': state_name, 'transitions': []}
             D['data'] = state
             D['initial'] = state_name == self.initial_state
             D['current'] = state_name == content_state
             D['title'] = state.get('title', state_name)
-            for tname, transition in self._transition_data.items():
+            for tname, transition in list(self._transition_data.items()):
                 if (transition['from_state'] == from_state and
                     transition['to_state'] == state_name):
                     transitions = D['transitions']
@@ -175,7 +175,7 @@ class Workflow(object):
         si = (state, transition_name)
 
         transition = None
-        for tname, candidate in self._transition_data.items():
+        for tname, candidate in list(self._transition_data.items()):
             match = (candidate['from_state'], candidate['name'])
             if si == match:
                 transition = candidate
@@ -230,7 +230,7 @@ class Workflow(object):
                             return self._transition(
                                 content, transition['name'], context,
                                     request, guards)
-                        except WorkflowError, e:
+                        except WorkflowError as e:
                             exc = e
                     raise exc
         raise WorkflowError('No transition from state %r to state %r'
@@ -251,7 +251,7 @@ class Workflow(object):
             from_state = self.state_of(content)
 
         transitions = []
-        for tname, transition in self._transition_data.items():
+        for tname, transition in list(self._transition_data.items()):
             if from_state == transition['from_state']:
                 transitions.append(transition)
 

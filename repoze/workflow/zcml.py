@@ -26,37 +26,37 @@ def handler(methodName, *args, **kwargs): # pragma: no cover
 
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
-    name = TextLine(title=u'key', required=True)
-    value = TextLine(title=u'value', required=True)
+    name = TextLine(title='key', required=True)
+    value = TextLine(title='value', required=True)
 
 class IAliasDirective(Interface):
     """ The interface for an alias subdirective """
-    name = TextLine(title=u'name', required=True)
+    name = TextLine(title='name', required=True)
 
 class ITransitionDirective(Interface):
     """ The interface for a transition directive """
-    name = TextLine(title=u'name', required=True)
-    from_state = TextLine(title=u'from_state', required=True)
-    to_state = TextLine(title=u'to_state', required=True)
-    permission = TextLine(title=u'permission', required=False)
-    callback = GlobalObject(title=u'callback', required=False)
+    name = TextLine(title='name', required=True)
+    from_state = TextLine(title='from_state', required=True)
+    to_state = TextLine(title='to_state', required=True)
+    permission = TextLine(title='permission', required=False)
+    callback = GlobalObject(title='callback', required=False)
 
 class IStateDirective(Interface):
     """ The interface for a state directive """
-    name = TextLine(title=u'name', required=True)
-    title = TextLine(title=u'title', required=False)
-    callback = GlobalObject(title=u'enter state callback', required=False)
+    name = TextLine(title='name', required=True)
+    title = TextLine(title='title', required=False)
+    callback = GlobalObject(title='enter state callback', required=False)
 
 class IWorkflowDirective(Interface):
-    type = TextLine(title=u'type', required=True)
-    name = TextLine(title=u'title', required=True)
-    initial_state = TextLine(title=u'initial_state', required=True)
-    state_attr = TextLine(title=u'state_attr', required=True)
-    content_types = Tokens(title=u'content_types', required=False,
+    type = TextLine(title='type', required=True)
+    name = TextLine(title='title', required=True)
+    initial_state = TextLine(title='initial_state', required=True)
+    state_attr = TextLine(title='state_attr', required=True)
+    content_types = Tokens(title='content_types', required=False,
                            value_type=GlobalObject())
-    elector = GlobalObject(title=u'elector', required=False)
-    permission_checker = GlobalObject(title=u'checker', required=False)
-    description = TextLine(title=u'description', required=False)
+    elector = GlobalObject(title='elector', required=False)
+    permission_checker = GlobalObject(title='checker', required=False)
+    description = TextLine(title='description', required=False)
 
 class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
     implements(zope.configuration.config.IConfigurationContext,
@@ -89,7 +89,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                        state.callback,
                                        aliases=state.aliases,
                                        **state.extras)
-                except WorkflowError, why:
+                except WorkflowError as why:
                     raise ConfigurationError(str(why))
 
             for transition in self.transitions:
@@ -100,12 +100,12 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                             transition.callback,
                                             transition.permission,
                                             **transition.extras)
-                except WorkflowError, why:
+                except WorkflowError as why:
                     raise ConfigurationError(str(why))
 
             try:
                 workflow.check()
-            except WorkflowError, why:
+            except WorkflowError as why:
                 raise ConfigurationError(str(why))
 
             register_workflow(workflow, self.type, content_type,
