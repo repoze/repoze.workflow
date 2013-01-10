@@ -113,6 +113,19 @@ class TestWorkflowDirective(unittest.TestCase):
             )
         self.assertEqual(workflow.initial_state, 'public')
 
+    def test_after_warns_if_no_content_types(self):
+        import warnings
+        directive = self._makeOne(initial_state='public', type='security')
+        directive.states = [ DummyState('private', a=1),
+                             DummyState('public', b=2) ]
+        directive.transitions = [ DummyTransition('make_public'),
+                                  DummyTransition('make_private'),
+                                  ]
+        with warnings.catch_warnings(record=True) as log:
+            directive.after()
+        self .assertEqual(len(log), 1)
+        self .assertEqual(log[0].category, UserWarning)
+
     def test_after_raises_error_during_transition_add(self):
         from zope.interface import Interface
         from zope.configuration.exceptions import ConfigurationError
