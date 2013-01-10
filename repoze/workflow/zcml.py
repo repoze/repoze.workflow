@@ -1,22 +1,20 @@
+import warnings
+
 from zope.component import getSiteManager
+from zope.configuration.config import GroupingContextDecorator
+from zope.configuration.config import IConfigurationContext
 from zope.configuration.exceptions import ConfigurationError
-
-import zope.configuration.config
-
 from zope.configuration.fields import GlobalObject
 from zope.configuration.fields import Tokens
-
 from zope.interface import Interface
 from zope.interface import implements
 from zope.interface import providedBy
 from zope.interface.interfaces import IInterface
-
 from zope.schema import TextLine
 
 from repoze.workflow.interfaces import IWorkflow
 from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
-
 from repoze.workflow.workflow import Workflow
 from repoze.workflow.workflow import WorkflowError
 
@@ -58,8 +56,8 @@ class IWorkflowDirective(Interface):
     permission_checker = GlobalObject(title=u'checker', required=False)
     description = TextLine(title=u'description', required=False)
 
-class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
-    implements(zope.configuration.config.IConfigurationContext,
+class WorkflowDirective(GroupingContextDecorator):
+    implements(IConfigurationContext,
                IWorkflowDirective)
     def __init__(self, context, type, name, state_attr, initial_state,
                  content_types=(), elector=None, permission_checker=None,
@@ -124,10 +122,10 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                 args = (content_type,),
                 )
 
-class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
+class TransitionDirective(GroupingContextDecorator):
     """ Handle ``transition`` ZCML directives
     """
-    implements(zope.configuration.config.IConfigurationContext,
+    implements(IConfigurationContext,
                ITransitionDirective)
 
     def __init__(self, context, name, from_state, to_state,
@@ -145,8 +143,8 @@ class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
     def after(self):
         self.context.transitions.append(self)
 
-class StateDirective(zope.configuration.config.GroupingContextDecorator):
-    implements(zope.configuration.config.IConfigurationContext,
+class StateDirective(GroupingContextDecorator):
+    implements(IConfigurationContext,
                IStateDirective)
     def __init__(self, context, name, callback=None, title=None):
         self.context = context
