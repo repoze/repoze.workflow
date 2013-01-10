@@ -4,9 +4,9 @@ from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
 from repoze.workflow.interfaces import ICallbackInfo
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
-from zope.interface import classImplements
+from zope.interface import provider
 from zope.interface.interfaces import IInterface
 from zope.component import getSiteManager
 
@@ -15,11 +15,11 @@ _marker = object()
 class WorkflowError(Exception):
     pass
 
+@provider(IWorkflowFactory)
+@implementer(IWorkflow)
 class Workflow(object):
     """ Finite state machine.
     """
-    classImplements(IWorkflowFactory)
-    implements(IWorkflow)
 
     def __init__(self, state_attr, initial_state, permission_checker=None,
                  name='', description=''):
@@ -279,8 +279,8 @@ class Workflow(object):
             L.append(transition)
         return L
 
+@implementer(ICallbackInfo)
 class CallbackInfo(object):
-    implements(ICallbackInfo)
 
     def __init__(self, workflow, transition, request=None):
         self.workflow = workflow

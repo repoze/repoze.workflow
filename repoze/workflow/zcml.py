@@ -7,7 +7,7 @@ from zope.configuration.exceptions import ConfigurationError
 from zope.configuration.fields import GlobalObject
 from zope.configuration.fields import Tokens
 from zope.interface import Interface
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
 from zope.interface.interfaces import IInterface
 from zope.schema import TextLine
@@ -57,9 +57,8 @@ class IWorkflowDirective(Interface):
     permission_checker = GlobalObject(title=u'checker', required=False)
     description = TextLine(title=u'description', required=False)
 
+@implementer(IConfigurationContext, IWorkflowDirective)
 class WorkflowDirective(GroupingContextDecorator):
-    implements(IConfigurationContext,
-               IWorkflowDirective)
     def __init__(self, context, type, name, state_attr, initial_state,
                  content_types=(), elector=None, permission_checker=None,
                  description=''):
@@ -127,11 +126,10 @@ class WorkflowDirective(GroupingContextDecorator):
                 args = (content_type,),
                 )
 
+@implementer(IConfigurationContext, ITransitionDirective)
 class TransitionDirective(GroupingContextDecorator):
     """ Handle ``transition`` ZCML directives
     """
-    implements(IConfigurationContext,
-               ITransitionDirective)
 
     def __init__(self, context, name, from_state, to_state,
                  callback=None, permission=None, title=None):
@@ -149,9 +147,8 @@ class TransitionDirective(GroupingContextDecorator):
     def after(self):
         self.context.transitions.append(self)
 
+@implementer(IConfigurationContext, IStateDirective)
 class StateDirective(GroupingContextDecorator):
-    implements(IConfigurationContext,
-               IStateDirective)
     def __init__(self, context, name, callback=None, title=None):
         self.context = context
         self.name = name

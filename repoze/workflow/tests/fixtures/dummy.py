@@ -1,5 +1,5 @@
 from zope.interface import Interface
-from zope.interface import implements
+from zope.interface import implementer
 
 from repoze.workflow import Workflow # imported
 
@@ -9,8 +9,9 @@ class IContent(Interface):
 class IContent2(Interface):
     pass
 
+@implementer(IContent)
 class Content(object):
-    implements(IContent)
+    pass
 
 def callback(context, transition):
     """ """

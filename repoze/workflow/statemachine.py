@@ -4,13 +4,14 @@
 # evolution of this software.
 
 from repoze.workflow.interfaces import IStateMachine
-from zope.interface import implements
+from zope.interface import implementer
 
 _marker = ()
 
 class StateMachineError(Exception):
     """ Invalid input to finite state machine"""
 
+@implementer(IStateMachine)
 class StateMachine(object):
     """ Finite state machine featuring transition actions.
 
@@ -28,7 +29,6 @@ class StateMachine(object):
     callables to facilitate issues related to StateMachine
     persistence.
     """
-    implements(IStateMachine)
     
     def __init__(self, state_attr, states=None, initial_state=None):
         """

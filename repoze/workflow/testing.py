@@ -1,4 +1,4 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from repoze.workflow.zcml import register_workflow
 from repoze.workflow.interfaces import IWorkflow
@@ -10,12 +10,12 @@ def registerDummyWorkflow(name, workflow=None, content_type=None, elector=None):
 
     return workflow
 
+@implementer(IWorkflow)
 class DummyWorkflow:
     state_attr = 'state'
     initial_state = 'initial'
     name = 'the workflow'
     description = ''
-    implements(IWorkflow)
     def __init__(self, state_info=(), transitions=()):
         self.executed = []
         self.transitioned = []
