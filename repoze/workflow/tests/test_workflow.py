@@ -196,20 +196,24 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne()
         sm.add_state('public')
         sm.add_state('private')
-        sm.add_transition('make_public', 'private', 'public', None, a=1)
-        sm.add_transition('make_private', 'public', 'private', None, b=2)
+        sm.add_transition('make_public', 'private', 'public',
+                          None, None, None, a=1)
+        sm.add_transition('make_private', 'public', 'private',
+                          None, None, 'Retract', b=2)
         self.assertEqual(len(sm._transition_data), 2)
         make_public = sm._transition_data['make_public']
         self.assertEqual(make_public['name'], 'make_public')
         self.assertEqual(make_public['from_state'], 'private')
         self.assertEqual(make_public['to_state'], 'public')
         self.assertEqual(make_public['callback'], None)
+        self.assertEqual(make_public['title'], 'make_public')
         self.assertEqual(make_public['a'], 1)
         make_private = sm._transition_data['make_private']
         self.assertEqual(make_private['name'], 'make_private')
         self.assertEqual(make_private['from_state'], 'public')
         self.assertEqual(make_private['to_state'], 'private')
         self.assertEqual(make_private['callback'], None)
+        self.assertEqual(make_private['title'], 'Retract')
         self.assertEqual(make_private['b'], 2)
         self.assertEqual(len(sm._state_data), 2)
 

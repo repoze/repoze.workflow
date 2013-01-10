@@ -37,6 +37,7 @@ class ITransitionDirective(Interface):
     from_state = TextLine(title=u'from_state', required=True)
     to_state = TextLine(title=u'to_state', required=True)
     permission = TextLine(title=u'permission', required=False)
+    title = TextLine(title=u'title', required=False)
     callback = GlobalObject(title=u'callback', required=False)
 
 class IStateDirective(Interface):
@@ -97,6 +98,7 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.to_state,
                                             transition.callback,
                                             transition.permission,
+                                            transition.title,
                                             **transition.extras)
                 except WorkflowError, why:
                     raise ConfigurationError(str(why))
@@ -131,7 +133,7 @@ class TransitionDirective(GroupingContextDecorator):
                ITransitionDirective)
 
     def __init__(self, context, name, from_state, to_state,
-                 callback=None, permission=None):
+                 callback=None, permission=None, title=None):
         self.context = context
         self.name = name
         if not from_state:
@@ -140,6 +142,7 @@ class TransitionDirective(GroupingContextDecorator):
         self.to_state = to_state
         self.callback = callback
         self.permission = permission
+        self.title = title
         self.extras = {} # mutated by subdirectives
 
     def after(self):

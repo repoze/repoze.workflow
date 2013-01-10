@@ -43,8 +43,9 @@ class TestWorkflowDirective(unittest.TestCase):
         directive.states = [ DummyState('private', a=1),
                              DummyState('public', b=2) ]
         directive.transitions = [ DummyTransition('make_public'),
-                                  DummyTransition('make_private'),
-                                  ]
+                                  DummyTransition('make_private',
+                                                  title='Retract'),
+                                ]
         directive.after()
         actions = directive.context.actions
         self.assertEqual(len(actions), 2)
@@ -72,11 +73,11 @@ class TestWorkflowDirective(unittest.TestCase):
             {'make_public':
              {'from_state': 'private', 'callback': None,
               'name': 'make_public', 'to_state': 'public',
-              'permission':None},
+              'permission':None, 'title': 'make_public'},
              'make_private':
              {'from_state': 'private', 'callback': None,
               'name': 'make_private', 'to_state': 'public',
-              'permission':None},
+              'permission':None, 'title': 'Retract'},
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
@@ -104,11 +105,11 @@ class TestWorkflowDirective(unittest.TestCase):
             {'make_public':
              {'from_state': 'private', 'callback': None,
               'name': 'make_public', 'to_state': 'public',
-              'permission':None},
+              'permission':None, 'title': 'make_public'},
              'make_private':
              {'from_state': 'private', 'callback': None,
               'name': 'make_private', 'to_state': 'public',
-              'permission':None},
+              'permission':None, 'title': 'Retract'},
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
@@ -300,11 +301,11 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(transitions['private_to_public'],
             {'from_state': u'private', 'callback': callback,
              'name': u'private_to_public', 'to_state': u'public',
-             'permission':'moderate'}),
+             'permission':'moderate', 'title': 'private_to_public'}),
         self.assertEqual(transitions['public_to_private'],
              {'from_state': u'public', 'callback': callback,
               'name': 'public_to_private', 'to_state': u'private',
-              'permission':'moderate',}
+              'permission':'moderate', 'title': 'public_to_private'}
             )
 
 class TestRegisterWorkflow(unittest.TestCase):
@@ -378,12 +379,11 @@ class DummyState:
         
 class DummyTransition:
     def __init__(self, name, from_state='private', to_state='public',
-                 callback=None, permission=None, **extras):
+                 callback=None, permission=None, title=None, **extras):
         self.name = name
         self.from_state = from_state
         self.to_state = to_state
         self.callback = callback
         self.permission = permission
+        self.title = title
         self.extras = extras
-
-                  

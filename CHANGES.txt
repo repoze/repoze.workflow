@@ -4,6 +4,9 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+- Added an optional ``title`` to transitions (defaults to the transition
+  name).
+
 - Added a warning if a ZCML workflow directive has no ``content_types``.
 
 - Dropped preservation of insertion order when listing states / transitions.
