@@ -4,6 +4,8 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+- Added a warning if a ZCML workflow directive has no ``content_types``.
+
 - Dropped preservation of insertion order when listing states / transitions.
 
 - Added support for PyPy.

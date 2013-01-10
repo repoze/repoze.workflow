@@ -114,6 +114,8 @@ class WorkflowDirective(GroupingContextDecorator):
         else:
             elector_id = None
 
+        if len(self.content_types) == 0:
+            warnings.warn('No content_types specified:  workflow inactive.')
         for content_type in self.content_types:
             self.action(
                 discriminator = (IWorkflow, content_type, elector_id,
