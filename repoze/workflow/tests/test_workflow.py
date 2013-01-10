@@ -177,20 +177,30 @@ class WorkflowTests(unittest.TestCase):
         callback = object()
         sm.add_state('foo', callback, a=1, b=2)
         self.assertEqual(sm._state_data,
-                         {'foo': {'callback': callback, 'a': 1, 'b': 2}})
+                         {'foo': {'callback': callback,
+                                  'title': 'foo', 'a': 1, 'b': 2}})
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo')
-        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': None, 'title': 'foo'}})
 
     def test_add_state_with_aliases(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo', aliases=['abc', 'def'])
         self.assertEqual(sm._state_aliases, {'abc': 'foo', 'def': 'foo'})
-        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': None, 'title': 'foo'}})
+
+    def test_add_state_with_title(self):
+        sm = self._makeOne()
+        callback = object()
+        sm.add_state('foo', title='Foo')
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': None, 'title': 'Foo'}})
 
     def test_add_transition(self):
         sm = self._makeOne()

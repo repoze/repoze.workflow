@@ -40,11 +40,12 @@ class TestWorkflowDirective(unittest.TestCase):
             pass
         directive = self._makeOne(initial_state='public', type='security',
                                   content_types=(IDummy, IDummy2))
-        directive.states = [ DummyState('private', a=1),
-                             DummyState('public', b=2) ]
-        directive.transitions = [ DummyTransition('make_public'),
-                                  DummyTransition('make_private',
-                                                  title='Retract'),
+        directive.states = [DummyState('private', title='Private', a=1),
+                            DummyState('public', b=2)
+                           ]
+        directive.transitions = [DummyTransition('make_public'),
+                                 DummyTransition('make_private',
+                                                 title='Retract'),
                                 ]
         directive.after()
         actions = directive.context.actions
@@ -69,6 +70,13 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(wf_dict['workflow'].__class__, Workflow)
         workflow = wf_dict['workflow']
         self.assertEqual(
+            workflow._state_data,
+            {'public':
+                {'callback': None, 'title': 'public', 'b': 2},
+             'private':
+                {'callback': None, 'title': 'Private', 'a': 1},
+             })
+        self.assertEqual(
             workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
@@ -78,8 +86,7 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'name': 'make_private', 'to_state': 'public',
               'permission':None, 'title': 'Retract'},
-             }
-            )
+             })
         self.assertEqual(workflow.initial_state, 'public')
 
         action = actions[1]
@@ -100,6 +107,13 @@ class TestWorkflowDirective(unittest.TestCase):
         self.assertEqual(wf_dict['elector'], None)
         self.assertEqual(wf_dict['workflow'].__class__, Workflow)
         workflow = wf_dict['workflow']
+        self.assertEqual(
+            workflow._state_data,
+            {'public':
+                {'callback': None, 'title': 'public', 'b': 2},
+             'private':
+                {'callback': None, 'title': 'Private', 'a': 1},
+             })
         self.assertEqual(
             workflow._transition_data,
             {'make_public':
@@ -371,8 +385,9 @@ class DummyContext:
         self.__dict__.update(kw)
 
 class DummyState:
-    def __init__(self, name, title=None, callback=None, aliases=(), **extras):
+    def __init__(self, name, callback=None, aliases=(), title=None, **extras):
         self.name = name
+        self.title = title
         self.callback = callback
         self.extras = extras
         self.aliases = aliases

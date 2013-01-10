@@ -14,15 +14,13 @@
    >
 
    <state name="private" 
-      callback=".dummy.callback">
-        <key name="title" value="Private"/>
+      callback=".dummy.callback" title="Private">
         <key name="description" value="Nobody can see it"/>
         <alias name="supersecret"/>
    </state>
 
    <state name="public"
-      callback=".dummy.callback">
-     <key name="title" value="Public"/>
+      callback=".dummy.callback" title="Public">
      <key name="description" value="Everybody can see it"/>
    </state>
 

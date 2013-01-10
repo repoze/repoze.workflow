@@ -4,6 +4,10 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+- Added an optional ``title`` to states (defaults to the state name).
+  In ZCML, the 'title' should now be carried as an attribute of the
+  '<state>' element, rather than as a '<key>' sub-element.
+
 - Added an optional ``title`` to transitions (defaults to the transition
   name).
 

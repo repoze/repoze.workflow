@@ -87,6 +87,7 @@ class WorkflowDirective(GroupingContextDecorator):
                     workflow.add_state(state.name,
                                        state.callback,
                                        aliases=state.aliases,
+                                       title=state.title,
                                        **state.extras)
                 except WorkflowError, why:
                     raise ConfigurationError(str(why))
@@ -155,7 +156,8 @@ class StateDirective(GroupingContextDecorator):
         self.context = context
         self.name = name
         self.callback = callback
-        self.extras = {'title':title} # mutated by subdirectives
+        self.title = title
+        self.extras = {} # mutated by subdirectives
         self.aliases = []
 
     def after(self):

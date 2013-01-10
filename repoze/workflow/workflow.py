@@ -41,7 +41,8 @@ class Workflow(object):
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
 
-    def add_state(self, state_name, callback=None, aliases=(), **kw):
+    def add_state(self, state_name, callback=None, aliases=(),
+                  title=None, **kw):
         """ Add a state to the FSM.  ``**kw`` must not contain the key
         ``callback``.  This name is reserved for internal use."""
         if state_name in self._state_data:
@@ -49,6 +50,9 @@ class Workflow(object):
         if state_name in self._state_aliases:
             raise WorkflowError('State %s already aliased' % state_name)
         kw['callback'] = callback
+        if title is None:
+            title = state_name
+        kw['title'] = title
         self._state_data[state_name] = kw
         for alias in aliases:
             self._state_aliases[alias] = state_name
