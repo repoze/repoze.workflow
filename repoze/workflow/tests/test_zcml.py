@@ -260,6 +260,18 @@ class TestKeyValuePair(unittest.TestCase):
         self._callFUT(context, 'key', 'value')
         self.assertEqual(context.context.extras, {'key':'value'})
 
+class TestGuard(unittest.TestCase):
+    def _callFUT(self, context, func):
+        from repoze.workflow.zcml import guard_function
+        guard_function(context, func)
+
+    def test_it_no_extras(self):
+        context = DummyTransition('dummy')
+        def example(context, transition):
+            return None
+        self._callFUT(context, example)
+        self.assertEqual(context.guards, [example])
+
 class TestAlias(unittest.TestCase):
     def _callFUT(self, context, name):
         from repoze.workflow.zcml import alias
