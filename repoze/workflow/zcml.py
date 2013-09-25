@@ -22,6 +22,10 @@ def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)
     method(*args, **kwargs)
 
+class IGuardDirective(Interface):
+    """ A directive for a guard on a transition. """
+    function = GlobalObject(title=u'enter guard function', required=True)
+
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
     name = TextLine(title=u'key', required=True)
@@ -99,6 +103,7 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.callback,
                                             transition.permission,
                                             transition.title,
+                                            guards=transition.guards,
                                             **transition.extras)
                 except WorkflowError, why:
                     raise ConfigurationError(str(why))
@@ -142,6 +147,7 @@ class TransitionDirective(GroupingContextDecorator):
         self.callback = callback
         self.permission = permission
         self.title = title
+        self.guards = []
         self.extras = {} # mutated by subdirectives
 
     def after(self):
@@ -159,6 +165,9 @@ class StateDirective(GroupingContextDecorator):
 
     def after(self):
         self.context.states.append(self)
+
+def guard_function(context, function):
+    context.guards.append(function)
 
 def key_value_pair(context, name, value):
     ob = context.context
