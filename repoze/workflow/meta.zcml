@@ -25,6 +25,14 @@
       handler="repoze.workflow.zcml.key_value_pair"
       />
 
+  <meta:directive
+      name="guard"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.ITransitionDirective"
+      schema="repoze.workflow.zcml.IGuardDirective"
+      handler="repoze.workflow.zcml.guard_function"
+      />
+
   <meta:groupingDirective
       name="state"
       namespace="http://namespaces.repoze.org/bfg"

@@ -33,6 +33,15 @@
       />
 
    <transition
+     name="unavailable_public_to_private"
+     callback=".dummy.callback"
+     from_state="public"
+     to_state="private"
+     permission="moderate">
+         <guard function=".dummy.never" />
+    </transition>
+
+   <transition
       name="private_to_public"
       callback=".dummy.callback"
       from_state="private"

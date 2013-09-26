@@ -247,6 +247,40 @@ The ``transition`` tag accepts the following attributes:
   A Python dotted name which points at a "callback".  See
   :ref:`callbacks`.
 
+The ``guard`` Tag
+---------------
+
+The ``guard`` tag can be used within a ``transition`` tag.
+It allows you to add arbitrary Python functions as guards against
+the transition::
+
+.. code-block:: python
+   :linenos:
+
+   <transition name="foo"
+               from_state="from"
+               to_state="to">
+      <guard function="repoze.example.check_things" />
+   </transition>
+
+The functions referenced will be called when deciding if a transition is
+valid, and are given ``context`` and ``info`` arguments, like callbacks. To
+abort a transition in a guard, the exception ``WorkflowError`` must be raised.
+
+.. code-block:: python
+   :linenos:
+
+    def check_things(context, info):
+        action = info.transition['title']
+        if context.things:
+            raise WorkflowError(
+                "Cannot '%s' objects with things" % action
+            )
+
+This is useful for cases where a workflow transitions aren't just governed by
+permission, but also the internal state of the object in question.
+
+
 The ``key`` Tag
 ---------------
 

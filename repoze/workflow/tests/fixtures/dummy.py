@@ -1,7 +1,7 @@
 from zope.interface import Interface
 from zope.interface import implementer
 
-from repoze.workflow import Workflow # imported
+from repoze.workflow import WorkflowError
 
 class IContent(Interface):
     pass
@@ -15,6 +15,9 @@ class Content(object):
 
 def callback(context, transition):
     """ """
+
+def never(context, transition):
+    raise WorkflowError("This is never allowed")
 
 def elector(context): return True
 
