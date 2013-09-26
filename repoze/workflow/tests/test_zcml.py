@@ -80,12 +80,14 @@ class TestWorkflowDirective(unittest.TestCase):
             workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_public', 'to_state': 'public',
-              'permission':None, 'title': 'make_public'},
+              'guards': [], 'name': 'make_public', 
+              'to_state': 'public', 'permission':None, 
+              'title': 'make_public'},
              'make_private':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_private', 'to_state': 'public',
-              'permission':None, 'title': 'Retract'},
+              'guards': [], 'name': 'make_private', 
+              'to_state': 'public', 'permission':None, 
+              'title': 'Retract'},
              })
         self.assertEqual(workflow.initial_state, 'public')
 
@@ -118,12 +120,14 @@ class TestWorkflowDirective(unittest.TestCase):
             workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_public', 'to_state': 'public',
-              'permission':None, 'title': 'make_public'},
+              'guards': [], 'name': 'make_public', 
+              'to_state': 'public', 'permission':None, 
+              'title': 'make_public'},
              'make_private':
              {'from_state': 'private', 'callback': None,
-              'name': 'make_private', 'to_state': 'public',
-              'permission':None, 'title': 'Retract'},
+              'guards': [], 'name': 'make_private', 
+              'to_state': 'public', 'permission':None, 
+              'title': 'Retract'},
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
@@ -256,6 +260,18 @@ class TestKeyValuePair(unittest.TestCase):
         self._callFUT(context, 'key', 'value')
         self.assertEqual(context.context.extras, {'key':'value'})
 
+class TestGuard(unittest.TestCase):
+    def _callFUT(self, context, func):
+        from repoze.workflow.zcml import guard_function
+        guard_function(context, func)
+
+    def test_it_no_extras(self):
+        context = DummyTransition('dummy')
+        def example(context, transition):
+            return None
+        self._callFUT(context, example)
+        self.assertEqual(context.guards, [example])
+
 class TestAlias(unittest.TestCase):
     def _callFUT(self, context, name):
         from repoze.workflow.zcml import alias
@@ -311,13 +327,18 @@ class TestFixtureApp(unittest.TestCase):
                           'title': u'Private'}},
             )
         transitions = workflow._transition_data
-        self.assertEqual(len(transitions), 2)
+        self.assertEqual(len(transitions), 3)
+        from repoze.workflow.tests.fixtures import dummy
         self.assertEqual(transitions['private_to_public'],
-            {'from_state': u'private', 'callback': callback,
+            {'from_state': u'private', 'callback': callback, 'guards': [],
              'name': u'private_to_public', 'to_state': u'public',
              'permission':'moderate', 'title': 'private_to_public'}),
+        self.assertEqual(transitions['unavailable_public_to_private'],
+            {'from_state': u'public', 'callback': callback, 'guards': [dummy.never],
+             'name': u'unavailable_public_to_private', 'to_state': u'private',
+             'permission':u'moderate', 'title': u'unavailable_public_to_private'}),
         self.assertEqual(transitions['public_to_private'],
-             {'from_state': u'public', 'callback': callback,
+             {'from_state': u'public', 'callback': callback, 'guards': [],
               'name': 'public_to_private', 'to_state': u'private',
               'permission':'moderate', 'title': 'public_to_private'}
             )
@@ -402,3 +423,4 @@ class DummyTransition:
         self.permission = permission
         self.title = title
         self.extras = extras
+        self.guards = []
