@@ -172,7 +172,22 @@ class Workflow(object):
         return state, msg
 
     def _transition(self, content, transition_name, context, request, guards):
-        """ Execute a transition via a transition name """
+        """ Execute a transition via a transition name
+
+        ``content`` is the object being managed.
+
+        ``transition_name`` is the name of the transition to execute.
+
+        ``context`` is the "elector" used to override ``content``, or None.
+
+        ``request`` is the current request object, or None.
+
+        ``guards`` is a sequence of callables taking ``(context, info)``;
+        a guard vetoes the transition by raising ``WorkflowError``.
+
+        .. note:: guards defined on the transition itself will always be
+                  called, in addition to any guards passed in.
+        """
         if context is None:
             context = content
 
