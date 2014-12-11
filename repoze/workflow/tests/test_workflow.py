@@ -1,6 +1,7 @@
 import unittest
 from zope.testing.cleanup import cleanUp
 
+
 class WorkflowTests(unittest.TestCase):
 
     def _getTargetClass(self):
@@ -150,7 +151,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test_state_of_uses_aliases(self):
         sm = self._makeOne()
-        sm._state_aliases = {'supersecret':'private'}
+        sm._state_aliases = {'supersecret': 'private'}
         ob = DummyContent()
         ob.state = 'supersecret'
         self.assertEqual(sm.state_of(ob), 'private')
@@ -182,14 +183,12 @@ class WorkflowTests(unittest.TestCase):
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
-        callback = object()
         sm.add_state('foo')
         self.assertEqual(sm._state_data,
                          {'foo': {'callback': None, 'title': 'foo'}})
 
     def test_add_state_with_aliases(self):
         sm = self._makeOne()
-        callback = object()
         sm.add_state('foo', aliases=['abc', 'def'])
         self.assertEqual(sm._state_aliases, {'abc': 'foo', 'def': 'foo'})
         self.assertEqual(sm._state_data,
@@ -197,7 +196,6 @@ class WorkflowTests(unittest.TestCase):
 
     def test_add_state_with_title(self):
         sm = self._makeOne()
-        callback = object()
         sm.add_state('foo', title='Foo')
         self.assertEqual(sm._state_data,
                          {'foo': {'callback': None, 'title': 'Foo'}})
@@ -272,7 +270,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makePopulated()
         ob = DummyContent()
         ob.state = 'pending'
-        result = sm._get_transitions(ob)
+        result = sorted(sm._get_transitions(ob), key=lambda d: d['name'])
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['name'], 'publish')
         self.assertEqual(result[1]['name'], 'reject')
