@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 ##############################################################################
 #
 # Copyright (c) 2008 Agendaless Consulting and Contributors.
@@ -15,10 +18,6 @@
 __version__ = '0.7dev'
 
 import os
-
-from ez_setup import use_setuptools
-use_setuptools()
-
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -43,11 +42,16 @@ setup(
     name='repoze.workflow',
     version=__version__,
     description='Content workflow for repoze.bfg',
-    long_description=README + '\n\n' +  CHANGES,
+    long_description=README + '\n\n' + CHANGES,
     classifiers=[
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Development Status :: 3 - Alpha",
@@ -62,11 +66,10 @@ setup(
     include_package_data=True,
     namespace_packages=['repoze'],
     zip_safe=False,
-    tests_require = tests_require,
-    install_requires= requires,
+    tests_require=tests_require,
+    install_requires=requires,
     test_suite="repoze.workflow",
-    entry_points = """
-    """,
+    entry_points="",
     extras_require={
         'docs': ['Sphinx', 'repoze.sphinx.autointerface'],
         'testing': testing_extras,

@@ -12,8 +12,10 @@ from zope.component import getSiteManager
 
 _marker = object()
 
+
 class WorkflowError(Exception):
     pass
+
 
 @provider(IWorkflowFactory)
 @implementer(IWorkflow)
@@ -39,7 +41,7 @@ class Workflow(object):
         self.description = description
 
     def __call__(self, context):
-        return self # allow ourselves to act as an adapter
+        return self  # allow ourselves to act as an adapter
 
     def add_state(self, state_name, callback=None, aliases=(),
                   title=None, **kw):
@@ -95,7 +97,7 @@ class Workflow(object):
         return state_name
 
     def state_of(self, content):
-        if content is None: # for add forms
+        if content is None:  # for add forms
             return self.initial_state
         state = self._state_of(content)
         if state is None:
@@ -109,9 +111,7 @@ class Workflow(object):
         content_state = self.state_of(content)
         if from_state is None:
             from_state = content_state
-
         L = []
-
         for state_name, state in self._state_data.items():
             state = self._state_data[state_name]
             D = {'name': state_name, 'transitions': []}
@@ -121,11 +121,10 @@ class Workflow(object):
             D['title'] = state.get('title', state_name)
             for tname, transition in self._transition_data.items():
                 if (transition['from_state'] == from_state and
-                    transition['to_state'] == state_name):
+                        transition['to_state'] == state_name):
                     transitions = D['transitions']
                     transitions.append(transition)
             L.append(D)
-
         return L
 
     def state_info(self, content, request, context=None, from_state=None):
@@ -199,7 +198,7 @@ class Workflow(object):
             for guard in guards:
                 guard(context, info)
 
-        from_state = transition['from_state']
+        # from_state = transition['from_state']
         to_state = transition['to_state']
 
         transition_callback = transition['callback']
@@ -237,7 +236,7 @@ class Workflow(object):
                             return self._transition(
                                 content, transition['name'], context,
                                     request, guards)
-                        except WorkflowError, e:
+                        except WorkflowError as e:
                             exc = e
                     raise exc
         raise WorkflowError('No transition from state %r to state %r'
@@ -273,11 +272,12 @@ class Workflow(object):
             permission = transition.get('permission')
             if permission is not None:
                 if self.permission_checker:
-                    if not self.permission_checker(permission, context, 
+                    if not self.permission_checker(permission, context,
                                                    request):
                         continue
             L.append(transition)
         return L
+
 
 @implementer(ICallbackInfo)
 class CallbackInfo(object):
@@ -286,6 +286,7 @@ class CallbackInfo(object):
         self.workflow = workflow
         self.transition = transition
         self.request = request
+
 
 class PermissionGuard:
     def __init__(self, request, name, checker):
@@ -299,8 +300,9 @@ class PermissionGuard:
             if not self.checker(permission, context, self.request):
                 raise WorkflowError(
                     '%s permission required for transition using %r' % (
-                    permission, self.name)
+                        permission, self.name)
                     )
+
 
 def process_wf_list(wf_list, context):
     # Try all workflows that have an elector first in ZCML order; if
@@ -320,6 +322,7 @@ def process_wf_list(wf_list, context):
             if elector(context):
                 return workflow
     return fallback
+
 
 def get_workflow(content_type, type, context=None,
                  process_wf_list=process_wf_list): # process_wf_list is for test
@@ -342,4 +345,3 @@ def get_workflow(content_type, type, context=None,
     wf_list = look((IDefaultWorkflow,), IWorkflowList, name=type, default=None)
     if wf_list is not None:
         return process_wf_list(wf_list, context)
-

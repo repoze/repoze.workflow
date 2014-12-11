@@ -8,8 +8,10 @@ from zope.interface import implementer
 
 _marker = ()
 
+
 class StateMachineError(Exception):
     """ Invalid input to finite state machine"""
+
 
 @implementer(IStateMachine)
 class StateMachine(object):
@@ -29,13 +31,13 @@ class StateMachine(object):
     callables to facilitate issues related to StateMachine
     persistence.
     """
-    
+
     def __init__(self, state_attr, states=None, initial_state=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
                        persisting)
-                       
+
         o states - state dictionary
 
         o initial_state - initial state for any object using this
@@ -51,7 +53,7 @@ class StateMachine(object):
         self.states[(state, transition_id)] = (newstate, transition_fn, kw)
 
     def execute(self, context, transition_id):
-        state = getattr(context, self.state_attr, _marker) 
+        state = getattr(context, self.state_attr, _marker)
         if state is _marker:
             state = self.initial_state
         si = (state, transition_id)
@@ -87,7 +89,8 @@ class StateMachine(object):
         if from_state is None:
             from_state = self.state_of(context)
         L = []
-        for (state,t_id), (newstate,transition_fn,kw) in self.states.items():
+        for (state, t_id), (newstate, transition_fn, kw) \
+                in self.states.items():
             if state == from_state:
                 newkw = {}
                 newkw.update(kw)

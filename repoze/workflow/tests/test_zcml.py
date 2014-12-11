@@ -22,7 +22,7 @@ class TestWorkflowDirective(unittest.TestCase):
     def test_ctor_with_state_attr(self):
         workflow = self._makeOne(name='public', state_attr='public2')
         self.assertEqual(workflow.state_attr, 'public2')
-        
+
     def test_ctor_no_state_attr(self):
         workflow = self._makeOne(name='public')
         self.assertEqual(workflow.state_attr, 'public')
@@ -80,13 +80,13 @@ class TestWorkflowDirective(unittest.TestCase):
             workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
-              'guards': [], 'name': 'make_public', 
-              'to_state': 'public', 'permission':None, 
+              'guards': [], 'name': 'make_public',
+              'to_state': 'public', 'permission':None,
               'title': 'make_public'},
              'make_private':
              {'from_state': 'private', 'callback': None,
-              'guards': [], 'name': 'make_private', 
-              'to_state': 'public', 'permission':None, 
+              'guards': [], 'name': 'make_private',
+              'to_state': 'public', 'permission':None,
               'title': 'Retract'},
              })
         self.assertEqual(workflow.initial_state, 'public')
@@ -120,13 +120,13 @@ class TestWorkflowDirective(unittest.TestCase):
             workflow._transition_data,
             {'make_public':
              {'from_state': 'private', 'callback': None,
-              'guards': [], 'name': 'make_public', 
-              'to_state': 'public', 'permission':None, 
+              'guards': [], 'name': 'make_public',
+              'to_state': 'public', 'permission':None,
               'title': 'make_public'},
              'make_private':
              {'from_state': 'private', 'callback': None,
-              'guards': [], 'name': 'make_private', 
-              'to_state': 'public', 'permission':None, 
+              'guards': [], 'name': 'make_private',
+              'to_state': 'public', 'permission':None,
               'title': 'Retract'},
              }
             )
@@ -319,29 +319,34 @@ class TestFixtureApp(unittest.TestCase):
             )
         self.assertEqual(
             workflow._state_data,
-            {u'public': {'callback':callback,
-                         'description': u'Everybody can see it',
-                         'title': u'Public'},
-             u'private': {'callback':callback,
-                          'description': u'Nobody can see it',
-                          'title': u'Private'}},
+            {'public': {'callback':callback,
+                         'description': 'Everybody can see it',
+                         'title': 'Public'},
+             'private': {'callback':callback,
+                          'description': 'Nobody can see it',
+                          'title': 'Private'}},
             )
         transitions = workflow._transition_data
         self.assertEqual(len(transitions), 3)
         from repoze.workflow.tests.fixtures import dummy
-        self.assertEqual(transitions['private_to_public'],
-            {'from_state': u'private', 'callback': callback, 'guards': [],
-             'name': u'private_to_public', 'to_state': u'public',
-             'permission':'moderate', 'title': 'private_to_public'}),
-        self.assertEqual(transitions['unavailable_public_to_private'],
-            {'from_state': u'public', 'callback': callback, 'guards': [dummy.never],
-             'name': u'unavailable_public_to_private', 'to_state': u'private',
-             'permission':u'moderate', 'title': u'unavailable_public_to_private'}),
-        self.assertEqual(transitions['public_to_private'],
-             {'from_state': u'public', 'callback': callback, 'guards': [],
-              'name': 'public_to_private', 'to_state': u'private',
-              'permission':'moderate', 'title': 'public_to_private'}
-            )
+        self.assertEqual(
+            transitions['private_to_public'],
+            {'from_state': 'private', 'callback': callback, 'guards': [],
+             'name': 'private_to_public', 'to_state': 'public',
+             'permission': 'moderate', 'title': 'private_to_public'})
+        self.assertEqual(
+            transitions['unavailable_public_to_private'],
+            {'from_state': 'public', 'callback': callback,
+             'guards': [dummy.never],
+             'name': 'unavailable_public_to_private', 'to_state': 'private',
+             'permission': 'moderate',
+             'title': 'unavailable_public_to_private'})
+        self.assertEqual(
+            transitions['public_to_private'],
+            {'from_state': 'public', 'callback': callback, 'guards': [],
+             'name': 'public_to_private', 'to_state': 'private',
+             'permission': 'moderate', 'title': 'public_to_private'})
+
 
 class TestRegisterWorkflow(unittest.TestCase):
     def setUp(self):
@@ -362,11 +367,11 @@ class TestRegisterWorkflow(unittest.TestCase):
         workflow = object()
         self._callFUT(workflow, 'security', None)
         sm = getSiteManager()
-        
+
         wf_list = sm.adapters.lookup((IDefaultWorkflow,), IWorkflowList,
                                      name='security')
         self.assertEqual(wf_list, [{'elector':None, 'workflow':workflow}])
-        
+
     def test_register_iface_as_content_type(self):
         from repoze.workflow.interfaces import IWorkflowList
         from zope.component import getSiteManager
@@ -376,11 +381,11 @@ class TestRegisterWorkflow(unittest.TestCase):
         workflow = object()
         self._callFUT(workflow, 'security', IFoo)
         sm = getSiteManager()
-        
+
         wf_list = sm.adapters.lookup((IFoo,), IWorkflowList,
                                      name='security')
         self.assertEqual(wf_list, [{'elector':None, 'workflow':workflow}])
-        
+
     def test_register_class_as_content_type(self):
         from repoze.workflow.interfaces import IWorkflowList
         from zope.component import getSiteManager
@@ -412,7 +417,7 @@ class DummyState:
         self.callback = callback
         self.extras = extras
         self.aliases = aliases
-        
+
 class DummyTransition:
     def __init__(self, name, from_state='private', to_state='public',
                  callback=None, permission=None, title=None, **extras):

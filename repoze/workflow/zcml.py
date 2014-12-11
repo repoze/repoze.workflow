@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import warnings
 
 from zope.component import getSiteManager
@@ -18,48 +22,56 @@ from repoze.workflow.interfaces import IDefaultWorkflow
 from repoze.workflow.workflow import Workflow
 from repoze.workflow.workflow import WorkflowError
 
-def handler(methodName, *args, **kwargs): # pragma: no cover
+
+def handler(methodName, *args, **kwargs):  # pragma: no cover
     method = getattr(getSiteManager(), methodName)
     method(*args, **kwargs)
 
+
 class IGuardDirective(Interface):
     """ A directive for a guard on a transition. """
-    function = GlobalObject(title=u'enter guard function', required=True)
+    function = GlobalObject(title='enter guard function', required=True)
+
 
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
-    name = TextLine(title=u'key', required=True)
-    value = TextLine(title=u'value', required=True)
+    name = TextLine(title='key', required=True)
+    value = TextLine(title='value', required=True)
+
 
 class IAliasDirective(Interface):
     """ The interface for an alias subdirective """
-    name = TextLine(title=u'name', required=True)
+    name = TextLine(title='name', required=True)
+
 
 class ITransitionDirective(Interface):
     """ The interface for a transition directive """
-    name = TextLine(title=u'name', required=True)
-    from_state = TextLine(title=u'from_state', required=True)
-    to_state = TextLine(title=u'to_state', required=True)
-    permission = TextLine(title=u'permission', required=False)
-    title = TextLine(title=u'title', required=False)
-    callback = GlobalObject(title=u'callback', required=False)
+    name = TextLine(title='name', required=True)
+    from_state = TextLine(title='from_state', required=True)
+    to_state = TextLine(title='to_state', required=True)
+    permission = TextLine(title='permission', required=False)
+    title = TextLine(title='title', required=False)
+    callback = GlobalObject(title='callback', required=False)
+
 
 class IStateDirective(Interface):
     """ The interface for a state directive """
-    name = TextLine(title=u'name', required=True)
-    title = TextLine(title=u'title', required=False)
-    callback = GlobalObject(title=u'enter state callback', required=False)
+    name = TextLine(title='name', required=True)
+    title = TextLine(title='title', required=False)
+    callback = GlobalObject(title='enter state callback', required=False)
+
 
 class IWorkflowDirective(Interface):
-    type = TextLine(title=u'type', required=True)
-    name = TextLine(title=u'title', required=True)
-    initial_state = TextLine(title=u'initial_state', required=True)
-    state_attr = TextLine(title=u'state_attr', required=True)
-    content_types = Tokens(title=u'content_types', required=False,
+    type = TextLine(title='type', required=True)
+    name = TextLine(title='title', required=True)
+    initial_state = TextLine(title='initial_state', required=True)
+    state_attr = TextLine(title='state_attr', required=True)
+    content_types = Tokens(title='content_types', required=False,
                            value_type=GlobalObject())
-    elector = GlobalObject(title=u'elector', required=False)
-    permission_checker = GlobalObject(title=u'checker', required=False)
-    description = TextLine(title=u'description', required=False)
+    elector = GlobalObject(title='elector', required=False)
+    permission_checker = GlobalObject(title='checker', required=False)
+    description = TextLine(title='description', required=False)
+
 
 @implementer(IConfigurationContext, IWorkflowDirective)
 class WorkflowDirective(GroupingContextDecorator):
@@ -77,8 +89,8 @@ class WorkflowDirective(GroupingContextDecorator):
         self.elector = elector
         self.permission_checker = permission_checker
         self.description = description
-        self.transitions = [] # mutated by subdirectives
-        self.states = [] # mutated by subdirectives
+        self.transitions = []  # mutated by subdirectives
+        self.states = []  # mutated by subdirectives
 
     def after(self):
         def register(content_type):
@@ -92,7 +104,7 @@ class WorkflowDirective(GroupingContextDecorator):
                                        aliases=state.aliases,
                                        title=state.title,
                                        **state.extras)
-                except WorkflowError, why:
+                except WorkflowError as why:
                     raise ConfigurationError(str(why))
 
             for transition in self.transitions:
@@ -105,12 +117,12 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.title,
                                             guards=transition.guards,
                                             **transition.extras)
-                except WorkflowError, why:
+                except WorkflowError as why:
                     raise ConfigurationError(str(why))
 
             try:
                 workflow.check()
-            except WorkflowError, why:
+            except WorkflowError as why:
                 raise ConfigurationError(str(why))
 
             register_workflow(workflow, self.type, content_type,
@@ -125,11 +137,12 @@ class WorkflowDirective(GroupingContextDecorator):
             warnings.warn('No content_types specified:  workflow inactive.')
         for content_type in self.content_types:
             self.action(
-                discriminator = (IWorkflow, content_type, elector_id,
-                                 self.type, self.state_attr),
-                callable = register,
-                args = (content_type,),
+                discriminator=(IWorkflow, content_type, elector_id,
+                               self.type, self.state_attr),
+                callable=register,
+                args=(content_type,),
                 )
+
 
 @implementer(IConfigurationContext, ITransitionDirective)
 class TransitionDirective(GroupingContextDecorator):
@@ -148,10 +161,11 @@ class TransitionDirective(GroupingContextDecorator):
         self.permission = permission
         self.title = title
         self.guards = []
-        self.extras = {} # mutated by subdirectives
+        self.extras = {}  # mutated by subdirectives
 
     def after(self):
         self.context.transitions.append(self)
+
 
 @implementer(IConfigurationContext, IStateDirective)
 class StateDirective(GroupingContextDecorator):
@@ -160,14 +174,16 @@ class StateDirective(GroupingContextDecorator):
         self.name = name
         self.callback = callback
         self.title = title
-        self.extras = {} # mutated by subdirectives
+        self.extras = {}  # mutated by subdirectives
         self.aliases = []
 
     def after(self):
         self.context.states.append(self)
 
+
 def guard_function(context, function):
     context.guards.append(function)
+
 
 def key_value_pair(context, name, value):
     ob = context.context
@@ -175,11 +191,13 @@ def key_value_pair(context, name, value):
         ob.extras = {}
     ob.extras[str(name)] = value
 
+
 def alias(context, name):
     ob = context.context
     if not hasattr(ob, 'aliases'):
         ob.aliases = []
     ob.aliases.append(name)
+
 
 def register_workflow(workflow, type, content_type, elector, info=None):
     if content_type is None:
@@ -197,5 +215,4 @@ def register_workflow(workflow, type, content_type, elector, info=None):
         wf_list = []
         sm.registerAdapter(wf_list, (content_type,), IWorkflowList, type, info)
 
-    wf_list.append({'workflow':workflow, 'elector':elector})
-
+    wf_list.append({'workflow': workflow, 'elector': elector})
