@@ -1,28 +1,30 @@
+import warnings
+
 from zope.component import getSiteManager
+from zope.configuration.config import GroupingContextDecorator
+from zope.configuration.config import IConfigurationContext
 from zope.configuration.exceptions import ConfigurationError
-
-import zope.configuration.config
-
 from zope.configuration.fields import GlobalObject
 from zope.configuration.fields import Tokens
-
 from zope.interface import Interface
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
 from zope.interface.interfaces import IInterface
-
 from zope.schema import TextLine
 
 from repoze.workflow.interfaces import IWorkflow
 from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
-
 from repoze.workflow.workflow import Workflow
 from repoze.workflow.workflow import WorkflowError
 
 def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)
     method(*args, **kwargs)
+
+class IGuardDirective(Interface):
+    """ A directive for a guard on a transition. """
+    function = GlobalObject(title=u'enter guard function', required=True)
 
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
@@ -39,6 +41,7 @@ class ITransitionDirective(Interface):
     from_state = TextLine(title='from_state', required=True)
     to_state = TextLine(title='to_state', required=True)
     permission = TextLine(title='permission', required=False)
+    title = TextLine(title='title', required=False)
     callback = GlobalObject(title='callback', required=False)
 
 class IStateDirective(Interface):
@@ -58,9 +61,8 @@ class IWorkflowDirective(Interface):
     permission_checker = GlobalObject(title='checker', required=False)
     description = TextLine(title='description', required=False)
 
-class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
-    implements(zope.configuration.config.IConfigurationContext,
-               IWorkflowDirective)
+@implementer(IConfigurationContext, IWorkflowDirective)
+class WorkflowDirective(GroupingContextDecorator):
     def __init__(self, context, type, name, state_attr, initial_state,
                  content_types=(), elector=None, permission_checker=None,
                  description=''):
@@ -88,6 +90,7 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                     workflow.add_state(state.name,
                                        state.callback,
                                        aliases=state.aliases,
+                                       title=state.title,
                                        **state.extras)
                 except WorkflowError as why:
                     raise ConfigurationError(str(why))
@@ -99,6 +102,8 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                                             transition.to_state,
                                             transition.callback,
                                             transition.permission,
+                                            transition.title,
+                                            guards=transition.guards,
                                             **transition.extras)
                 except WorkflowError as why:
                     raise ConfigurationError(str(why))
@@ -116,6 +121,8 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
         else:
             elector_id = None
 
+        if len(self.content_types) == 0:
+            warnings.warn('No content_types specified:  workflow inactive.')
         for content_type in self.content_types:
             self.action(
                 discriminator = (IWorkflow, content_type, elector_id,
@@ -124,14 +131,13 @@ class WorkflowDirective(zope.configuration.config.GroupingContextDecorator):
                 args = (content_type,),
                 )
 
-class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
+@implementer(IConfigurationContext, ITransitionDirective)
+class TransitionDirective(GroupingContextDecorator):
     """ Handle ``transition`` ZCML directives
     """
-    implements(zope.configuration.config.IConfigurationContext,
-               ITransitionDirective)
 
     def __init__(self, context, name, from_state, to_state,
-                 callback=None, permission=None):
+                 callback=None, permission=None, title=None):
         self.context = context
         self.name = name
         if not from_state:
@@ -140,23 +146,28 @@ class TransitionDirective(zope.configuration.config.GroupingContextDecorator):
         self.to_state = to_state
         self.callback = callback
         self.permission = permission
+        self.title = title
+        self.guards = []
         self.extras = {} # mutated by subdirectives
 
     def after(self):
         self.context.transitions.append(self)
 
-class StateDirective(zope.configuration.config.GroupingContextDecorator):
-    implements(zope.configuration.config.IConfigurationContext,
-               IStateDirective)
+@implementer(IConfigurationContext, IStateDirective)
+class StateDirective(GroupingContextDecorator):
     def __init__(self, context, name, callback=None, title=None):
         self.context = context
         self.name = name
         self.callback = callback
-        self.extras = {'title':title} # mutated by subdirectives
+        self.title = title
+        self.extras = {} # mutated by subdirectives
         self.aliases = []
 
     def after(self):
         self.context.states.append(self)
+
+def guard_function(context, function):
+    context.guards.append(function)
 
 def key_value_pair(context, name, value):
     ob = context.context

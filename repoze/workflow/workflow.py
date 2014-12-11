@@ -4,9 +4,9 @@ from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
 from repoze.workflow.interfaces import ICallbackInfo
 
-from zope.interface import implements
+from zope.interface import implementer
 from zope.interface import providedBy
-from zope.interface import classImplements
+from zope.interface import provider
 from zope.interface.interfaces import IInterface
 from zope.component import getSiteManager
 
@@ -15,11 +15,11 @@ _marker = object()
 class WorkflowError(Exception):
     pass
 
+@provider(IWorkflowFactory)
+@implementer(IWorkflow)
 class Workflow(object):
     """ Finite state machine.
     """
-    classImplements(IWorkflowFactory)
-    implements(IWorkflow)
 
     def __init__(self, state_attr, initial_state, permission_checker=None,
                  name='', description=''):
@@ -41,7 +41,8 @@ class Workflow(object):
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
 
-    def add_state(self, state_name, callback=None, aliases=(), **kw):
+    def add_state(self, state_name, callback=None, aliases=(),
+                  title=None, **kw):
         """ Add a state to the FSM.  ``**kw`` must not contain the key
         ``callback``.  This name is reserved for internal use."""
         if state_name in self._state_data:
@@ -49,12 +50,15 @@ class Workflow(object):
         if state_name in self._state_aliases:
             raise WorkflowError('State %s already aliased' % state_name)
         kw['callback'] = callback
+        if title is None:
+            title = state_name
+        kw['title'] = title
         self._state_data[state_name] = kw
         for alias in aliases:
             self._state_aliases[alias] = state_name
 
     def add_transition(self, transition_name, from_state, to_state,
-                       callback=None, permission=None, **kw):
+                       callback=None, permission=None, title=None, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
@@ -75,6 +79,9 @@ class Workflow(object):
         transition['to_state'] = to_state
         transition['callback'] = callback
         transition['permission'] = permission
+        if title is None:
+            title = transition_name
+        transition['title'] = title
         self._transition_data[transition_name] = transition
 
     def check(self):
@@ -272,8 +279,8 @@ class Workflow(object):
             L.append(transition)
         return L
 
+@implementer(ICallbackInfo)
 class CallbackInfo(object):
-    implements(ICallbackInfo)
 
     def __init__(self, workflow, transition, request=None):
         self.workflow = workflow

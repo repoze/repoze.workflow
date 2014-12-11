@@ -177,39 +177,53 @@ class WorkflowTests(unittest.TestCase):
         callback = object()
         sm.add_state('foo', callback, a=1, b=2)
         self.assertEqual(sm._state_data,
-                         {'foo': {'callback': callback, 'a': 1, 'b': 2}})
+                         {'foo': {'callback': callback,
+                                  'title': 'foo', 'a': 1, 'b': 2}})
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo')
-        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': None, 'title': 'foo'}})
 
     def test_add_state_with_aliases(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo', aliases=['abc', 'def'])
         self.assertEqual(sm._state_aliases, {'abc': 'foo', 'def': 'foo'})
-        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': None, 'title': 'foo'}})
+
+    def test_add_state_with_title(self):
+        sm = self._makeOne()
+        callback = object()
+        sm.add_state('foo', title='Foo')
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': None, 'title': 'Foo'}})
 
     def test_add_transition(self):
         sm = self._makeOne()
         sm.add_state('public')
         sm.add_state('private')
-        sm.add_transition('make_public', 'private', 'public', None, a=1)
-        sm.add_transition('make_private', 'public', 'private', None, b=2)
+        sm.add_transition('make_public', 'private', 'public',
+                          None, None, None, a=1)
+        sm.add_transition('make_private', 'public', 'private',
+                          None, None, 'Retract', b=2)
         self.assertEqual(len(sm._transition_data), 2)
         make_public = sm._transition_data['make_public']
         self.assertEqual(make_public['name'], 'make_public')
         self.assertEqual(make_public['from_state'], 'private')
         self.assertEqual(make_public['to_state'], 'public')
         self.assertEqual(make_public['callback'], None)
+        self.assertEqual(make_public['title'], 'make_public')
         self.assertEqual(make_public['a'], 1)
         make_private = sm._transition_data['make_private']
         self.assertEqual(make_private['name'], 'make_private')
         self.assertEqual(make_private['from_state'], 'public')
         self.assertEqual(make_private['to_state'], 'private')
         self.assertEqual(make_private['callback'], None)
+        self.assertEqual(make_private['title'], 'Retract')
         self.assertEqual(make_private['b'], 2)
         self.assertEqual(len(sm._state_data), 2)
 

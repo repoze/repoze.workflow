@@ -14,15 +14,13 @@
    >
 
    <state name="private" 
-      callback=".dummy.callback">
-        <key name="title" value="Private"/>
+      callback=".dummy.callback" title="Private">
         <key name="description" value="Nobody can see it"/>
         <alias name="supersecret"/>
    </state>
 
    <state name="public"
-      callback=".dummy.callback">
-     <key name="title" value="Public"/>
+      callback=".dummy.callback" title="Public">
      <key name="description" value="Everybody can see it"/>
    </state>
 
@@ -33,6 +31,15 @@
       to_state="private"
       permission="moderate"
       />
+
+   <transition
+     name="unavailable_public_to_private"
+     callback=".dummy.callback"
+     from_state="public"
+     to_state="private"
+     permission="moderate">
+         <guard function=".dummy.never" />
+    </transition>
 
    <transition
       name="private_to_public"

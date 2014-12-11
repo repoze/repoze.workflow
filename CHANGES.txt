@@ -4,6 +4,18 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+- Replaced deprecated class-advice declarations (``implements``,
+  ``classImplements``) with forward-compatible equivalent class decorators.
+
+- Added an optional ``title`` to states (defaults to the state name).
+  In ZCML, the 'title' should now be carried as an attribute of the
+  '<state>' element, rather than as a '<key>' sub-element.
+
+- Added an optional ``title`` to transitions (defaults to the transition
+  name).
+
+- Added a warning if a ZCML workflow directive has no ``content_types``.
+
 - Dropped preservation of insertion order when listing states / transitions.
 
 - Added support for PyPy.
@@ -16,6 +28,8 @@ After 0.6.1 (unreleased)
   dependencies).
 
 - Dropped support for Python 2.4 / 2.5.
+
+- Add support in ZCML for guard functions on transitions
 
 0.6.1 (2012-03-24)
 ------------------
