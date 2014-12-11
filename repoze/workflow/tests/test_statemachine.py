@@ -39,9 +39,14 @@ class StateMachineTests(unittest.TestCase):
         sm.add('private', 'submit', 'pending', None)
         sm.add('pending', None, 'published', None)
         ob = ReviewedObject()
-        self.assertEqual(sorted(sm.transitions(ob)), [None,'publish', 'reject'])
-        self.assertEqual(sorted(sm.transitions(ob, from_state='private')),
-                         ['submit'])
+        def _key(x):
+            return x == None and 'AAAA' or x
+        self.assertEqual(
+            sorted(sm.transitions(ob), key=_key),
+            [None,'publish', 'reject'])
+        self.assertEqual(
+            sorted(sm.transitions(ob, from_state='private'), key=_key),
+            ['submit'])
         ob.state = 'published'
         self.assertEqual(sorted(sm.transitions(ob)), ['retract'])
 
@@ -53,7 +58,8 @@ class StateMachineTests(unittest.TestCase):
         sm.add('private', 'submit', 'pending', None, d=4)
         sm.add('pending', None, 'published', None, e=5)
         ob = ReviewedObject()
-        info = sorted(sm.transition_info(ob))
+        info = sorted(sm.transition_info(ob),
+                      key=lambda x: (x['transition_id'] or 'zzzz'))
         self.assertEqual(len(info), 3)
         self.assertEqual(
             info[0],
