@@ -16,7 +16,7 @@ class Content(object):
 def callback(context, transition):
     """ """
 
-def never(context, transition):
+def never(context, transition):  # pragma: NO COVER
     raise WorkflowError("This is never allowed")
 
 def elector(context): return True

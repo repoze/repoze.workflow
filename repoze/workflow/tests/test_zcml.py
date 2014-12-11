@@ -267,7 +267,7 @@ class TestGuard(unittest.TestCase):
 
     def test_it_no_extras(self):
         context = DummyTransition('dummy')
-        def example(context, transition):
+        def example(context, transition):  # pragma: NO COVER
             return None
         self._callFUT(context, example)
         self.assertEqual(context.guards, [example])
