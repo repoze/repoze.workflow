@@ -301,13 +301,13 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
-        sm._transition(ob, 'publish')
+        sm._transition(ob, 'publish', None, None, ())
         self.assertEqual(ob.state, 'published')
-        sm._transition(ob, 'retract')
+        sm._transition(ob, 'retract', None, None, ())
         self.assertEqual(ob.state, 'pending')
-        sm._transition(ob, 'reject')
+        sm._transition(ob, 'reject', None, None, ())
         self.assertEqual(ob.state, 'private')
-        sm._transition(ob, 'submit')
+        sm._transition(ob, 'submit', None, None, ())
         self.assertEqual(ob.state, 'pending')
 
         self.assertEqual(len(args), 4)
@@ -347,7 +347,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makePopulated(state_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
-        sm._transition(ob, 'publish')
+        sm._transition(ob, 'publish', None, None, ())
         self.assertEqual(ob.info.transition,
                          {'from_state': 'pending',
                           'callback': None,
@@ -361,7 +361,8 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state('pending')
         ob = DummyContent()
         from repoze.workflow import WorkflowError
-        self.assertRaises(WorkflowError, sm._transition, ob, 'nosuch')
+        self.assertRaises(WorkflowError,
+                          sm._transition, ob, 'nosuch', None, None, ())
 
     def test__transition_guard(self):
         def guard(content, info):

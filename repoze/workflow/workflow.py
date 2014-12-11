@@ -171,8 +171,7 @@ class Workflow(object):
         setattr(content, self.state_attr, state)
         return state, msg
 
-    def _transition(self, content, transition_name, context=None,
-                    request=None, guards=()):
+    def _transition(self, content, transition_name, context, request, guards):
         """ Execute a transition via a transition name """
         if context is None:
             context = content
@@ -219,8 +218,7 @@ class Workflow(object):
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
-        self._transition(content, transition_name, context=context,
-                         request=request, guards=guards)
+        self._transition(content, transition_name, context, request, guards)
 
     def _transition_to_state(self, content, to_state, context=None,
                              request=None, guards=(), skip_same=True):
