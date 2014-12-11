@@ -20,10 +20,16 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(here, 'README.rst')) as f:
-    README = f.read()
-with open(os.path.join(here, 'CHANGES.rst')) as f:
-    CHANGES = f.read()
+def _read_file(name):
+    try:
+        with open(os.path.join(here, 'README.rst')) as f:
+            return f.read()
+    except IOError:  # Travis??? 
+        return ''
+
+README = _read_file('README.rst')
+CHANGES = _read_file('CHANGES.rst')
+
 
 requires = [
     'setuptools',
