@@ -23,14 +23,14 @@ from repoze.workflow.workflow import Workflow
 from repoze.workflow.workflow import WorkflowError
 
 
-def handler(methodName, *args, **kwargs): # pragma: no cover
+def handler(methodName, *args, **kwargs):  # pragma: no cover
     method = getattr(getSiteManager(), methodName)
     method(*args, **kwargs)
 
 
 class IGuardDirective(Interface):
     """ A directive for a guard on a transition. """
-    function = GlobalObject(title=u'enter guard function', required=True)
+    function = GlobalObject(title='enter guard function', required=True)
 
 
 class IKeyValueDirective(Interface):
@@ -161,7 +161,7 @@ class TransitionDirective(GroupingContextDecorator):
         self.permission = permission
         self.title = title
         self.guards = []
-        self.extras = {} # mutated by subdirectives
+        self.extras = {}  # mutated by subdirectives
 
     def after(self):
         self.context.transitions.append(self)
