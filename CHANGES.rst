@@ -4,6 +4,11 @@ repoze.workflow Changelog
 After 0.6.1 (unreleased)
 ------------------------
 
+Features
+~~~~~~~~
+
+- Add support for defining guard functions on transitions in ZCML (PR #5).
+
 - Replaced deprecated class-advice declarations (``implements``,
   ``classImplements``) with forward-compatible equivalent class decorators.
 
@@ -12,13 +17,24 @@ After 0.6.1 (unreleased)
   '<state>' element, rather than as a '<key>' sub-element.
 
 - Added an optional ``title`` to transitions (defaults to the transition
-  name).
+  name) (issue #1).
 
-- Added a warning if a ZCML workflow directive has no ``content_types``.
+- Added a warning if a ZCML workflow directive has no ``content_types``
+  (issue #4).
 
-- Dropped preservation of insertion order when listing states / transitions.
+- Gave the ``ICallbackInfo`` an optional ``request`` attribute:  it will
+  be non-None if the transition triggering the callback is passed a request
+  (PR #3).
+
+Bugs Fixed
+~~~~~~~~~~
+
+Housekeeping
+~~~~~~~~~~~~
 
 - Added support for PyPy.
+
+- Added support for continuous integration using ``Travis-CI``.
 
 - Added support for continuous integration using ``tox`` and ``jenkins``.
 
@@ -27,9 +43,12 @@ After 0.6.1 (unreleased)
 - Added ``setup.py dev`` alias (installs nose, coverage, and testing
   dependencies).
 
-- Dropped support for Python 2.4 / 2.5.
+Backward-Incompatible Changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Add support in ZCML for guard functions on transitions
+- Dropped preservation of insertion order when listing states / transitions.
+
+- Dropped support for Python 2.4 / 2.5.
 
 0.6.1 (2012-03-24)
 ------------------
