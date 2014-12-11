@@ -252,7 +252,7 @@ class Workflow(object):
                             return self._transition(
                                 content, transition['name'], context,
                                     request, guards)
-                        except WorkflowError, e:
+                        except WorkflowError as e:
                             exc = e
                     raise exc
         raise WorkflowError('No transition from state %r to state %r'

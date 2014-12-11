@@ -92,7 +92,7 @@ class WorkflowDirective(GroupingContextDecorator):
                                        aliases=state.aliases,
                                        title=state.title,
                                        **state.extras)
-                except WorkflowError, why:
+                except WorkflowError as why:
                     raise ConfigurationError(str(why))
 
             for transition in self.transitions:
@@ -105,12 +105,12 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.title,
                                             guards=transition.guards,
                                             **transition.extras)
-                except WorkflowError, why:
+                except WorkflowError as why:
                     raise ConfigurationError(str(why))
 
             try:
                 workflow.check()
-            except WorkflowError, why:
+            except WorkflowError as why:
                 raise ConfigurationError(str(why))
 
             register_workflow(workflow, self.type, content_type,
