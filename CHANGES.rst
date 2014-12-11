@@ -37,6 +37,8 @@ Housekeeping
 
 - Added support for PyPy.
 
+- Added support for Python 3.2, 3.3, and 3.4.
+
 - Added support for continuous integration using ``Travis-CI``.
 
 - Added support for continuous integration using ``tox`` and ``jenkins``.
