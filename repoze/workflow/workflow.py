@@ -209,9 +209,11 @@ class Workflow(object):
 
         info = CallbackInfo(self, transition, request=request)
 
-        if guards:
-            for guard in guards:
-                guard(context, info)
+        for guard in transition.get('guards', ()):
+            guard(context, info)
+
+        for guard in guards:
+            guard(context, info)
 
         from_state = transition['from_state']
         to_state = transition['to_state']
