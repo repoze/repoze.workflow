@@ -29,6 +29,9 @@ Features
 Bugs Fixed
 ~~~~~~~~~~
 
+- Include guards defined on the transition itself when checking whether a
+  transition is allowed (issue #8).
+
 Housekeeping
 ~~~~~~~~~~~~
 
