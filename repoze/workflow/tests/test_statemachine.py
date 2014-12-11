@@ -1,5 +1,6 @@
 import unittest
 
+
 class StateMachineTests(unittest.TestCase):
 
     def _getTargetClass(self):
@@ -39,7 +40,8 @@ class StateMachineTests(unittest.TestCase):
         sm.add('private', 'submit', 'pending', None)
         sm.add('pending', None, 'published', None)
         ob = ReviewedObject()
-        self.assertEqual(sorted(sm.transitions(ob)), [None,'publish', 'reject'])
+        self.assertEqual(
+            sorted(sm.transitions(ob)), [None, 'publish', 'reject'])
         self.assertEqual(sorted(sm.transitions(ob, from_state='private')),
                          ['submit'])
         ob.state = 'published'
@@ -61,11 +63,11 @@ class StateMachineTests(unittest.TestCase):
              'to_state': 'published', 'transition_id': 'publish'})
         self.assertEqual(
             info[1],
-            {'b':2, 'from_state': 'pending',
+            {'b': 2, 'from_state': 'pending',
              'to_state': 'private', 'transition_id': 'reject'})
         self.assertEqual(
             info[2],
-            {'e':5, 'from_state': 'pending',
+            {'e': 5, 'from_state': 'pending',
              'to_state': 'published', 'transition_id': None})
         ob.state = 'published'
         info = sorted(sm.transition_info(ob))
@@ -155,7 +157,7 @@ class StateMachineTests(unittest.TestCase):
     def test_fail_before_transition(self):
         from repoze.workflow.statemachine import StateMachine
         from repoze.workflow.statemachine import StateMachineError
-        
+
         class FailBeforeTransition(StateMachine):
             def before_transition(self, a, b, c, d):
                 raise StateMachineError
