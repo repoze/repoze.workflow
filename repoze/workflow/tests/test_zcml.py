@@ -291,15 +291,17 @@ class TestFixtureApp(unittest.TestCase):
         cleanUp()
 
     def test_execute_actions(self):
+        from zope.configuration import xmlconfig
+        from zope.component import getSiteManager
         from repoze.workflow.interfaces import IWorkflowList
         from repoze.workflow.workflow import Workflow
         from repoze.workflow.tests.fixtures.dummy import callback
         import repoze.workflow.tests.fixtures as package
+        from repoze.workflow.tests.fixtures import dummy
         from repoze.workflow.tests.fixtures.dummy import IContent
         from repoze.workflow.tests.fixtures.dummy import elector
         from repoze.workflow.tests.fixtures.dummy import has_permission
-        from zope.configuration import xmlconfig
-        from zope.component import getSiteManager
+        from repoze.workflow._compat import text_ as _u
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
         wf_list = sm.adapters.lookup((IContent,),
@@ -319,30 +321,45 @@ class TestFixtureApp(unittest.TestCase):
             )
         self.assertEqual(
             workflow._state_data,
-            {u'public': {'callback':callback,
-                         'description': u'Everybody can see it',
-                         'title': u'Public'},
-             u'private': {'callback':callback,
-                          'description': u'Nobody can see it',
-                          'title': u'Private'}},
-            )
+            {_u('public'):
+                {'callback':callback,
+                 'description': _u('Everybody can see it'),
+                 'title': _u('Public'),
+                },
+             _u('private'):
+                {'callback':callback,
+                 'description': _u('Nobody can see it'),
+                 'title': _u('Private'),
+                },
+            })
         transitions = workflow._transition_data
         self.assertEqual(len(transitions), 3)
-        from repoze.workflow.tests.fixtures import dummy
         self.assertEqual(transitions['private_to_public'],
-            {'from_state': u'private', 'callback': callback, 'guards': [],
-             'name': u'private_to_public', 'to_state': u'public',
-             'permission':'moderate', 'title': 'private_to_public'}),
+            {'from_state': _u('private'),
+             'callback': callback,
+             'guards': [],
+             'name': _u('private_to_public'),
+             'to_state': _u('public'),
+             'permission':'moderate',
+             'title': 'private_to_public',
+            }),
         self.assertEqual(transitions['unavailable_public_to_private'],
-            {'from_state': u'public', 'callback': callback,
+            {'from_state': _u('public'),
+             'callback': callback,
              'guards': [dummy.never],
-             'name': u'unavailable_public_to_private', 'to_state': u'private',
-             'permission':u'moderate',
-             'title': u'unavailable_public_to_private'}),
+             'name': _u('unavailable_public_to_private'),
+             'to_state': _u('private'),
+             'permission':_u('moderate'),
+             'title': _u('unavailable_public_to_private'),
+            }),
         self.assertEqual(transitions['public_to_private'],
-             {'from_state': u'public', 'callback': callback, 'guards': [],
-              'name': 'public_to_private', 'to_state': u'private',
-              'permission':'moderate', 'title': 'public_to_private'}
+             {'from_state': _u('public'),
+              'callback': callback,
+              'guards': [],
+              'name': 'public_to_private',
+              'to_state': _u('private'),
+              'permission':'moderate',
+              'title': 'public_to_private'}
             )
 
 class TestRegisterWorkflow(unittest.TestCase):

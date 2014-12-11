@@ -17,6 +17,7 @@ from repoze.workflow.interfaces import IWorkflowList
 from repoze.workflow.interfaces import IDefaultWorkflow
 from repoze.workflow.workflow import Workflow
 from repoze.workflow.workflow import WorkflowError
+from repoze.workflow._compat import text_ as _u
 
 def handler(methodName, *args, **kwargs): # pragma: no cover
     method = getattr(getSiteManager(), methodName)
@@ -24,42 +25,42 @@ def handler(methodName, *args, **kwargs): # pragma: no cover
 
 class IGuardDirective(Interface):
     """ A directive for a guard on a transition. """
-    function = GlobalObject(title=u'enter guard function', required=True)
+    function = GlobalObject(title=_u('enter guard function'), required=True)
 
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
-    name = TextLine(title=u'key', required=True)
-    value = TextLine(title=u'value', required=True)
+    name = TextLine(title=_u('key'), required=True)
+    value = TextLine(title=_u('value'), required=True)
 
 class IAliasDirective(Interface):
     """ The interface for an alias subdirective """
-    name = TextLine(title=u'name', required=True)
+    name = TextLine(title=_u('name'), required=True)
 
 class ITransitionDirective(Interface):
     """ The interface for a transition directive """
-    name = TextLine(title=u'name', required=True)
-    from_state = TextLine(title=u'from_state', required=True)
-    to_state = TextLine(title=u'to_state', required=True)
-    permission = TextLine(title=u'permission', required=False)
-    title = TextLine(title=u'title', required=False)
-    callback = GlobalObject(title=u'callback', required=False)
+    name = TextLine(title=_u('name'), required=True)
+    from_state = TextLine(title=_u('from_state'), required=True)
+    to_state = TextLine(title=_u('to_state'), required=True)
+    permission = TextLine(title=_u('permission'), required=False)
+    title = TextLine(title=_u('title'), required=False)
+    callback = GlobalObject(title=_u('callback'), required=False)
 
 class IStateDirective(Interface):
     """ The interface for a state directive """
-    name = TextLine(title=u'name', required=True)
-    title = TextLine(title=u'title', required=False)
-    callback = GlobalObject(title=u'enter state callback', required=False)
+    name = TextLine(title=_u('name'), required=True)
+    title = TextLine(title=_u('title'), required=False)
+    callback = GlobalObject(title=_u('enter state callback'), required=False)
 
 class IWorkflowDirective(Interface):
-    type = TextLine(title=u'type', required=True)
-    name = TextLine(title=u'title', required=True)
-    initial_state = TextLine(title=u'initial_state', required=True)
-    state_attr = TextLine(title=u'state_attr', required=True)
-    content_types = Tokens(title=u'content_types', required=False,
+    type = TextLine(title=_u('type'), required=True)
+    name = TextLine(title=_u('title'), required=True)
+    initial_state = TextLine(title=_u('initial_state'), required=True)
+    state_attr = TextLine(title=_u('state_attr'), required=True)
+    content_types = Tokens(title=_u('content_types'), required=False,
                            value_type=GlobalObject())
-    elector = GlobalObject(title=u'elector', required=False)
-    permission_checker = GlobalObject(title=u'checker', required=False)
-    description = TextLine(title=u'description', required=False)
+    elector = GlobalObject(title=_u('elector'), required=False)
+    permission_checker = GlobalObject(title=_u('checker'), required=False)
+    description = TextLine(title=_u('description'), required=False)
 
 @implementer(IConfigurationContext, IWorkflowDirective)
 class WorkflowDirective(GroupingContextDecorator):
