@@ -18,6 +18,8 @@ After 0.6.1 (unreleased)
 
 - Dropped preservation of insertion order when listing states / transitions.
 
+- Added support for Python 3.x.
+
 - Added support for PyPy.
 
 - Added support for continuous integration using ``tox`` and ``jenkins``.
@@ -30,6 +32,7 @@ After 0.6.1 (unreleased)
 - Dropped support for Python 2.4 / 2.5.
 
 - Add support in ZCML for guard functions on transitions
+
 
 0.6.1 (2012-03-24)
 ------------------

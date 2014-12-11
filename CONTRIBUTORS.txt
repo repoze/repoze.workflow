@@ -106,3 +106,4 @@ Contributors
 - Tres Seaver, 2011/02/22
 - Jan Murre, 2012/04/23
 - Matthew Wilkes, 2013/09/25
+- Nando Florestan, 2014-12-11
