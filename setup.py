@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 ##############################################################################
 #
 # Copyright (c) 2008 Agendaless Consulting and Contributors.
@@ -15,10 +18,6 @@
 __version__ = '0.7dev'
 
 import os
-
-from ez_setup import use_setuptools
-use_setuptools()
-
 from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
