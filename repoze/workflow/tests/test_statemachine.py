@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 import unittest
 
 
@@ -41,7 +45,7 @@ class StateMachineTests(unittest.TestCase):
         sm.add('pending', None, 'published', None)
         ob = ReviewedObject()
         self.assertEqual(
-            sorted(sm.transitions(ob)), [None, 'publish', 'reject'])
+            set(sm.transitions(ob)), set([None, 'publish', 'reject']))
         self.assertEqual(sorted(sm.transitions(ob, from_state='private')),
                          ['submit'])
         ob.state = 'published'
@@ -55,27 +59,28 @@ class StateMachineTests(unittest.TestCase):
         sm.add('private', 'submit', 'pending', None, d=4)
         sm.add('pending', None, 'published', None, e=5)
         ob = ReviewedObject()
-        info = sorted(sm.transition_info(ob))
+        info = sorted(sm.transition_info(ob),
+                      key=lambda i: i['transition_id'] or 'a')
         self.assertEqual(len(info), 3)
         self.assertEqual(
             info[0],
+            {'e': 5, 'from_state': 'pending',
+             'to_state': 'published', 'transition_id': None})
+        self.assertEqual(
+            info[1],
             {'a': 1, 'from_state': 'pending',
              'to_state': 'published', 'transition_id': 'publish'})
         self.assertEqual(
-            info[1],
+            info[2],
             {'b': 2, 'from_state': 'pending',
              'to_state': 'private', 'transition_id': 'reject'})
-        self.assertEqual(
-            info[2],
-            {'e': 5, 'from_state': 'pending',
-             'to_state': 'published', 'transition_id': None})
         ob.state = 'published'
-        info = sorted(sm.transition_info(ob))
+        info = sm.transition_info(ob)
         self.assertEqual(len(info), 1)
         self.assertEqual(
             info[0],
-             {'c': 3, 'from_state': 'published',
-              'to_state': 'pending', 'transition_id': 'retract'})
+            {'c': 3, 'from_state': 'published',
+             'to_state': 'pending', 'transition_id': 'retract'})
 
     def test_execute_use_add(self):
         sm = self._makeOne(initial_state='pending')
@@ -171,6 +176,7 @@ class StateMachineTests(unittest.TestCase):
         self.assertRaises(StateMachineError, sm.execute, ob, 'do_it')
         self.assertEqual(hasattr(ob, 'state'), False)
         self.assertEqual(sm.state_of(ob), 'from')
+
 
 class ReviewedObject:
     pass
