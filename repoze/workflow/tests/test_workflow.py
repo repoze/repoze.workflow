@@ -301,13 +301,13 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
-        sm._transition(ob, 'publish')
+        sm._transition(ob, 'publish', None, None, ())
         self.assertEqual(ob.state, 'published')
-        sm._transition(ob, 'retract')
+        sm._transition(ob, 'retract', None, None, ())
         self.assertEqual(ob.state, 'pending')
-        sm._transition(ob, 'reject')
+        sm._transition(ob, 'reject', None, None, ())
         self.assertEqual(ob.state, 'private')
-        sm._transition(ob, 'submit')
+        sm._transition(ob, 'submit', None, None, ())
         self.assertEqual(ob.state, 'pending')
 
         self.assertEqual(len(args), 4)
@@ -347,7 +347,7 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makePopulated(state_callback=dummy)
         ob = DummyContent()
         ob.state = 'pending'
-        sm._transition(ob, 'publish')
+        sm._transition(ob, 'publish', None, None, ())
         self.assertEqual(ob.info.transition,
                          {'from_state': 'pending',
                           'callback': None,
@@ -356,12 +356,79 @@ class WorkflowTests(unittest.TestCase):
                           'name': 'publish'})
         self.assertEqual(ob.info.workflow, sm)
 
+    def test__transition_with_guards(self):
+        from repoze.workflow import WorkflowError
+        from repoze.workflow.workflow import CallbackInfo
+        sm = self._makePopulated()
+        _passing = []
+        def passing(*args):
+            _passing.append(args)
+        _failing = []
+        def failing(*args):
+            _failing.append(args)
+            raise WorkflowError('FAIL')
+        sm._transition_data['publish']['guards'] = [passing, failing]
+        ob = DummyContent()
+        ob.state = 'pending'
+        self.assertRaises(WorkflowError,
+                          sm._transition, ob, 'publish', None, None, ())
+        self.assertEqual(len(_passing), 1)
+        self.assertEqual(len(_passing[0]), 2)
+        self.assertTrue(_passing[0][0] is ob)
+        info = _passing[0][1]
+        self.assertTrue(isinstance(info, CallbackInfo))
+        self.assertTrue(info.workflow is sm)
+        self.assertEqual(info.transition['name'], 'publish')
+        self.assertTrue(info.request is None)
+        self.assertEqual(len(_failing), 1)
+        self.assertEqual(len(_failing[0]), 2)
+        self.assertTrue(_failing[0][0] is ob)
+        info = _failing[0][1]
+        self.assertTrue(isinstance(info, CallbackInfo))
+        self.assertTrue(info.workflow is sm)
+        self.assertEqual(info.transition['name'], 'publish')
+        self.assertTrue(info.request is None)
+
+    def test__transition_with_guards_passed_in(self):
+        from repoze.workflow import WorkflowError
+        from repoze.workflow.workflow import CallbackInfo
+        sm = self._makePopulated()
+        _passing = []
+        def passing(*args):
+            _passing.append(args)
+        _failing = []
+        def failing(*args):
+            _failing.append(args)
+            raise WorkflowError('FAIL')
+        sm._transition_data['publish']['guards'] = [passing]
+        ob = DummyContent()
+        ob.state = 'pending'
+        self.assertRaises(WorkflowError,
+                          sm._transition, ob, 'publish', None, None, [failing])
+        self.assertEqual(len(_passing), 1)
+        self.assertEqual(len(_passing[0]), 2)
+        self.assertTrue(_passing[0][0] is ob)
+        info = _passing[0][1]
+        self.assertTrue(isinstance(info, CallbackInfo))
+        self.assertTrue(info.workflow is sm)
+        self.assertEqual(info.transition['name'], 'publish')
+        self.assertTrue(info.request is None)
+        self.assertEqual(len(_failing), 1)
+        self.assertEqual(len(_failing[0]), 2)
+        self.assertTrue(_failing[0][0] is ob)
+        info = _failing[0][1]
+        self.assertTrue(isinstance(info, CallbackInfo))
+        self.assertTrue(info.workflow is sm)
+        self.assertEqual(info.transition['name'], 'publish')
+        self.assertTrue(info.request is None)
+
     def test__transition_error(self):
         sm = self._makeOne(initial_state='pending')
         sm.add_state('pending')
         ob = DummyContent()
         from repoze.workflow import WorkflowError
-        self.assertRaises(WorkflowError, sm._transition, ob, 'nosuch')
+        self.assertRaises(WorkflowError,
+                          sm._transition, ob, 'nosuch', None, None, ())
 
     def test__transition_guard(self):
         def guard(content, info):

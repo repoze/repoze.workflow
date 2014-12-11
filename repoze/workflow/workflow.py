@@ -171,9 +171,23 @@ class Workflow(object):
         setattr(content, self.state_attr, state)
         return state, msg
 
-    def _transition(self, content, transition_name, context=None,
-                    request=None, guards=()):
-        """ Execute a transition via a transition name """
+    def _transition(self, content, transition_name, context, request, guards):
+        """ Execute a transition via a transition name
+
+        ``content`` is the object being managed.
+
+        ``transition_name`` is the name of the transition to execute.
+
+        ``context`` is the "elector" used to override ``content``, or None.
+
+        ``request`` is the current request object, or None.
+
+        ``guards`` is a sequence of callables taking ``(context, info)``;
+        a guard vetoes the transition by raising ``WorkflowError``.
+
+        .. note:: guards defined on the transition itself will always be
+                  called, in addition to any guards passed in.
+        """
         if context is None:
             context = content
 
@@ -195,9 +209,11 @@ class Workflow(object):
 
         info = CallbackInfo(self, transition, request=request)
 
-        if guards:
-            for guard in guards:
-                guard(context, info)
+        for guard in transition.get('guards', ()):
+            guard(context, info)
+
+        for guard in guards:
+            guard(context, info)
 
         from_state = transition['from_state']
         to_state = transition['to_state']
@@ -219,8 +235,7 @@ class Workflow(object):
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
-        self._transition(content, transition_name, context=context,
-                         request=request, guards=guards)
+        self._transition(content, transition_name, context, request, guards)
 
     def _transition_to_state(self, content, to_state, context=None,
                              request=None, guards=(), skip_same=True):
