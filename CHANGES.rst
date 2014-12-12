@@ -1,30 +1,34 @@
 repoze.workflow Changelog
 =========================
 
-After 0.6.1 (unreleased)
-------------------------
+1.0b1 (2014-12-11)
+------------------
 
 Features
 ~~~~~~~~
 
+- Add support for PyPy.
+
+- Add support for Python 3.2, 3.3, and 3.4.
+
 - Add support for defining guard functions on transitions in ZCML (PR #5).
 
-- Replaced deprecated class-advice declarations (``implements``,
+- Replace deprecated class-advice declarations (``implements``,
   ``classImplements``) with forward-compatible equivalent class decorators.
 
-- Added an optional ``title`` to states (defaults to the state name).
+- Add an optional ``title`` to states (defaults to the state name).
   In ZCML, the 'title' should now be carried as an attribute of the
   '<state>' element, rather than as a '<key>' sub-element.
 
-- Added an optional ``title`` to transitions (defaults to the transition
+- Add an optional ``title`` to transitions (defaults to the transition
   name) (issue #1).
 
-- Added a warning if a ZCML workflow directive has no ``content_types``
+- Add a warning if a ZCML workflow directive has no ``content_types``
   (issue #4).
 
-- Gave the ``ICallbackInfo`` an optional ``request`` attribute:  it will
-  be non-None if the transition triggering the callback is passed a request
-  (PR #3).
+- Give an optional ``request`` attribute to the ``ICallbackInfo`` interface.
+  It will be non-None if the transition triggering the callback is passed a
+  request (PR #3).
 
 Bugs Fixed
 ~~~~~~~~~~
@@ -35,25 +39,21 @@ Bugs Fixed
 Housekeeping
 ~~~~~~~~~~~~
 
-- Added support for PyPy.
+- Add support for continuous integration using ``Travis-CI``.
 
-- Added support for Python 3.2, 3.3, and 3.4.
+- Add support for continuous integration using ``tox`` and ``jenkins``.
 
-- Added support for continuous integration using ``Travis-CI``.
+- Add ``setup.py docs`` alias (installs Sphinx and related dependencies).
 
-- Added support for continuous integration using ``tox`` and ``jenkins``.
-
-- Added ``setup.py docs`` alias (installs Sphinx and related dependencies).
-
-- Added ``setup.py dev`` alias (installs nose, coverage, and testing
+- Add ``setup.py dev`` alias (installs nose, coverage, and testing
   dependencies).
 
 Backward-Incompatible Changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- Dropped preservation of insertion order when listing states / transitions.
+- Drop preservation of insertion order when listing states / transitions.
 
-- Dropped support for Python 2.4 / 2.5.
+- Drop support for Python 2.4 / 2.5.
 
 0.6.1 (2012-03-24)
 ------------------
