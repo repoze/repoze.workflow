@@ -248,7 +248,7 @@ The ``transition`` tag accepts the following attributes:
   :ref:`callbacks`.
 
 The ``guard`` Tag
----------------
+-----------------
 
 The ``guard`` tag can be used within a ``transition`` tag.
 It allows you to add arbitrary Python functions as guards against
