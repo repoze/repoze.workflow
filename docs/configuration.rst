@@ -252,7 +252,7 @@ The ``guard`` Tag
 
 The ``guard`` tag can be used within a ``transition`` tag.
 It allows you to add arbitrary Python functions as guards against
-the transition::
+the transition:
 
 .. code-block:: python
    :linenos:
