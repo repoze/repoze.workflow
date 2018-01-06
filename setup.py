@@ -41,6 +41,7 @@ requires = [
 
 tests_require = [
     'zope.testing',
+    'mock',
     ]
 
 testing_extras = tests_require + ['nose', 'coverage']

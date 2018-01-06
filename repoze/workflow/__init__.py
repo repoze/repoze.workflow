@@ -1,3 +1,4 @@
+from repoze.workflow.security import has_permission # API
 from repoze.workflow.workflow import Workflow # API
 from repoze.workflow.workflow import WorkflowError #API
 from repoze.workflow.workflow import get_workflow #API
