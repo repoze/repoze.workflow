@@ -64,7 +64,7 @@ workflow.
       state_attr="state"
       initial_state="private"
       content_types=".dummy.IContent"
-      permission_checker="repoze.bfg.security.has_permission"
+      permission_checker="repoze.workflow.has_permission"
       >
 
       <state name="private" 

@@ -1,6 +1,23 @@
 repoze.workflow Changelog
 =========================
 
+1.0b2 (unreleased)
+------------------
+
+Features
+~~~~~~~~
+
+- Add ``repoze.workflow.has_permission`` since as of Pyramid 1.5 the
+  "pyramid.security.has_permission" API is now deprecated and it will
+  be removed in Pyramid 1.8
+
+Housekeeping
+~~~~~~~~~~~~
+
+- Update permission checker example in ``docs/configuration.rst``
+
+- Add mock library to test requirements
+
 1.0b1 (2014-12-11)
 ------------------
 
