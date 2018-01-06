@@ -18,8 +18,6 @@ Housekeeping
 
 - Add mock library to test requirements
 
-- Add missing python interpreters to travis CI
-
 1.0b1 (2014-12-11)
 ------------------
 
