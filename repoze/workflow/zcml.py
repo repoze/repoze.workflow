@@ -27,6 +27,10 @@ class IGuardDirective(Interface):
     """ A directive for a guard on a transition. """
     function = GlobalObject(title=_u('enter guard function'), required=True)
 
+class IRoleDirective(Interface):
+    """ The interface for a key/value pair subdirective """
+    name = TextLine(title=_u('name'), required=True)
+
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
     name = TextLine(title=_u('key'), required=True)
@@ -149,6 +153,7 @@ class TransitionDirective(GroupingContextDecorator):
         self.permission = permission
         self.title = title
         self.guards = []
+        self.roles = []
         self.extras = {} # mutated by subdirectives
 
     def after(self):
@@ -169,6 +174,9 @@ class StateDirective(GroupingContextDecorator):
 
 def guard_function(context, function):
     context.guards.append(function)
+
+def role(context, name):
+    context.roles.append(name)
 
 def key_value_pair(context, name, value):
     ob = context.context

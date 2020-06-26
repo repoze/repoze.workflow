@@ -1,54 +1,63 @@
 <configure xmlns="http://namespaces.repoze.org/bfg">
 
-<include package="repoze.workflow" file="meta.zcml"/>
+    <include package="repoze.workflow" file="meta.zcml"/>
 
-<workflow
-   type="security"
-   name="the workflow"
-   description="The workflow which is of the testing fixtures package"
-   state_attr="state"
-   initial_state="private"
-   content_types=".dummy.IContent .dummy.IContent2"
-   elector=".dummy.elector"
-   permission_checker=".dummy.has_permission"
-   >
+    <workflow
+            type="security"
+            name="the workflow"
+            description="The workflow which is of the testing fixtures package"
+            state_attr="state"
+            initial_state="private"
+            content_types=".dummy.IContent .dummy.IContent2"
+            elector=".dummy.elector"
+            permission_checker=".dummy.has_permission"
+    >
 
-   <state name="private" 
-      callback=".dummy.callback" title="Private">
-        <key name="description" value="Nobody can see it"/>
-        <alias name="supersecret"/>
-   </state>
+        <state name="private"
+               callback=".dummy.callback" title="Private">
+            <key name="description" value="Nobody can see it"/>
+            <alias name="supersecret"/>
+        </state>
 
-   <state name="public"
-      callback=".dummy.callback" title="Public">
-     <key name="description" value="Everybody can see it"/>
-   </state>
+        <state name="public"
+               callback=".dummy.callback" title="Public">
+            <key name="description" value="Everybody can see it"/>
+        </state>
 
-   <transition
-      name="public_to_private"
-      callback=".dummy.callback"
-      from_state="public"
-      to_state="private"
-      permission="moderate"
-      />
+        <transition
+                name="public_to_private"
+                callback=".dummy.callback"
+                from_state="public"
+                to_state="private"
+                permission="moderate"
+        />
 
-   <transition
-     name="unavailable_public_to_private"
-     callback=".dummy.callback"
-     from_state="public"
-     to_state="private"
-     permission="moderate">
-         <guard function=".dummy.never" />
-    </transition>
+        <transition
+                name="unavailable_public_to_private"
+                callback=".dummy.callback"
+                from_state="public"
+                to_state="private"
+                permission="moderate">
+            <guard function=".dummy.never"/>
+        </transition>
 
-   <transition
-      name="private_to_public"
-      callback=".dummy.callback"
-      from_state="private"
-      to_state="public"
-      permission="moderate"
-      />
+        <transition
+                name="private_to_public"
+                callback=".dummy.callback"
+                from_state="private"
+                to_state="public"
+                permission="moderate"
+        />
 
-</workflow>
-      
+        <transition
+                name="private_to_public_by_role"
+                from_state="private"
+                to_state="public"
+        >
+            <role name="admin"/>
+            <role name="editor"/>
+        </transition>
+
+    </workflow>
+
 </configure>
