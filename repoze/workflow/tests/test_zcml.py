@@ -340,7 +340,8 @@ class TestFixtureApp(unittest.TestCase):
              'guards': [],
              'name': _u('private_to_public'),
              'to_state': _u('public'),
-             'permission':'moderate',
+             'roles': [],
+             'permission': 'moderate',
              'title': 'private_to_public',
             }),
         self.assertEqual(transitions['unavailable_public_to_private'],
@@ -350,6 +351,7 @@ class TestFixtureApp(unittest.TestCase):
              'name': _u('unavailable_public_to_private'),
              'to_state': _u('private'),
              'permission':_u('moderate'),
+             'roles': [],
              'title': _u('unavailable_public_to_private'),
             }),
         self.assertEqual(transitions['public_to_private'],
@@ -359,8 +361,19 @@ class TestFixtureApp(unittest.TestCase):
               'name': 'public_to_private',
               'to_state': _u('private'),
               'permission':'moderate',
+              'roles': [],
               'title': 'public_to_private'}
             )
+        self.assertEqual(transitions['private_to_public_by_role'],
+            {'from_state': _u('private'),
+             'callback': None,
+             'guards': [],
+             'name': _u('private_to_public_by_role'),
+             'to_state': _u('public'),
+             'permission': None,
+             'roles': ['admin', 'editor'],
+             'title': 'private_to_public_by_role',
+            }),
 
 class TestRegisterWorkflow(unittest.TestCase):
     def setUp(self):
