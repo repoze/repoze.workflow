@@ -109,6 +109,7 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.permission,
                                             transition.title,
                                             guards=transition.guards,
+                                            roles=transition.roles,
                                             **transition.extras)
                 except WorkflowError as why:
                     raise ConfigurationError(str(why))
