@@ -22,7 +22,7 @@ class Workflow(object):
     """
 
     def __init__(self, state_attr, initial_state, permission_checker=None,
-                 name='', description=''):
+                 name='', description='', roles_checker=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -37,6 +37,7 @@ class Workflow(object):
         self.permission_checker = permission_checker
         self.name = name
         self.description = description
+        self.roles_checker = roles_checker
 
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
@@ -265,6 +266,11 @@ class Workflow(object):
             permission_guard = PermissionGuard(request, to_state,
                                                self.permission_checker)
             guards.append(permission_guard)
+        if self.roles_checker:
+            guards = list(guards)
+            roles_guard = RolesGuard(request, to_state,
+                                               self.roles_checker)
+            guards.append(roles_guard)
         self._transition_to_state(content, to_state, context, guards=guards,
                                   request=request, skip_same=skip_same)
 
@@ -315,6 +321,21 @@ class PermissionGuard:
                 raise WorkflowError(
                     '%s permission required for transition using %r' % (
                     permission, self.name)
+                    )
+
+class RolesGuard:
+    def __init__(self, request, name, checker):
+        self.request = request
+        self.name = name
+        self.checker = checker
+
+    def __call__(self, context, info):
+        roles = info.transition.get('roles')
+        if self.request is not None and roles:
+            if not self.checker(roles, context, self.request):
+                raise WorkflowError(
+                    'one role of %s required for transition using %r' % (
+                    roles, self.name)
                     )
 
 def process_wf_list(wf_list, context):
