@@ -333,7 +333,7 @@ class TestFixtureApp(unittest.TestCase):
                 },
             })
         transitions = workflow._transition_data
-        self.assertEqual(len(transitions), 3)
+        self.assertEqual(len(transitions), 4)
         self.assertEqual(transitions['private_to_public'],
             {'from_state': _u('private'),
              'callback': callback,
