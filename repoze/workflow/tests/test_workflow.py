@@ -38,9 +38,10 @@ class WorkflowTests(unittest.TestCase):
 
     def _makePopulatedOverlappingTransitions(
         self, state_callback=None, transition_callback=None,
-        permission_checker=None):
+        permission_checker=None, roles_checker=None):
         sm = self._makePopulated(state_callback, transition_callback)
         sm.permission_checker = permission_checker
+        sm.roles_checker = roles_checker
 
         sm._transition_data['submit2'] = dict(
             name='submit2',
@@ -99,6 +100,80 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(checker_args), 2)
         self.assertEqual([a[0] for a in sorted(checker_args)],
                          ['forbidden1', 'forbidden2'])
+
+    def test_transition_to_state_two_transitions_none_works_with_role_check(self):
+        callback_args = []
+        def dummy(content, info): #pragma NO COVER
+            callback_args.append((content, info))
+
+        checker_args = []
+        def checker(permission, context, request):
+            checker_args.append((permission, context, request))
+            return permission == 'allowed'
+
+        roles_checker_args = []
+        def roles_checker(roles, context, request):
+            roles_checker_args.append((roles, context, request))
+            return roles == ['admin', 'manager']
+
+        sm = self._makePopulatedOverlappingTransitions(
+            transition_callback=dummy,
+            permission_checker=checker,
+            roles_checker=roles_checker
+            )
+
+        sm._transition_data['submit']['permission'] = 'allowed'
+        sm._transition_data['submit']['roles'] = ['viewer', 'editor']
+        sm._transition_data['submit2']['permission'] = 'allowed'
+        sm._transition_data['submit2']['roles'] = ['viewer']
+
+        ob = DummyContent()
+        ob.state = 'private'
+        from repoze.workflow import WorkflowError
+        self.assertRaises(WorkflowError, sm.transition_to_state,
+                          ob, object(), 'pending')
+        self.assertEqual(len(callback_args), 0)
+        self.assertEqual(len(checker_args), 2)
+        self.assertEqual([a[0] for a in sorted(checker_args)],
+                         ['allowed', 'allowed'])
+        self.assertEqual([a[0] for a in sorted(roles_checker_args)],
+                         [['viewer'], ['viewer', 'editor']])
+
+    def test_transition_to_state_two_transitions_second_works_with_role_check(self):
+        callback_args = []
+        def dummy(content, info): #pragma NO COVER
+            callback_args.append((content, info))
+
+        checker_args = []
+        def checker(permission, context, request):
+            checker_args.append((permission, context, request))
+            return permission == 'allowed'
+
+        roles_checker_args = []
+        def roles_checker(roles, context, request):
+            roles_checker_args.append((roles, context, request))
+            return 'viewer' in roles
+
+        sm = self._makePopulatedOverlappingTransitions(
+            transition_callback=dummy,
+            permission_checker=checker,
+            roles_checker=roles_checker
+            )
+
+        sm._transition_data['submit']['permission'] = 'allowed'
+        sm._transition_data['submit']['roles'] = ['admin', 'editor']
+        sm._transition_data['submit2']['permission'] = 'allowed'
+        sm._transition_data['submit2']['roles'] = ['viewer']
+
+        ob = DummyContent()
+        ob.state = 'private'
+        sm.transition_to_state(ob, object(), 'pending')
+        self.assertEqual(len(callback_args), 1)
+        self.assertEqual(len(checker_args), 2)
+        self.assertEqual([a[0] for a in sorted(checker_args)],
+                         ['allowed', 'allowed'])
+        self.assertEqual([a[0] for a in sorted(roles_checker_args)],
+                         [['admin', 'editor'], ['viewer']])
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
