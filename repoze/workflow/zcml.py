@@ -91,7 +91,7 @@ class WorkflowDirective(GroupingContextDecorator):
         def register(content_type):
             workflow = Workflow(self.state_attr, self.initial_state,
                                 self.permission_checker, self.name,
-                                self.description)
+                                self.description, roles_checker=self.roles_checker)
             for state in self.states:
                 try:
                     workflow.add_state(state.name,
