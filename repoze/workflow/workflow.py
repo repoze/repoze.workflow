@@ -74,6 +74,11 @@ class Workflow(object):
             raise WorkflowError(
                 'Permission %r defined without permission checker on '
                 'workflow' % permission)
+        if roles and self.roles_checker is None:
+            raise WorkflowError(
+                'Roles %r defined without roles checker on '
+                'workflow' % roles)
+
         transition = kw
         transition['name'] = transition_name
         transition['from_state'] = from_state
@@ -140,6 +145,11 @@ class Workflow(object):
                 permission = transition.get('permission')
                 if permission is not None:
                     if not self.permission_checker(permission, context,
+                                                   request):
+                        continue
+                roles = transition.get('roles')
+                if roles is not None:
+                    if not self.roles_checker(roles, context,
                                                    request):
                         continue
                 L.append(transition)
@@ -237,6 +247,11 @@ class Workflow(object):
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
+        if self.roles_checker:
+            guards = list(guards)
+            roles_guard = RolesGuard(request, transition_name,
+                                               self.roles_checker)
+            guards.append(roles_guard)
         self._transition(content, transition_name, context, request, guards)
 
     def _transition_to_state(self, content, to_state, context=None,
@@ -296,6 +311,12 @@ class Workflow(object):
             if permission is not None:
                 if self.permission_checker:
                     if not self.permission_checker(permission, context, 
+                                                   request):
+                        continue
+            roles = transition.get('roles')
+            if roles is not None:
+                if self.roles_checker:
+                    if not self.roles_checker(roles, context,
                                                    request):
                         continue
             L.append(transition)
