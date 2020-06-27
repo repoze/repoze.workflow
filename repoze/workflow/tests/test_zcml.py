@@ -301,6 +301,7 @@ class TestFixtureApp(unittest.TestCase):
         from repoze.workflow.tests.fixtures.dummy import IContent
         from repoze.workflow.tests.fixtures.dummy import elector
         from repoze.workflow.tests.fixtures.dummy import has_permission
+        from repoze.workflow.tests.fixtures.dummy import has_role
         from repoze.workflow._compat import text_ as _u
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
@@ -315,6 +316,7 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(workflow.description, 'The workflow which is of the '
                          'testing fixtures package')
         self.assertEqual(workflow.permission_checker, has_permission)
+        self.assertEqual(workflow.roles_checker, has_role)
         self.assertEqual(
             workflow._state_aliases,
             {'supersecret':'private'},
