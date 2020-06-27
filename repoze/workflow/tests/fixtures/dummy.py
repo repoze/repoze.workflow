@@ -23,3 +23,6 @@ def elector(context): return True
 
 def has_permission(permission, context, request):
     """ """
+
+def has_role(roles, context, request):
+    """"""

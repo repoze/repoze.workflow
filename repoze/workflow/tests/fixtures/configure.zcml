@@ -11,6 +11,7 @@
             content_types=".dummy.IContent .dummy.IContent2"
             elector=".dummy.elector"
             permission_checker=".dummy.has_permission"
+            roles_checker=".dummy.has_role"
     >
 
         <state name="private"
