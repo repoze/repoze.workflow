@@ -63,14 +63,15 @@ class IWorkflowDirective(Interface):
     content_types = Tokens(title=_u('content_types'), required=False,
                            value_type=GlobalObject())
     elector = GlobalObject(title=_u('elector'), required=False)
-    permission_checker = GlobalObject(title=_u('checker'), required=False)
+    permission_checker = GlobalObject(title=_u('permission checker'), required=False)
     description = TextLine(title=_u('description'), required=False)
+    roles_checker = GlobalObject(title=_u('roles checker'), required=False)
 
 @implementer(IConfigurationContext, IWorkflowDirective)
 class WorkflowDirective(GroupingContextDecorator):
     def __init__(self, context, type, name, state_attr, initial_state,
                  content_types=(), elector=None, permission_checker=None,
-                 description=''):
+                 description='', roles_checker=None):
         self.context = context
         self.type = type
         self.name = name
@@ -84,6 +85,7 @@ class WorkflowDirective(GroupingContextDecorator):
         self.description = description
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
+        self.roles_checker = roles_checker
 
     def after(self):
         def register(content_type):
