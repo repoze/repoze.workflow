@@ -70,6 +70,7 @@ setup(
     url="http://www.repoze.org",
     license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
     packages=find_packages(),
+    package_data={'': ['*.zcml']},
     include_package_data=True,
     namespace_packages=['repoze'],
     zip_safe=False,
