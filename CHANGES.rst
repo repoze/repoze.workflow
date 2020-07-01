@@ -9,6 +9,7 @@ repoze.workflow Changelog
 1.1 (2020-07-01)
 ----------------
 
+- support for role guards in transitions
 - Add support for Python 3.5, 3.6, 3.7, and 3.8.
 
 Backward-Incompatible Changes
