@@ -1,6 +1,17 @@
 repoze.workflow Changelog
 =========================
 
+1.1 (unreleased)
+----------------
+
+- Add support for Python 3.5, 3.6, 3.7, and 3.8.
+
+Backward-Incompatible Changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Drop support for Python 2.6, 3.2, 3.3, and 3.4.
+
+
 1.0b1 (2014-12-11)
 ------------------
 
