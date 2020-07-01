@@ -405,7 +405,7 @@ class TestRegisterWorkflow(unittest.TestCase):
         from zope.component import getSiteManager
         from zope.interface import providedBy
         from zope.interface import Interface
-        class Foo:
+        class Foo(object):
             pass
         class IBar(Interface):
             pass
