@@ -82,12 +82,12 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_public', 
               'to_state': 'public', 'permission':None, 
-              'title': 'make_public'},
+              'title': 'make_public', 'roles': []},
              'make_private':
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_private', 
               'to_state': 'public', 'permission':None, 
-              'title': 'Retract'},
+              'title': 'Retract', 'roles': []},
              })
         self.assertEqual(workflow.initial_state, 'public')
 
@@ -122,12 +122,12 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_public', 
               'to_state': 'public', 'permission':None, 
-              'title': 'make_public'},
+              'title': 'make_public', 'roles': []},
              'make_private':
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_private', 
               'to_state': 'public', 'permission':None, 
-              'title': 'Retract'},
+              'title': 'Retract', 'roles': []},
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
@@ -458,3 +458,4 @@ class DummyTransition:
         self.title = title
         self.extras = extras
         self.guards = []
+        self.roles = []
