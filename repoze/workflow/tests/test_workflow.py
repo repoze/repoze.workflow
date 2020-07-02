@@ -845,6 +845,63 @@ class WorkflowTests(unittest.TestCase):
         self.assertRaises(WorkflowError, permitted, None, info)
         self.assertEqual(args, [('view', None, request)])
 
+    def test_transition_permissive_with_roles(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
+        workflow = self._makeOne(roles_checker=checker)
+        transitioned = []
+        def append(content, name, context=None, request=None, guards=()):
+            D = {'content':content, 'name': name, 'request': request,
+                 'guards':guards, 'context':context }
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
+        content = DummyContent()
+        content.state = 'pending'
+        request = object()
+        workflow.transition(content, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['content'], content)
+        self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
+        self.assertEqual(transitioned['context'], None)
+        permitted = transitioned['guards'][0]
+        info = DummyCallbackInfo(transition = {'roles': ['manager', 'viewer']})
+        result = permitted(None, info)
+        self.assertEqual(result, None)
+        self.assertEqual(args, [(['manager', 'viewer'], None, request)])
+
+    def test_transition_not_permissive_with_roles(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        from repoze.workflow import WorkflowError
+        workflow = self._makeOne(roles_checker=checker)
+        transitioned = []
+        def append(content, name, context=None, request=None, guards=()):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context }
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
+        request = object()
+        content = DummyContent()
+        content.state = 'pending'
+        workflow.transition(content, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['content'], content)
+        self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
+        self.assertEqual(transitioned['context'], None)
+        permitted = transitioned['guards'][0]
+        info = DummyCallbackInfo(transition = {'roles': ['manager', 'viewer']})
+        self.assertRaises(WorkflowError, permitted, None, info)
+        self.assertEqual(args, [(['manager', 'viewer'], None, request)])
+
+
     def test_transition_request_is_None(self):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
