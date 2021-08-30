@@ -59,7 +59,7 @@ class Workflow(object):
             self._state_aliases[alias] = state_name
 
     def add_transition(self, transition_name, from_state, to_state,
-                       callback=None, permission=None, title=None, roles=None,**kw):
+                       callback=None, permission=None, title=None, roles=None, callback_after=None, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
@@ -84,6 +84,7 @@ class Workflow(object):
         transition['from_state'] = from_state
         transition['to_state'] = to_state
         transition['callback'] = callback
+        transition['callback_after'] = callback_after
         transition['permission'] = permission
         transition['roles'] = roles or []
         if title is None:
@@ -239,6 +240,10 @@ class Workflow(object):
             state_callback(content, info)
 
         setattr(content, self.state_attr, to_state)
+        transition_callback_after = transition['callback_after']
+
+        if transition_callback_after is not None:
+            transition_callback_after(content, info)
 
     def transition(self, content, request, transition_name, context=None,
                    guards=()):
@@ -391,7 +396,11 @@ def get_workflow(content_type, type, context=None,
         content_type = providedBy(content_type)
 
     if content_type not in (None, IDefaultWorkflow):
-        wf_list = look((content_type,), IWorkflowList, name=type, default=None)
+        try:
+            wf_list = look((content_type,), IWorkflowList, name=type, default=None)
+        except ValueError as ex:
+            print(ex)
+            raise
         if wf_list is not None:
             wf = process_wf_list(wf_list, context)
             if wf is not None:
