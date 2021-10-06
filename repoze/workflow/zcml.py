@@ -111,13 +111,9 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.callback,
                                             transition.permission,
                                             transition.title,
-<<<<<<< HEAD
-                                            guards=transition.guards,                                            roles=transition.roles,
-=======
                                             guards=transition.guards,
                                             roles=transition.roles,
                                             callback_after=transition.callback_after,
->>>>>>> master
                                             **transition.extras)
                 except WorkflowError as why:
                     raise ConfigurationError(str(why))

@@ -377,10 +377,7 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(transitions['private_to_public_by_role'],
             {'from_state': _u('private'),
              'callback': None,
-<<<<<<< HEAD
-=======
              'callback_after': None,
->>>>>>> master
              'guards': [],
              'name': _u('private_to_public_by_role'),
              'to_state': _u('public'),

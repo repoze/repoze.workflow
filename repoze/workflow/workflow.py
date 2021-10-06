@@ -59,11 +59,7 @@ class Workflow(object):
             self._state_aliases[alias] = state_name
 
     def add_transition(self, transition_name, from_state, to_state,
-<<<<<<< HEAD
-                       callback=None, permission=None, title=None, roles=None,**kw):
-=======
                        callback=None, permission=None, title=None, roles=None, callback_after=None, **kw):
->>>>>>> master
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
