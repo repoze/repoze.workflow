@@ -45,6 +45,7 @@
         <transition
                 name="private_to_public"
                 callback=".dummy.callback"
+                callback_after=".dummy.callback_after"
                 from_state="private"
                 to_state="public"
                 permission="moderate"
