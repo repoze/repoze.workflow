@@ -22,7 +22,7 @@ class Workflow(object):
     """
 
     def __init__(self, state_attr, initial_state, permission_checker=None,
-                 name='', description=''):
+                 name='', description='', roles_checker=None):
         """
         o state_attr - attribute name where a given object's current
                        state will be stored (object is responsible for
@@ -37,6 +37,7 @@ class Workflow(object):
         self.permission_checker = permission_checker
         self.name = name
         self.description = description
+        self.roles_checker = roles_checker
 
     def __call__(self, context):
         return self # allow ourselves to act as an adapter
@@ -58,7 +59,7 @@ class Workflow(object):
             self._state_aliases[alias] = state_name
 
     def add_transition(self, transition_name, from_state, to_state,
-                       callback=None, permission=None, title=None, **kw):
+                       callback=None, permission=None, title=None, roles=None, callback_after=None, **kw):
         """ Add a transition to the FSM.  ``**kw`` must not contain
         any of the keys ``from_state``, ``name``, ``to_state``, or
         ``callback``; these are reserved for internal use."""
@@ -73,12 +74,19 @@ class Workflow(object):
             raise WorkflowError(
                 'Permission %r defined without permission checker on '
                 'workflow' % permission)
+        if roles and self.roles_checker is None:
+            raise WorkflowError(
+                'Roles %r defined without roles checker on '
+                'workflow' % roles)
+
         transition = kw
         transition['name'] = transition_name
         transition['from_state'] = from_state
         transition['to_state'] = to_state
         transition['callback'] = callback
+        transition['callback_after'] = callback_after
         transition['permission'] = permission
+        transition['roles'] = roles or []
         if title is None:
             title = transition_name
         transition['title'] = title
@@ -138,6 +146,11 @@ class Workflow(object):
                 permission = transition.get('permission')
                 if permission is not None:
                     if not self.permission_checker(permission, context,
+                                                   request):
+                        continue
+                roles = transition.get('roles')
+                if roles is not None:
+                    if not self.roles_checker(roles, context,
                                                    request):
                         continue
                 L.append(transition)
@@ -227,6 +240,10 @@ class Workflow(object):
             state_callback(content, info)
 
         setattr(content, self.state_attr, to_state)
+        transition_callback_after = transition['callback_after']
+
+        if transition_callback_after is not None:
+            transition_callback_after(content, info)
 
     def transition(self, content, request, transition_name, context=None,
                    guards=()):
@@ -235,6 +252,11 @@ class Workflow(object):
             permission_guard = PermissionGuard(request, transition_name,
                                                self.permission_checker)
             guards.append(permission_guard)
+        if self.roles_checker:
+            guards = list(guards)
+            roles_guard = RolesGuard(request, transition_name,
+                                               self.roles_checker)
+            guards.append(roles_guard)
         self._transition(content, transition_name, context, request, guards)
 
     def _transition_to_state(self, content, to_state, context=None,
@@ -265,6 +287,11 @@ class Workflow(object):
             permission_guard = PermissionGuard(request, to_state,
                                                self.permission_checker)
             guards.append(permission_guard)
+        if self.roles_checker:
+            guards = list(guards)
+            roles_guard = RolesGuard(request, to_state,
+                                               self.roles_checker)
+            guards.append(roles_guard)
         self._transition_to_state(content, to_state, context, guards=guards,
                                   request=request, skip_same=skip_same)
 
@@ -291,6 +318,12 @@ class Workflow(object):
                     if not self.permission_checker(permission, context, 
                                                    request):
                         continue
+            roles = transition.get('roles')
+            if roles is not None:
+                if self.roles_checker:
+                    if not self.roles_checker(roles, context,
+                                                   request):
+                        continue
             L.append(transition)
         return L
 
@@ -315,6 +348,21 @@ class PermissionGuard:
                 raise WorkflowError(
                     '%s permission required for transition using %r' % (
                     permission, self.name)
+                    )
+
+class RolesGuard:
+    def __init__(self, request, name, checker):
+        self.request = request
+        self.name = name
+        self.checker = checker
+
+    def __call__(self, context, info):
+        roles = info.transition.get('roles')
+        if self.request is not None and roles:
+            if not self.checker(roles, context, self.request):
+                raise WorkflowError(
+                    'one role of %s required for transition using %r' % (
+                    roles, self.name)
                     )
 
 def process_wf_list(wf_list, context):
@@ -348,7 +396,11 @@ def get_workflow(content_type, type, context=None,
         content_type = providedBy(content_type)
 
     if content_type not in (None, IDefaultWorkflow):
-        wf_list = look((content_type,), IWorkflowList, name=type, default=None)
+        try:
+            wf_list = look((content_type,), IWorkflowList, name=type, default=None)
+        except ValueError as ex:
+            print(ex)
+            raise
         if wf_list is not None:
             wf = process_wf_list(wf_list, context)
             if wf is not None:

@@ -33,6 +33,14 @@
       handler="repoze.workflow.zcml.guard_function"
       />
 
+   <meta:directive
+      name="role"
+      namespace="http://namespaces.repoze.org/bfg"
+      usedIn="repoze.workflow.zcml.ITransitionDirective"
+      schema="repoze.workflow.zcml.IRoleDirective"
+      handler="repoze.workflow.zcml.role"
+      />
+
   <meta:groupingDirective
       name="state"
       namespace="http://namespaces.repoze.org/bfg"

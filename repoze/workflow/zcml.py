@@ -27,6 +27,10 @@ class IGuardDirective(Interface):
     """ A directive for a guard on a transition. """
     function = GlobalObject(title=_u('enter guard function'), required=True)
 
+class IRoleDirective(Interface):
+    """ The interface for a key/value pair subdirective """
+    name = TextLine(title=_u('name'), required=True)
+
 class IKeyValueDirective(Interface):
     """ The interface for a key/value pair subdirective """
     name = TextLine(title=_u('key'), required=True)
@@ -44,6 +48,7 @@ class ITransitionDirective(Interface):
     permission = TextLine(title=_u('permission'), required=False)
     title = TextLine(title=_u('title'), required=False)
     callback = GlobalObject(title=_u('callback'), required=False)
+    callback_after = GlobalObject(title=_u('callback_after'), required=False)
 
 class IStateDirective(Interface):
     """ The interface for a state directive """
@@ -59,14 +64,15 @@ class IWorkflowDirective(Interface):
     content_types = Tokens(title=_u('content_types'), required=False,
                            value_type=GlobalObject())
     elector = GlobalObject(title=_u('elector'), required=False)
-    permission_checker = GlobalObject(title=_u('checker'), required=False)
+    permission_checker = GlobalObject(title=_u('permission checker'), required=False)
     description = TextLine(title=_u('description'), required=False)
+    roles_checker = GlobalObject(title=_u('roles checker'), required=False)
 
 @implementer(IConfigurationContext, IWorkflowDirective)
 class WorkflowDirective(GroupingContextDecorator):
     def __init__(self, context, type, name, state_attr, initial_state,
                  content_types=(), elector=None, permission_checker=None,
-                 description=''):
+                 description='', roles_checker=None):
         self.context = context
         self.type = type
         self.name = name
@@ -80,12 +86,13 @@ class WorkflowDirective(GroupingContextDecorator):
         self.description = description
         self.transitions = [] # mutated by subdirectives
         self.states = [] # mutated by subdirectives
+        self.roles_checker = roles_checker
 
     def after(self):
         def register(content_type):
             workflow = Workflow(self.state_attr, self.initial_state,
                                 self.permission_checker, self.name,
-                                self.description)
+                                self.description, roles_checker=self.roles_checker)
             for state in self.states:
                 try:
                     workflow.add_state(state.name,
@@ -105,6 +112,8 @@ class WorkflowDirective(GroupingContextDecorator):
                                             transition.permission,
                                             transition.title,
                                             guards=transition.guards,
+                                            roles=transition.roles,
+                                            callback_after=transition.callback_after,
                                             **transition.extras)
                 except WorkflowError as why:
                     raise ConfigurationError(str(why))
@@ -138,7 +147,7 @@ class TransitionDirective(GroupingContextDecorator):
     """
 
     def __init__(self, context, name, from_state, to_state,
-                 callback=None, permission=None, title=None):
+                 callback=None, permission=None, title=None, callback_after=None):
         self.context = context
         self.name = name
         if not from_state:
@@ -149,7 +158,9 @@ class TransitionDirective(GroupingContextDecorator):
         self.permission = permission
         self.title = title
         self.guards = []
+        self.roles = []
         self.extras = {} # mutated by subdirectives
+        self.callback_after = callback_after
 
     def after(self):
         self.context.transitions.append(self)
@@ -169,6 +180,9 @@ class StateDirective(GroupingContextDecorator):
 
 def guard_function(context, function):
     context.guards.append(function)
+
+def role(context, name):
+    context.roles.append(name)
 
 def key_value_pair(context, name, value):
     ob = context.context

@@ -8,9 +8,9 @@ class WorkflowTests(unittest.TestCase):
         return Workflow
 
     def _makeOne(self, attr='state', initial_state='pending',
-                 permission_checker=None):
+                 permission_checker=None, roles_checker=None):
         klass = self._getTargetClass()
-        return klass(attr, initial_state, permission_checker)
+        return klass(attr, initial_state, permission_checker, roles_checker=roles_checker)
 
     def _makePopulated(self, state_callback=None, transition_callback=None):
         sm = self._makeOne()
@@ -38,9 +38,10 @@ class WorkflowTests(unittest.TestCase):
 
     def _makePopulatedOverlappingTransitions(
         self, state_callback=None, transition_callback=None,
-        permission_checker=None):
+        permission_checker=None, roles_checker=None):
         sm = self._makePopulated(state_callback, transition_callback)
         sm.permission_checker = permission_checker
+        sm.roles_checker = roles_checker
 
         sm._transition_data['submit2'] = dict(
             name='submit2',
@@ -99,6 +100,80 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(checker_args), 2)
         self.assertEqual([a[0] for a in sorted(checker_args)],
                          ['forbidden1', 'forbidden2'])
+
+    def test_transition_to_state_two_transitions_none_works_with_role_check(self):
+        callback_args = []
+        def dummy(content, info): #pragma NO COVER
+            callback_args.append((content, info))
+
+        checker_args = []
+        def checker(permission, context, request):
+            checker_args.append((permission, context, request))
+            return permission == 'allowed'
+
+        roles_checker_args = []
+        def roles_checker(roles, context, request):
+            roles_checker_args.append((roles, context, request))
+            return roles == ['admin', 'manager']
+
+        sm = self._makePopulatedOverlappingTransitions(
+            transition_callback=dummy,
+            permission_checker=checker,
+            roles_checker=roles_checker
+            )
+
+        sm._transition_data['submit']['permission'] = 'allowed'
+        sm._transition_data['submit']['roles'] = ['viewer', 'editor']
+        sm._transition_data['submit2']['permission'] = 'allowed'
+        sm._transition_data['submit2']['roles'] = ['viewer']
+
+        ob = DummyContent()
+        ob.state = 'private'
+        from repoze.workflow import WorkflowError
+        self.assertRaises(WorkflowError, sm.transition_to_state,
+                          ob, object(), 'pending')
+        self.assertEqual(len(callback_args), 0)
+        self.assertEqual(len(checker_args), 2)
+        self.assertEqual([a[0] for a in sorted(checker_args)],
+                         ['allowed', 'allowed'])
+        self.assertEqual([a[0] for a in sorted(roles_checker_args)],
+                         [['viewer'], ['viewer', 'editor']])
+
+    def test_transition_to_state_two_transitions_second_works_with_role_check(self):
+        callback_args = []
+        def dummy(content, info): #pragma NO COVER
+            callback_args.append((content, info))
+
+        checker_args = []
+        def checker(permission, context, request):
+            checker_args.append((permission, context, request))
+            return permission == 'allowed'
+
+        roles_checker_args = []
+        def roles_checker(roles, context, request):
+            roles_checker_args.append((roles, context, request))
+            return 'viewer' in roles
+
+        sm = self._makePopulatedOverlappingTransitions(
+            transition_callback=dummy,
+            permission_checker=checker,
+            roles_checker=roles_checker
+            )
+
+        sm._transition_data['submit']['permission'] = 'allowed'
+        sm._transition_data['submit']['roles'] = ['admin', 'editor']
+        sm._transition_data['submit2']['permission'] = 'allowed'
+        sm._transition_data['submit2']['roles'] = ['viewer']
+
+        ob = DummyContent()
+        ob.state = 'private'
+        sm.transition_to_state(ob, object(), 'pending')
+        self.assertEqual(len(callback_args), 1)
+        self.assertEqual(len(checker_args), 2)
+        self.assertEqual([a[0] for a in sorted(checker_args)],
+                         ['allowed', 'allowed'])
+        self.assertEqual([a[0] for a in sorted(roles_checker_args)],
+                         [['admin', 'editor'], ['viewer']])
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
@@ -257,6 +332,14 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state('public')
         self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
                           'private', 'public', permission='permission')
+
+    def test_add_transition_with_roles_no_roles_checker(self):
+        from repoze.workflow import WorkflowError
+        sm = self._makeOne()
+        sm.add_state('private')
+        sm.add_state('public')
+        self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
+                          'private', 'public', roles=['somerole'])
 
     def test_check_fails(self):
         from repoze.workflow import WorkflowError
@@ -762,6 +845,63 @@ class WorkflowTests(unittest.TestCase):
         self.assertRaises(WorkflowError, permitted, None, info)
         self.assertEqual(args, [('view', None, request)])
 
+    def test_transition_permissive_with_roles(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
+        workflow = self._makeOne(roles_checker=checker)
+        transitioned = []
+        def append(content, name, context=None, request=None, guards=()):
+            D = {'content':content, 'name': name, 'request': request,
+                 'guards':guards, 'context':context }
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
+        content = DummyContent()
+        content.state = 'pending'
+        request = object()
+        workflow.transition(content, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['content'], content)
+        self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
+        self.assertEqual(transitioned['context'], None)
+        permitted = transitioned['guards'][0]
+        info = DummyCallbackInfo(transition = {'roles': ['manager', 'viewer']})
+        result = permitted(None, info)
+        self.assertEqual(result, None)
+        self.assertEqual(args, [(['manager', 'viewer'], None, request)])
+
+    def test_transition_not_permissive_with_roles(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        from repoze.workflow import WorkflowError
+        workflow = self._makeOne(roles_checker=checker)
+        transitioned = []
+        def append(content, name, context=None, request=None, guards=()):
+            D = {'content': content, 'name': name, 'request': request,
+                 'guards': guards, 'context': context }
+            transitioned.append(D)
+        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
+        request = object()
+        content = DummyContent()
+        content.state = 'pending'
+        workflow.transition(content, request, 'publish')
+        self.assertEqual(len(transitioned), 1)
+        transitioned = transitioned[0]
+        self.assertEqual(transitioned['content'], content)
+        self.assertEqual(transitioned['name'], 'publish')
+        self.assertEqual(transitioned['request'], request)
+        self.assertEqual(transitioned['context'], None)
+        permitted = transitioned['guards'][0]
+        info = DummyCallbackInfo(transition = {'roles': ['manager', 'viewer']})
+        self.assertRaises(WorkflowError, permitted, None, info)
+        self.assertEqual(args, [(['manager', 'viewer'], None, request)])
+
+
     def test_transition_request_is_None(self):
         def checker(*arg): raise NotImplementedError
         workflow = self._makeOne(permission_checker=checker)
@@ -970,6 +1110,60 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
         self.assertEqual(args, [('view', request, 'whatever'),
                                 ('view', request, 'whatever')])
+
+    def test_get_transitions_permissive_checking_roles(self):
+        args = []
+        def roles_checker(*arg):
+            args.append(arg)
+            return True
+        workflow = self._makeOne(roles_checker=roles_checker)
+        workflow._get_transitions=lambda *arg, **kw: [{'roles':['viewer', 'editor']}, {}]
+        transitions = workflow.get_transitions(None, None, None, 'private')
+        self.assertEqual(len(transitions), 2)
+        self.assertEqual(args, [(['viewer', 'editor'], None, None)])
+
+    def test_get_transitions_nonpermissive_checking_roles(self):
+        args = []
+        def roles_checker(*arg):
+            args.append(arg)
+            return False
+        workflow = self._makeOne(roles_checker=roles_checker)
+        workflow._get_transitions=lambda *arg, **kw: [{'roles':['viewer', 'editor']}, {}]
+        transitions = workflow.get_transitions(None, 'private')
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(args, [(['viewer', 'editor'], None, 'private')])
+
+    def test_state_info_permissive_checking_roles(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return True
+        state_info = []
+        state_info.append({'transitions':[{'roles':['viewer', 'editor']}, {}]})
+        state_info.append({'transitions':[{'roles':['viewer', 'editor']}, {}]})
+        workflow = self._makeOne(roles_checker=checker)
+        workflow._state_info = lambda *arg, **kw: state_info
+        request = object()
+        result = workflow.state_info(request, 'whatever')
+        self.assertEqual(result, state_info)
+        self.assertEqual(args, [(['viewer', 'editor'], request, 'whatever'),
+                                (['viewer', 'editor'], request, 'whatever')])
+
+    def test_state_info_nonpermissive_checking_roles(self):
+        args = []
+        def checker(*arg):
+            args.append(arg)
+            return False
+        state_info = []
+        state_info.append({'transitions':[{'roles':['viewer', 'editor']}, {}]})
+        state_info.append({'transitions':[{'roles':['viewer', 'editor']}, {}]})
+        workflow = self._makeOne(roles_checker=checker)
+        workflow._state_info = lambda *arg, **kw: state_info
+        request = object()
+        result = workflow.state_info(request, 'whatever')
+        self.assertEqual(result, [{'transitions': [{}]}, {'transitions': [{}]}])
+        self.assertEqual(args, [(['viewer', 'editor'], request, 'whatever'),
+                                (['viewer', 'editor'], request, 'whatever')])
 
     def test_callbackinfo_has_request(self):
         def transition_cb(content, info):

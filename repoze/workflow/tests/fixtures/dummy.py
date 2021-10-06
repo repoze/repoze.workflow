@@ -16,6 +16,9 @@ class Content(object):
 def callback(context, transition):
     """ """
 
+def callback_after(context, transition):
+    """"""
+
 def never(context, transition):  # pragma: NO COVER
     raise WorkflowError("This is never allowed")
 
@@ -23,3 +26,6 @@ def elector(context): return True
 
 def has_permission(permission, context, request):
     """ """
+
+def has_role(roles, context, request):
+    """"""

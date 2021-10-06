@@ -109,7 +109,7 @@ use some of these APIs you need a "request" object.  This object is
 available in :mod:`repoze.bfg` views as the "request" parameter to the
 view.  Your web framework may have another kind of request object
 obtained from another place.  If none of your workflows use a
-``permission_checker``, you can pass ``None`` as the request object.
+``permission_checker`` or ``roles_checker``, you can pass ``None`` as the request object.
 
 Here is how you initialize a piece of content to the initial workflow
 state:
@@ -180,7 +180,7 @@ current
 transitions
 
   A sequence of transition dictionaries; if any of the transitions is
-  not allowed due to a permission violation, it will not show up in
+  not allowed due to a permission violation or insuficient roles, it will not show up in
   this list.
 
 You can also obtain state information about a nonexistent object
@@ -193,9 +193,9 @@ content object) using ``state_info``:
    state_info = workflow.state_info(None, request, context=someotherobject)
 
 This will return the same list of dictionaries, except the ``current``
-flag will always be false.  Permissions used to compute the allowed
+flag will always be false.  Permissions and roles used to compute the allowed
 transitions will be computed against the ``context`` (the ``context``
-will be passed to the permission checker instead of any particular
+will be passed to the permission checker resp. the roles checker instead of any particular
 content object).
 
 You can obtain transition information for a piece of content using the

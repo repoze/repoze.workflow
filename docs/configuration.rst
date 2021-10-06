@@ -95,6 +95,14 @@ workflow.
          permission="moderate"
          />
 
+      <transition
+         name="private_to_public_by_role"
+         from_state="private"
+         to_state="public">
+            <role name="admin"/>
+            <role name="editor"/>
+      </transition>
+
    </workflow>
          
    </configure>
@@ -163,6 +171,14 @@ attributes:
   string), ``context`` and ``request``.  It should return ``True`` if
   the current user implied by the request has the permission in the
   ``context``, ``False`` otherwise.
+
+``roles_checker``
+
+  A Python dotted-name referring to a permission checking function.
+  This function should accept three arguments: ``roles`` (a list of
+  string), ``context`` and ``request``.  It should return ``True`` if
+  the current user implied by the request has at least one of the roles
+  in the ``context``, ``False`` otherwise.
 
 A ``workflow`` tag may contain ``transition`` and ``state`` tags.  A
 workflow declared via ZCML is unique amongst all workflows defined if
@@ -322,6 +338,13 @@ The ``alias`` tag may only be used within a ``state`` tag.  The
 ``state_attr`` attribute that matches the state's name *or any of its
 aliases*, it will be considered to be in that state, according to
 e.g. ``workflow.state_of``, etc.
+
+The ``role`` Tag
+----------------
+The ``role`` tag which may occur within the ``transition`` tag allows
+to specify role guards. The only attribute available is ``name``.
+The roles specified within a ``transition`` are passed as a list of strings
+to the ``roles_checker`` which can be specified for the workflow.
 
 .. _callbacks:
 

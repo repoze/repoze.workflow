@@ -1,6 +1,9 @@
 import unittest
 from zope.testing.cleanup import cleanUp
 
+from repoze.workflow.tests.fixtures.dummy import callback_after
+
+
 class TestWorkflowDirective(unittest.TestCase):
     def setUp(self):
         cleanUp()
@@ -82,12 +85,12 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_public', 
               'to_state': 'public', 'permission':None, 
-              'title': 'make_public'},
+              'title': 'make_public', 'roles': []},
              'make_private':
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_private', 
               'to_state': 'public', 'permission':None, 
-              'title': 'Retract'},
+              'title': 'Retract', 'roles': []},
              })
         self.assertEqual(workflow.initial_state, 'public')
 
@@ -122,12 +125,12 @@ class TestWorkflowDirective(unittest.TestCase):
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_public', 
               'to_state': 'public', 'permission':None, 
-              'title': 'make_public'},
+              'title': 'make_public', 'roles': []},
              'make_private':
              {'from_state': 'private', 'callback': None,
               'guards': [], 'name': 'make_private', 
               'to_state': 'public', 'permission':None, 
-              'title': 'Retract'},
+              'title': 'Retract', 'roles': []},
              }
             )
         self.assertEqual(workflow.initial_state, 'public')
@@ -203,19 +206,21 @@ class TestTransitionDirective(unittest.TestCase):
         return TransitionDirective
 
     def _makeOne(self, context=None, name=None, from_state=None,
-                 to_state=None, callback=None, permission=None):
+                 to_state=None, callback=None, permission=None, callback_after=None):
         return self._getTargetClass()(context, name, from_state,
-                                      to_state, callback, permission)
+                                      to_state, callback,
+                                      permission, callback_after=callback_after)
 
     def test_ctor(self):
         directive = self._makeOne('context', 'name', 'from_state',
-                                  'to_state', 'callback', 'permission')
+                                  'to_state', 'callback', 'permission', callback_after='callback_after')
         self.assertEqual(directive.context, 'context')
         self.assertEqual(directive.name, 'name')
         self.assertEqual(directive.callback, 'callback')
         self.assertEqual(directive.from_state, 'from_state')
         self.assertEqual(directive.to_state, 'to_state')
         self.assertEqual(directive.permission, 'permission')
+        self.assertEqual(directive.callback_after, 'callback_after')
         self.assertEqual(directive.extras, {})
 
     def test_after(self):
@@ -301,6 +306,7 @@ class TestFixtureApp(unittest.TestCase):
         from repoze.workflow.tests.fixtures.dummy import IContent
         from repoze.workflow.tests.fixtures.dummy import elector
         from repoze.workflow.tests.fixtures.dummy import has_permission
+        from repoze.workflow.tests.fixtures.dummy import has_role
         from repoze.workflow._compat import text_ as _u
         xmlconfig.file('configure.zcml', package, execute=True)
         sm = getSiteManager()
@@ -315,6 +321,7 @@ class TestFixtureApp(unittest.TestCase):
         self.assertEqual(workflow.description, 'The workflow which is of the '
                          'testing fixtures package')
         self.assertEqual(workflow.permission_checker, has_permission)
+        self.assertEqual(workflow.roles_checker, has_role)
         self.assertEqual(
             workflow._state_aliases,
             {'supersecret':'private'},
@@ -333,34 +340,51 @@ class TestFixtureApp(unittest.TestCase):
                 },
             })
         transitions = workflow._transition_data
-        self.assertEqual(len(transitions), 3)
+        self.assertEqual(len(transitions), 4)
         self.assertEqual(transitions['private_to_public'],
             {'from_state': _u('private'),
              'callback': callback,
+             'callback_after': callback_after,
              'guards': [],
              'name': _u('private_to_public'),
              'to_state': _u('public'),
-             'permission':'moderate',
+             'roles': [],
+             'permission': 'moderate',
              'title': 'private_to_public',
             }),
         self.assertEqual(transitions['unavailable_public_to_private'],
             {'from_state': _u('public'),
              'callback': callback,
+             'callback_after': None,
              'guards': [dummy.never],
              'name': _u('unavailable_public_to_private'),
              'to_state': _u('private'),
              'permission':_u('moderate'),
+             'roles': [],
              'title': _u('unavailable_public_to_private'),
             }),
         self.assertEqual(transitions['public_to_private'],
              {'from_state': _u('public'),
               'callback': callback,
+              'callback_after': None,
               'guards': [],
               'name': 'public_to_private',
               'to_state': _u('private'),
               'permission':'moderate',
+              'roles': [],
               'title': 'public_to_private'}
             )
+        self.assertEqual(transitions['private_to_public_by_role'],
+            {'from_state': _u('private'),
+             'callback': None,
+             'callback_after': None,
+             'guards': [],
+             'name': _u('private_to_public_by_role'),
+             'to_state': _u('public'),
+             'permission': None,
+             'roles': ['admin', 'editor'],
+             'title': 'private_to_public_by_role',
+            }),
 
 class TestRegisterWorkflow(unittest.TestCase):
     def setUp(self):
@@ -443,3 +467,4 @@ class DummyTransition:
         self.title = title
         self.extras = extras
         self.guards = []
+        self.roles = []
