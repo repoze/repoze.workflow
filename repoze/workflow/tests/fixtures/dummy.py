@@ -16,6 +16,9 @@ class Content(object):
 def callback(context, transition):
     """ """
 
+def callback_after(context, transition):
+    """"""
+
 def never(context, transition):  # pragma: NO COVER
     raise WorkflowError("This is never allowed")
 
